@@ -333,7 +333,7 @@ public sealed class SicAuthService : ISicAuthService
             Success = true,
             Message = "Estabelecimento alterado com sucesso."
         };
-    } 
+    }
 
     public async Task<OperationResult> UpdateUserPhotoAsync(int usuarioId, string foto, CancellationToken cancellationToken = default)
     {

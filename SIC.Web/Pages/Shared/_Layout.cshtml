@@ -1,0 +1,181 @@
+﻿@inject SIC.Web.Services.SicAuthApiClient AuthApiClient
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SIC</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/SIC.Web.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/fontawesome7/css/all.min.css" asp-append-version="true" />
+</head>
+<body>
+    @{
+        var isAuthenticated = User.Identity?.IsAuthenticated == true;
+        var userName = User.FindFirst("sic_nome")?.Value ?? "Usuário";
+        var currentRoute = $"{Context.Request.Path}{Context.Request.QueryString}";
+
+        var usuarioIdClaim = User.FindFirst("sic_usuarioid")?.Value;
+        var isAdminClaim = User.FindFirst("sic_admin")?.Value;
+        var currentEstabelecimentoClaim = User.FindFirst("sic_estabelecimentoid")?.Value;
+        var currentEstabelecimentoNome = User.FindFirst("sic_estabelecimento_nome")?.Value;
+        var userFoto = User.FindFirst("sic_foto")?.Value;
+        var avatarUrl = !string.IsNullOrWhiteSpace(userFoto)
+        ? Url.Content($"~/img/upload/{userFoto}")
+        : Url.Content("~/img/upload/sem-foto.jpg");
+        var hasUserPhoto = !string.IsNullOrWhiteSpace(userFoto);
+
+        int.TryParse(usuarioIdClaim, out var usuarioId);
+        int.TryParse(currentEstabelecimentoClaim, out var currentEstabelecimentoId);
+        var isAdmin = string.Equals(isAdminClaim, "1", StringComparison.OrdinalIgnoreCase);
+
+        var establishments = new List<SIC.Web.Models.Auth.EstablishmentVm>();
+        if (isAuthenticated && usuarioId > 0)
+        {
+            establishments = (await AuthApiClient.GetEstablishmentsAsync(usuarioId, isAdmin, currentEstabelecimentoId, Context.RequestAborted)).ToList();
+        }
+    }
+
+    @if (isAuthenticated)
+    {
+        <div class="sic-app">
+            <aside class="sic-sidebar" id="sicSidebar">
+                <div class="sidebar-brand">
+                    <a class="logo-dark" asp-page="/Index"><img class="logo-default ms-2" src="~/img/logo-light.png" /></a>
+                    <a class="logo-light" asp-page="/Index"><img class="logo-default ms-2" src="~/img/logo-dark.png" /></a>
+                </div>
+
+                <nav class="nav flex-column sidebar-nav">
+                    <a class="nav-link active" asp-page="/Index"><i class="fa-solid fa-house"></i> Dashboard</a>
+                    <a class="nav-link" href="#"><i class="fa-duotone fa-user-group"></i> RH</a>
+                    <a class="nav-link" href="#"><i class="fa-duotone fa-briefcase"></i> Comercial</a>
+                    <a class="nav-link" href="#"><i class="fa-duotone fa-truck-fast"></i> Logística</a>
+                    <a class="nav-link" href="#"><i class="fa-duotone fa-wallet"></i> Financeiro</a>
+                    <a class="nav-link" href="#"><i class="fa-duotone fa-gears"></i> Configurações</a>
+                </nav>
+            </aside>
+
+            <div class="sic-main">
+                <header class="sic-topbar">
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-outline-secondary d-lg-none" id="sidebarToggle" type="button">
+                            <i class="fa-solid fa-bars"></i>
+                        </button>
+                        <h1 class="h5 m-0">@ViewData["Title"]</h1>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-block me-2">
+                            <img class="avatar"
+                                 id="userAvatar"
+                                 src="@avatarUrl"
+                                 alt="Foto do usuário"
+                                 title="Clique para alterar a foto"
+                                 data-has-photo="@hasUserPhoto.ToString().ToLowerInvariant()" />
+                        </div>
+                        <div class="d-block me-2">
+                            <h6 class="m-0 p-0">
+                                <strong>
+                                    @userName
+                                </strong>
+                            </h6>
+                            <p class="m-0 p-0 text-muted">
+                                @(!string.IsNullOrWhiteSpace(currentEstabelecimentoNome) ? currentEstabelecimentoNome : "Estabelecimento")
+                            </p>
+                        </div>
+
+                        <button class="btn btn-outline-secondary" id="themeToggle" type="button" title="Alternar tema">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Trocar estabelecimento">
+                                <i class="fa-duotone fa-home-alt"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end sic-establishments-menu">
+                                @if (establishments.Count == 0)
+                                {
+                                    <li><span class="dropdown-item-text text-muted">Nenhum estabelecimento disponível.</span></li>
+                                }
+                                else
+                                {
+                                    @foreach (var item in establishments)
+                                    {
+                                        var isCurrent = item.EstabelecimentoId == currentEstabelecimentoId || item.IsCurrent;
+                                        <li>
+                                            @if (isCurrent)
+                                            {
+                                                <span class="dropdown-item active">
+                                                    <i class="fa-duotone fa-warehouse me-2"></i>
+                                                    @item.NmEstabelecimento [@item.CdEstabelecimento]
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <a class="dropdown-item"
+                                                   asp-page="/Account/Estabelecimentos"
+                                                   asp-page-handler="Change"
+                                                   asp-route-estabelecimentoId="@item.EstabelecimentoId"
+                                                   asp-route-returnUrl="@currentRoute">
+                                                    <i class="fa-duotone fa-warehouse me-2"></i>
+                                                    @item.NmEstabelecimento [@item.CdEstabelecimento]
+                                                </a>
+                                            }
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-user"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="javascript:void(0)" id="changePasswordAction">
+                                        <i class="fa-solid fa-key me-2"></i>Alterar Senha
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form method="post" asp-page="/Account/Logout" class="px-2">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fa-solid fa-right-from-bracket me-2"></i>Sair
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="sic-content">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    }
+    else
+    {
+        <main class="container py-4 py-md-5">
+            @RenderBody()
+        </main>
+    }
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <form id="avatarUploadForm" method="post" asp-page="/Account/Avatar" asp-page-handler="Upload" enctype="multipart/form-data" class="d-none">
+        @Html.AntiForgeryToken()
+        <input id="avatarFileInput" name="avatarFile" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
+    </form>
+    <form id="changePasswordForm" method="post" asp-page="/Account/Security" asp-page-handler="ChangePassword" class="d-none">
+        @Html.AntiForgeryToken()
+    </form>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

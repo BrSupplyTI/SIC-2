@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using SIC.Web.Models.Auth;
+using SIC.Web.Models.Profile;
 
 namespace SIC.Web.Services;
 
@@ -89,6 +90,40 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
             NewPassword = newPassword
         }, cancellationToken);
 
+    public async Task<IReadOnlyList<AreaVm>> GetAreasAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<AreaVm>>("api/profile/areas", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<UserProfileVm?> GetMyProfileAsync(int usuarioId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await httpClient.GetFromJsonAsync<UserProfileVm>($"api/profile/{usuarioId}", cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public Task<OperationResultVm?> UpdateMyProfileAsync(UpdateUserProfileVm payload, CancellationToken cancellationToken = default)
+        => SendAsyncOperationWithPut("api/profile", payload, cancellationToken);
+
+    public Task<OperationResultVm?> UpdateMyProfilePhotoAsync(int usuarioId, string foto, CancellationToken cancellationToken = default)
+        => SendOperationAsync("api/profile/photo", new { UsuarioId = usuarioId, Foto = foto }, cancellationToken);
+
+    public Task<OperationResultVm?> RemoveMyProfilePhotoAsync(int usuarioId, CancellationToken cancellationToken = default)
+        => SendOperationAsync("api/profile/photo/remove", new { UsuarioId = usuarioId }, cancellationToken);
+
     private async Task<AuthApiResultVm?> SendAsync<TRequest>(string path, TRequest payload, CancellationToken cancellationToken)
     {
         try
@@ -112,6 +147,34 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
                 Success = false,
                 ErrorCode = "API_TIMEOUT",
                 Message = "Tempo de conexão com a API excedido."
+            };
+        }
+    }
+
+    private async Task<OperationResultVm?> SendAsyncOperationWithPut<TRequest>(string path, TRequest payload, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await httpClient.PutAsJsonAsync(path, payload, cancellationToken);
+            if (response.Content.Headers.ContentLength == 0)
+            {
+                return new OperationResultVm
+                {
+                    Success = false,
+                    ErrorCode = "EMPTY_RESPONSE",
+                    Message = $"Falha na operação. Status HTTP {(int)response.StatusCode}."
+                };
+            }
+
+            return await response.Content.ReadFromJsonAsync<OperationResultVm>(cancellationToken: cancellationToken);
+        }
+        catch
+        {
+            return new OperationResultVm
+            {
+                Success = false,
+                ErrorCode = "API_UNAVAILABLE",
+                Message = "Não foi possível conectar na API do SIC."
             };
         }
     }

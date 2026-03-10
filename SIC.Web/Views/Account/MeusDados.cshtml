@@ -1,0 +1,121 @@
+@model SIC.Web.Models.Profile.MyDataPageVm
+@{
+    ViewData["Title"] = "Meus Dados";
+    var avatarUrl = !string.IsNullOrWhiteSpace(Model.Foto)
+        ? Url.Content($"~/img/upload/{Model.Foto}")
+        : Url.Content("~/img/upload/sem-foto.jpg");
+}
+
+<div class="container-fluid">
+    @if (TempData["MyDataSuccess"] is string success)
+    {
+        <div class="alert alert-success">@success</div>
+    }
+    @if (TempData["MyDataError"] is string error)
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <img src="@avatarUrl" class="rounded-circle border" style="width: 130px; height: 130px; object-fit: cover;" alt="Foto do usuário" />
+                    <h5 class="mt-3 mb-1">@Model.Nome</h5>
+                    <p class="text-muted mb-3">@Model.Email</p>
+
+                    <form action="/Account/MeusDados/Foto" method="post" enctype="multipart/form-data" class="mb-2">
+                        @Html.AntiForgeryToken()
+                        <input type="file" name="foto" class="form-control mb-2" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required />
+                        <button type="submit" class="btn btn-primary w-100">Alterar foto</button>
+                    </form>
+
+                    <form action="/Account/MeusDados/Foto/Excluir" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger w-100">Excluir foto</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header"><strong>Resumo cadastral</strong></div>
+                <div class="card-body">
+                    <form action="/Account/MeusDados" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="UsuarioId" />
+
+                        <div class="col-md-6">
+                            <label class="form-label">Nome</label>
+                            <input class="form-control" value="@Model.Nome" disabled />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">E-mail</label>
+                            <input class="form-control" value="@Model.Email" disabled />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Telefone" class="form-label"></label>
+                            <input asp-for="Telefone" class="form-control" />
+                            <span asp-validation-for="Telefone" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="AreaId" class="form-label"></label>
+                            <select asp-for="AreaId" class="form-select">
+                                <option value="">Selecione</option>
+                                @foreach (var area in Model.Areas)
+                                {
+                                    <option value="@area.AreaId">@area.Nome</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-success">Salvar alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><strong>Permissões</strong></div>
+                <div class="card-body p-0">
+                    @if (Model.Permissoes.Count == 0)
+                    {
+                        <div class="p-3 text-muted">Nenhuma permissão especial concedida até o momento.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Módulo</th>
+                                        <th>Permissão</th>
+                                        <th>Data/Hora</th>
+                                        <th>Concedida por</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var p in Model.Permissoes)
+                                    {
+                                        <tr>
+                                            <td>@p.Modulo</td>
+                                            <td>@p.NomePermissao</td>
+                                            <td>@(p.DataHora.HasValue ? p.DataHora.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                                            <td>@(string.IsNullOrWhiteSpace(p.ConcedidoPor) ? "-" : p.ConcedidoPor)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

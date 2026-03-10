@@ -1,4 +1,5 @@
 using SIC.Api.Services;
+using SIC.Api.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,8 @@ builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<ISicAuthService, SicAuthService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<IUserProfileRepository, SqlUserProfileRepository>();
+builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 
 var app = builder.Build();
 

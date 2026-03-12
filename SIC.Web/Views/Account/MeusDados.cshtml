@@ -62,10 +62,34 @@
                             <span asp-validation-for="Telefone" class="text-danger"></span>
                         </div>
 
+                        <div class="col-md-3">
+                            <label asp-for="Ramal" class="form-label"></label>
+                            <input asp-for="Ramal" class="form-control" />
+                            <span asp-validation-for="Ramal" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label asp-for="Matricula" class="form-label"></label>
+                            <input asp-for="Matricula" class="form-control" type="number" inputmode="numeric" step="1" min="0" />
+                            <span asp-validation-for="Matricula" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Cargo" class="form-label"></label>
+                            <input asp-for="Cargo" class="form-control" />
+                            <span asp-validation-for="Cargo" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Setor" class="form-label"></label>
+                            <input asp-for="Setor" class="form-control" />
+                            <span asp-validation-for="Setor" class="text-danger"></span>
+                        </div>
+
                         <div class="col-md-6">
                             <label asp-for="AreaId" class="form-label"></label>
-                            <select asp-for="AreaId" class="form-select">
-                                <option value="">Selecione</option>
+                            <select asp-for="AreaId" class="form-select" required>
+                                <option value="">- Selecione sua área - </option>
                                 @foreach (var area in Model.Areas)
                                 {
                                     <option value="@area.AreaId">@area.Nome</option>

@@ -45,16 +45,102 @@
                 <div class="sidebar-brand">
                     <a class="logo-dark" asp-page="/Index"><img class="logo-default ms-2" src="~/img/logo-light.png" /></a>
                     <a class="logo-light" asp-page="/Index"><img class="logo-default ms-2" src="~/img/logo-dark.png" /></a>
+                    <a class="logo-icon-link" asp-page="/Index"><img class="logo-icon ms-2" src="~/img/logo-icon.png" /></a>
+                    <button class="btn btn-default sidebar-collapse-btn" id="sidebarCollapseToggle" type="button" title="Recolher menu">
+                        <i class="fa-duotone fa-chevron-left fa-lg"></i>
+                    </button>
                 </div>
 
                 <nav class="nav flex-column sidebar-nav">
-                    <a class="nav-link active" asp-page="/Index"><i class="fa-solid fa-house"></i> Dashboard</a>
-                    <a class="nav-link" href="#"><i class="fa-duotone fa-user-group"></i> RH</a>
-                    <a class="nav-link" href="#"><i class="fa-duotone fa-briefcase"></i> Comercial</a>
-                    <a class="nav-link" href="#"><i class="fa-duotone fa-truck-fast"></i> Logística</a>
-                    <a class="nav-link" href="#"><i class="fa-duotone fa-wallet"></i> Financeiro</a>
-                    <a class="nav-link" href="#"><i class="fa-duotone fa-gears"></i> Configurações</a>
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuDashboard" aria-expanded="true">
+                            <span><i class="fa-solid fa-house me-2 sidebar-menu-icon"></i><span class="sidebar-label">Dashboard</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu open" id="sidebarMenuDashboard">
+                            <a class="nav-link active" asp-page="/Index"><i class="fa-solid fa-chart-line me-2"></i>Visão geral</a>
+                            <a class="nav-link" href="#"><i class="fa-duotone fa-boxes me-2"></i>Consulta Pedido</a>
+                            <a class="nav-link" href="#"><i class="fa-duotone fa-pump-soap me-2"></i>Consulta Produto</a>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuCorporativo" aria-expanded="false">
+                            <span><i class="fa-duotone fa-buildings me-2 sidebar-menu-icon"></i><span class="sidebar-label">Corporativo</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu" id="sidebarMenuCorporativo">
+                            <a class="nav-link" href="#"><i class="fa-duotone fa-phone me-2"></i>Ramais</a>
+                            <a class="nav-link" href="#"><i class="fa-duotone fa-mobile me-2"></i>Celulares</a>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuComercial" aria-expanded="false">
+                            <span><i class="fa-duotone fa-briefcase me-2 sidebar-menu-icon"></i><span class="sidebar-label">Comercial</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu" id="sidebarMenuComercial">
+                            <a class="nav-link" href="#"><i class="fa-duotone fa-box me-2"></i>Adm. de Pedidos</a>
+                            <a class="nav-link" href="#"><i class="fa-duotone fa-user-tie me-2"></i>Adm. de Clientes</a>
+                            <a class="nav-link" href="#"><i class="fa-duotone fa-plug me-2"></i>Integrações</a>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuRh" aria-expanded="false">
+                            <span><i class="fa-duotone fa-user-group me-2 sidebar-menu-icon"></i><span class="sidebar-label">RH</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu" id="sidebarMenuRh">
+                            <a class="nav-link" href="#"><i class="fa-regular fa-circle-dot me-2"></i>Em breve</a>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuLogistica" aria-expanded="false">
+                            <span><i class="fa-duotone fa-truck-fast me-2 sidebar-menu-icon"></i><span class="sidebar-label">Logística</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu" id="sidebarMenuLogistica">
+                            <a class="nav-link" href="#"><i class="fa-regular fa-circle-dot me-2"></i>Em breve</a>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuFinanceiro" aria-expanded="false">
+                            <span><i class="fa-duotone fa-wallet me-2 sidebar-menu-icon"></i><span class="sidebar-label">Financeiro</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu" id="sidebarMenuFinanceiro">
+                            <a class="nav-link" href="#"><i class="fa-regular fa-circle-dot me-2"></i>Em breve</a>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuConfiguracoes" aria-expanded="false">
+                            <span><i class="fa-duotone fa-gears me-2 sidebar-menu-icon"></i><span class="sidebar-label">Configurações</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu" id="sidebarMenuConfiguracoes">
+                            <a class="nav-link" href="#"><i class="fa-regular fa-circle-dot me-2"></i>Em breve</a>
+                        </div>
+                    </div>
                 </nav>
+
+                <div class="sidebar-user-compact" id="sidebarUserCompact">
+                    <button class="nav-link user-menu-toggle" type="button" id="sidebarUserToggle" data-sidebar-toggle="sidebarUserMenu" aria-expanded="false" aria-controls="sidebarUserMenu">
+                        <span><i class="fa-solid fa-user me-2"></i>Usuário</span>
+                        <i class="fa-solid fa-chevron-down user-menu-chevron"></i>
+                    </button>
+                    <div class="user-menu-items" id="sidebarUserMenu">
+                        <a class="nav-link" asp-controller="Account" asp-action="MeusDados"><i class="fa-solid fa-id-card me-2"></i>Minha conta</a>
+                        <a class="nav-link" href="javascript:void(0)" data-change-password-action="true"><i class="fa-solid fa-key me-2"></i>Alterar senha</a>
+                        <form method="post" asp-page="/Account/Logout" class="m-0">
+                            <button type="submit" class="nav-link nav-link-button w-100 text-start"><i class="fa-solid fa-right-from-bracket me-2"></i>Sair</button>
+                        </form>
+                    </div>
+                </div>
             </aside>
 
             <div class="sic-main">
@@ -75,7 +161,7 @@
                                  title="Clique para alterar a foto"
                                  data-has-photo="@hasUserPhoto.ToString().ToLowerInvariant()" />
                         </div>
-                        <div class="d-block me-2">
+                        <div class="d-block me-2 d-none d-sm-block">
                             <h6 class="m-0 p-0">
                                 <strong>
                                     @userName
@@ -129,7 +215,7 @@
                             </ul>
                         </div>
 
-                        <div class="dropdown">
+                        <div class="dropdown top-user-menu">
                             <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa-solid fa-user"></i>
                             </button>
@@ -140,7 +226,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="javascript:void(0)" id="changePasswordAction">
+                                    <a class="dropdown-item" href="javascript:void(0)" data-change-password-action="true">
                                         <i class="fa-solid fa-key me-2"></i>Alterar Senha
                                     </a>
                                 </li>

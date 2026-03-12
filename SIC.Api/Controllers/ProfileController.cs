@@ -25,7 +25,7 @@ public sealed class ProfileController(IUserProfileService profileService) : Cont
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] UpdateUserProfileRequest request, CancellationToken cancellationToken)
     {
-        var result = await profileService.UpdateProfileAsync(request.UsuarioId, request.AreaId, request.Telefone, cancellationToken);
+        var result = await profileService.UpdateProfileAsync(request.UsuarioId, request.AreaId, request.Telefone, request.Ramal, request.Matricula, request.Cargo, request.Setor, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 

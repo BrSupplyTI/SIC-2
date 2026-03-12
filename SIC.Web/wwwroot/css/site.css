@@ -46,6 +46,7 @@ a {
     color: #000 !important;
     text-decoration: none;
 }
+
 [data-bs-theme="dark"] a {
     color: #fff !important;
 }
@@ -104,24 +105,115 @@ a {
     background: linear-gradient(180deg, var(--sic-surface), var(--sic-surface-2));
     border-right: 1px solid var(--sic-border);
     padding: 1rem;
+    overflow: auto;
+    /*display: flex; não mexer aqui pois display flex quebra o scroll da sidebar, para alinhar os itens da sidebar usar flexbox nos elementos internos, como .sidebar-brand e .sidebar-nav, e não na sidebar em si, para evitar problemas de overflow.
+    flex-direction: column;
+    overflow: hidden;*/
     position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
     z-index: 1030;
-    transition: transform .25s ease;
+    transition: transform .25s ease, width .25s ease;
     box-shadow: var(--sic-shadow);
+}
+
+    .sic-sidebar.sidebar-collapsed {
+        width: 88px;
+    }
+
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+    .sidebar-nav .nav-link {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+.top-user-menu {
+    display: block;
+}
+
+.sidebar-user-compact {
+    display: none;
+    border-top: 1px solid var(--sic-border);
+    padding-top: .75rem;
+    margin-top: .75rem;
+}
+
+.user-menu-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent;
+    border: 0;
+    color: var(--sic-muted);
+    border-radius: .65rem;
+    padding: .65rem .75rem;
+}
+
+    .user-menu-toggle:hover {
+        background: color-mix(in srgb, var(--sic-brand) 15%, transparent);
+        color: var(--sic-brand);
+    }
+
+.user-menu-items {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .25s ease;
+    padding-left: .35rem;
+}
+
+    .user-menu-items.open {
+        max-height: 220px;
+    }
+
+    .user-menu-items .nav-link {
+        margin-top: .35rem;
+    }
+
+.user-menu-chevron {
+    transition: transform .2s ease;
+}
+
+.user-menu-toggle[aria-expanded="true"] .user-menu-chevron {
+    transform: rotate(180deg);
+}
+
+.nav-link-button {
+    border: 0;
+    background: transparent;
 }
 
 .sidebar-brand {
     height: 56px;
     display: flex;
     align-items: center;
-    gap: .75rem;
+    justify-content: space-between;
+    gap: .5rem;
     color: var(--sic-brand);
     font-weight: 700;
     border-bottom: 1px solid var(--sic-border);
     margin-bottom: 1rem;
+}
+
+.sidebar-collapse-btn {
+    margin-left: auto;
+}
+
+.logo-icon-link {
+    display: none;
+}
+
+.logo-icon {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
 }
 
 .sidebar-nav .nav-link {
@@ -139,10 +231,84 @@ a {
         color: var(--sic-brand);
     }
 
+.sidebar-group {
+    margin-bottom: .35rem;
+}
+
+.sidebar-group-toggle {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .65rem .75rem;
+}
+
+    .sidebar-group-toggle > span {
+        display: inline-flex;
+        align-items: center;
+    }
+
+.sidebar-submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .25s ease;
+    padding-left: .5rem;
+}
+
+    .sidebar-submenu.open {
+        max-height: 220px;
+    }
+
+    .sidebar-submenu .nav-link {
+        margin-top: .3rem;
+    }
+
+.sidebar-group-chevron {
+    transition: transform .2s ease;
+}
+
+.sidebar-group-toggle[aria-expanded="true"] .sidebar-group-chevron {
+    transform: rotate(180deg);
+}
+
 .sic-main {
     flex: 1;
     margin-left: 280px;
     min-width: 0;
+    transition: margin-left .25s ease;
+}
+
+.sic-sidebar.sidebar-collapsed + .sic-main {
+    margin-left: 88px;
+}
+
+.sic-sidebar.sidebar-collapsed .sidebar-collapse-btn,
+.sic-sidebar.sidebar-collapsed .sidebar-group-chevron,
+.sic-sidebar.sidebar-collapsed .sidebar-label,
+.sic-sidebar.sidebar-collapsed .sidebar-submenu,
+.sic-sidebar.sidebar-collapsed .logo-dark,
+.sic-sidebar.sidebar-collapsed .logo-light {
+    display: none !important;
+}
+
+.sic-sidebar.sidebar-collapsed .logo-icon-link {
+    display: inline-flex;
+}
+
+.sic-sidebar.sidebar-collapsed .sidebar-group-toggle {
+    justify-content: center;
+    padding: 1.2rem .4rem;
+}
+
+.sic-sidebar.sidebar-collapsed .sidebar-menu-icon {
+    margin-right: 0 !important;
+}
+
+.user-menu-toggle > span {
+    display: inline-flex;
+    align-items: center;
 }
 
 .sic-topbar {
@@ -173,25 +339,25 @@ a {
 }
 
 .sic-establishments-menu {
-  min-width: 320px;
-  max-height: 360px;
-  overflow-y: auto;
+    min-width: 320px;
+    max-height: 360px;
+    overflow-y: auto;
 }
 
 .avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--sic-border);
-  cursor: pointer;
-  transition: transform .2s ease, box-shadow .2s ease;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--sic-border);
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
 }
 
-.avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sic-brand) 20%, transparent);
-}
+    .avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--sic-brand) 20%, transparent);
+    }
 
 @media (max-width: 991.98px) {
     .sic-sidebar {
@@ -204,44 +370,57 @@ a {
 
     .sic-main {
         margin-left: 0;
-    }    
+    }
+
+    .top-user-menu {
+        display: none;
+    }
+
+    .sidebar-collapse-btn {
+        display: none;
+    }
+
+    .sidebar-user-compact {
+        display: block;
+    }
 }
+
 .logo-default {
     max-width: 180px;
 }
 
 .login-video-background {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
 }
 
-.login-video-background video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity:0.4;
-}
+    .login-video-background video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.4;
+    }
 
 .login-video-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, .35);
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .35);
 }
 
 .login-shell {
-  position: relative;
-  z-index: 1;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .login-content {
-  width: 100%;
-  max-width: 640px;
+    width: 100%;
+    max-width: 640px;
 }
 
 .logo-login {

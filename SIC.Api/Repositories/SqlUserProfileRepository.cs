@@ -43,6 +43,10 @@ public sealed class SqlUserProfileRepository(IConfiguration configuration) : IUs
                 U.NmUsuario,
                 U.Email,
                 U.Telefone,
+                U.Ramal,
+                U.Matricula,
+                U.Cargo,
+                U.Setor,
                 U.Foto,
                 I.IntranetAreaID,
                 A.NmArea,
@@ -73,6 +77,10 @@ public sealed class SqlUserProfileRepository(IConfiguration configuration) : IUs
             Nome = reader.GetString(reader.GetOrdinal("NmUsuario")),
             Email = ReadNullableString(reader, "Email"),
             Telefone = ReadNullableString(reader, "Telefone"),
+            Ramal = ReadNullableString(reader, "Ramal"),
+            Matricula = ReadNullableInt(reader, "Matricula"),
+            Cargo = ReadNullableString(reader, "Cargo"),
+            Setor = ReadNullableString(reader, "Setor"),
             Foto = ReadNullableString(reader, "Foto"),
             AreaId = ReadNullableInt(reader, "IntranetAreaID"),
             AreaNome = ReadNullableString(reader, "NmArea"),
@@ -118,15 +126,20 @@ public sealed class SqlUserProfileRepository(IConfiguration configuration) : IUs
         return permissions;
     }
 
-    public async Task<bool> UpdateProfileAsync(int usuarioId, int? areaId, string? telefone, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateProfileAsync(int usuarioId, int? areaId, string? telefone, string? ramal, int? matricula, string? cargo, string? setor, CancellationToken cancellationToken = default)
     {
         const string sql = """
-            UPDATE U
-            SET U.Telefone = @telefone,
-                I.IntranetAreaID = @areaId
-            FROM BR_Usuario U
-            INNER JOIN BrWeb..Permissoes_Intranet I ON I.UsuarioID = U.UsuarioID
-            WHERE U.UsuarioID = @usuarioId;
+            UPDATE BR_Usuario
+            SET Telefone = @telefone,
+                Ramal = @ramal,
+                Matricula = @matricula,
+                Cargo = @cargo,
+                Setor = @setor
+            WHERE UsuarioID = @usuarioId;
+
+            UPDATE BrWeb..Permissoes_Intranet 
+            SET IntranetAreaID = @areaId
+            WHERE UsuarioID = @usuarioId;
             """;
 
         await using var connection = new SqlConnection(_connectionString);
@@ -135,6 +148,10 @@ public sealed class SqlUserProfileRepository(IConfiguration configuration) : IUs
         await using var cmd = new SqlCommand(sql, connection);
         cmd.Parameters.AddWithValue("@usuarioId", usuarioId);
         cmd.Parameters.AddWithValue("@telefone", string.IsNullOrWhiteSpace(telefone) ? DBNull.Value : telefone);
+        cmd.Parameters.AddWithValue("@ramal", string.IsNullOrWhiteSpace(ramal) ? DBNull.Value : ramal);
+        cmd.Parameters.AddWithValue("@matricula", matricula.HasValue ? matricula.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("@cargo", string.IsNullOrWhiteSpace(cargo) ? DBNull.Value : cargo);
+        cmd.Parameters.AddWithValue("@setor", string.IsNullOrWhiteSpace(setor) ? DBNull.Value : setor);
         cmd.Parameters.AddWithValue("@areaId", areaId.HasValue ? areaId.Value : DBNull.Value);
 
         var rows = await cmd.ExecuteNonQueryAsync(cancellationToken);

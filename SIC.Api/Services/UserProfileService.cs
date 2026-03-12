@@ -59,6 +59,10 @@ public sealed class UserProfileService(IUserProfileRepository repository) : IUse
             Nome = profile.Nome,
             Email = profile.Email,
             Telefone = profile.Telefone,
+            Ramal = profile.Ramal,
+            Matricula = profile.Matricula,
+            Cargo = profile.Cargo,
+            Setor = profile.Setor,
             AreaId = profile.AreaId,
             AreaNome = profile.AreaNome,
             Foto = profile.Foto,
@@ -72,7 +76,7 @@ public sealed class UserProfileService(IUserProfileRepository repository) : IUse
         };
     }
 
-    public async Task<OperationResult> UpdateProfileAsync(int usuarioId, int? areaId, string? telefone, CancellationToken cancellationToken = default)
+    public async Task<OperationResult> UpdateProfileAsync(int usuarioId, int? areaId, string? telefone, string? ramal, int? matricula, string? cargo, string? setor, CancellationToken cancellationToken = default)
     {
         if (usuarioId <= 0)
         {
@@ -84,7 +88,7 @@ public sealed class UserProfileService(IUserProfileRepository repository) : IUse
             };
         }
 
-        var updated = await repository.UpdateProfileAsync(usuarioId, areaId, telefone, cancellationToken);
+        var updated = await repository.UpdateProfileAsync(usuarioId, areaId, telefone, ramal, matricula, cargo, setor, cancellationToken);
         return new OperationResult
         {
             Success = updated,

@@ -39,6 +39,10 @@ public sealed class AccountController(IWebHostEnvironment environment, SicAuthAp
             Nome = profile.Nome,
             Email = profile.Email,
             Telefone = profile.Telefone,
+            Ramal = profile.Ramal,
+            Matricula = profile.Matricula,
+            Cargo = profile.Cargo,
+            Setor = profile.Setor,
             AreaId = profile.AreaId,
             Foto = profile.Foto,
             Permissoes = profile.Permissoes,
@@ -60,7 +64,11 @@ public sealed class AccountController(IWebHostEnvironment environment, SicAuthAp
         {
             UsuarioId = usuarioId.Value,
             AreaId = model.AreaId,
-            Telefone = model.Telefone
+            Telefone = model.Telefone,
+            Ramal = model.Ramal,
+            Matricula = model.Matricula,
+            Cargo = model.Cargo,
+            Setor = model.Setor
         }, cancellationToken);
 
         TempData[result?.Success == true ? "MyDataSuccess" : "MyDataError"] = result?.Message ?? "Falha ao atualizar dados.";

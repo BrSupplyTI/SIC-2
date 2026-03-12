@@ -30,11 +30,129 @@
 
   const sidebarToggle = document.getElementById("sidebarToggle");
   const sidebar = document.getElementById("sicSidebar");
+  const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
+  const sidebarMenuIcons = document.querySelectorAll(".sidebar-menu-icon");
+
+  const isCompactMode = () => window.matchMedia("(max-width: 991.98px)").matches;
+
+  const setSidebarCollapsed = (collapsed) => {
+    if (!sidebar) {
+      return;
+    }
+
+    sidebar.classList.toggle("sidebar-collapsed", collapsed);
+    sidebarMenuIcons.forEach((icon) => {
+      icon.classList.toggle("fa-lg", collapsed);
+    });
+  };
+
   if (sidebarToggle && sidebar) {
     sidebarToggle.addEventListener("click", () => {
       sidebar.classList.toggle("open");
     });
+
+    document.addEventListener("click", (event) => {
+      if (!isCompactMode() || !sidebar.classList.contains("open")) {
+        return;
+      }
+
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (sidebar.contains(target) || sidebarToggle.contains(target)) {
+        return;
+      }
+
+      sidebar.classList.remove("open");
+    });
   }
+
+  if (sidebarCollapseToggle && sidebar) {
+    sidebarCollapseToggle.addEventListener("click", () => {
+      if (isCompactMode()) {
+        return;
+      }
+
+      const shouldCollapse = !sidebar.classList.contains("sidebar-collapsed");
+      setSidebarCollapsed(shouldCollapse);
+
+      if (shouldCollapse) {
+        const sidebarMenuToggles = document.querySelectorAll("[data-sidebar-toggle]");
+        sidebarMenuToggles.forEach((toggle) => {
+          const targetId = toggle.getAttribute("data-sidebar-toggle");
+          if (!targetId) {
+            return;
+          }
+
+          const menu = document.getElementById(targetId);
+          if (!menu) {
+            return;
+          }
+
+          toggle.setAttribute("aria-expanded", "false");
+          menu.classList.remove("open");
+        });
+      }
+    });
+  }
+
+  const sidebarMenuToggles = document.querySelectorAll("[data-sidebar-toggle]");
+  sidebarMenuToggles.forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const targetId = toggle.getAttribute("data-sidebar-toggle");
+      if (!targetId) {
+        return;
+      }
+
+      const menu = document.getElementById(targetId);
+      if (!menu) {
+        return;
+      }
+
+      if (sidebar?.classList.contains("sidebar-collapsed") && !isCompactMode()) {
+        setSidebarCollapsed(false);
+        sidebarMenuToggles.forEach((otherToggle) => {
+          const otherTargetId = otherToggle.getAttribute("data-sidebar-toggle");
+          if (!otherTargetId) {
+            return;
+          }
+
+          const otherMenu = document.getElementById(otherTargetId);
+          if (!otherMenu) {
+            return;
+          }
+
+          const isCurrent = otherTargetId === targetId;
+          otherToggle.setAttribute("aria-expanded", isCurrent ? "true" : "false");
+          otherMenu.classList.toggle("open", isCurrent);
+        });
+        return;
+      }
+
+      const isExpanded = toggle.getAttribute("aria-expanded") === "true";
+      if (!isExpanded) {
+        sidebarMenuToggles.forEach((otherToggle) => {
+          const otherTargetId = otherToggle.getAttribute("data-sidebar-toggle");
+          if (!otherTargetId || otherTargetId === targetId) {
+            return;
+          }
+
+          const otherMenu = document.getElementById(otherTargetId);
+          if (!otherMenu) {
+            return;
+          }
+
+          otherToggle.setAttribute("aria-expanded", "false");
+          otherMenu.classList.remove("open");
+        });
+      }
+
+      toggle.setAttribute("aria-expanded", (!isExpanded).toString());
+      menu.classList.toggle("open", !isExpanded);
+    });
+  });
 
   window.sicAlert = (title, text, icon = "info") => {
     if (!window.Swal) {
@@ -136,11 +254,12 @@
     });
   }
 
-  const changePasswordAction = document.getElementById("changePasswordAction");
+  const changePasswordActions = document.querySelectorAll('[data-change-password-action="true"]');
   const changePasswordForm = document.getElementById("changePasswordForm");
 
-  if (changePasswordAction && changePasswordForm) {
-    changePasswordAction.addEventListener("click", async () => {
+  if (changePasswordActions.length > 0 && changePasswordForm) {
+    const handleChangePassword = async (event) => {
+      event.preventDefault();
       if (!window.Swal) {
         window.sicAlert("Indisponível", "SweetAlert não está carregado.", "error");
         return;
@@ -204,6 +323,8 @@
       } catch {
         window.sicAlert("Erro", "Não foi possível alterar a senha neste momento.", "error");
       }
-    });
+    };
+
+    changePasswordActions.forEach((item) => item.addEventListener("click", handleChangePassword));
   }
 })();

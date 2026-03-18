@@ -1,0 +1,266 @@
+@inject SIC.Web.Services.SicAuthApiClient AuthApiClient
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="pathbase" content="@Context.Request.PathBase" />
+    <title>@ViewData["Title"] - SIC</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />    
+    <link rel="stylesheet" href="~/css/fontawesome7/css/all.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/fontawesome7/css/duotone-thin.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/fontawesome7/css/duotone-light.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/fontawesome7/css/duotone-regular.min.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    @{
+        var isAuthenticated = User.Identity?.IsAuthenticated == true;
+        var userName = User.FindFirst("sic_nome")?.Value ?? "Usuário";
+        var currentRoute = $"{Context.Request.Path}{Context.Request.QueryString}";
+
+        var usuarioIdClaim = User.FindFirst("sic_usuarioid")?.Value;
+        var isAdminClaim = User.FindFirst("sic_admin")?.Value;
+        var currentEstabelecimentoClaim = User.FindFirst("sic_estabelecimentoid")?.Value;
+        var currentEstabelecimentoNome = User.FindFirst("sic_estabelecimento_nome")?.Value;
+        var userFoto = User.FindFirst("sic_foto")?.Value;
+        var avatarUrl = !string.IsNullOrWhiteSpace(userFoto)
+        ? Url.Content($"~/img/upload/{userFoto}")
+        : Url.Content("~/img/upload/sem-foto.jpg");
+        var hasUserPhoto = !string.IsNullOrWhiteSpace(userFoto);
+
+        int.TryParse(usuarioIdClaim, out var usuarioId);
+        int.TryParse(currentEstabelecimentoClaim, out var currentEstabelecimentoId);
+        var isAdmin = string.Equals(isAdminClaim, "1", StringComparison.OrdinalIgnoreCase);
+
+        var establishments = new List<SIC.Web.Models.Auth.EstablishmentVm>();
+        if (isAuthenticated && usuarioId > 0)
+        {
+            establishments = (await AuthApiClient.GetEstablishmentsAsync(usuarioId, isAdmin, currentEstabelecimentoId, Context.RequestAborted)).ToList();
+        }
+    }
+
+    @if (isAuthenticated)
+    {
+        <div class="sic-app">
+            <aside class="sic-sidebar" id="sicSidebar">
+                <div class="sidebar-brand">
+                    <a class="logo-dark" asp-controller="Home" asp-action="Index"><img class="logo-default ms-2" src="~/img/logo-light.png" /></a>
+                    <a class="logo-light" asp-controller="Home" asp-action="Index"><img class="logo-default ms-2" src="~/img/logo-dark.png" /></a>
+                    <a class="logo-icon-link" asp-controller="Home" asp-action="Index"><img class="logo-icon ms-2" src="~/img/logo-icon.png" /></a>
+                    <button class="btn btn-default sidebar-collapse-btn" id="sidebarCollapseToggle" type="button" title="Recolher menu">
+                        <i class="fa-duotone fa-chevron-left fa-lg"></i>
+                    </button>
+                </div>
+
+                <nav class="nav flex-column sidebar-nav">
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuDashboard" aria-expanded="true" title="Dashboard">
+                            <span><i class="fa-solid fa-house me-2 sidebar-menu-icon"></i><span class="sidebar-label">Dashboard</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu open" id="sidebarMenuDashboard">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index" data-sic-nav><i class="fa-solid fa-chart-line me-2"></i>Visão geral</a>
+                            <a class="nav-link" asp-controller="Pedidos" asp-action="Busca" data-sic-nav><i class="fa-duotone fa-boxes me-2"></i>Consulta Pedido</a>
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-pump-soap me-2"></i>Consulta Produto<span class="badge-soon">Em breve</span></span>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuCorporativo" aria-expanded="false" title="Corporativo">
+                            <span><i class="fa-duotone fa-buildings me-2 sidebar-menu-icon"></i><span class="sidebar-label">Corporativo</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu" id="sidebarMenuCorporativo">
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-phone me-2"></i>Ramais<span class="badge-soon">Em breve</span></span>
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-mobile me-2"></i>Celulares<span class="badge-soon">Em breve</span></span>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group">
+                        <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuComercial" aria-expanded="false" title="Comercial">
+                            <span><i class="fa-duotone fa-briefcase me-2 sidebar-menu-icon"></i><span class="sidebar-label">Comercial</span></span>
+                            <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                        </button>
+                        <div class="sidebar-submenu" id="sidebarMenuComercial">
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-box me-2"></i>Adm. de Pedidos<span class="badge-soon">Em breve</span></span>
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-user-tie me-2"></i>Adm. de Clientes<span class="badge-soon">Em breve</span></span>
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-plug me-2"></i>Integrações<span class="badge-soon">Em breve</span></span>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group sidebar-group-disabled" title="RH — Em breve">
+                        <span class="nav-link sidebar-group-toggle sidebar-group-toggle-disabled">
+                            <span><i class="fa-duotone fa-user-group me-2 sidebar-menu-icon"></i><span class="sidebar-label">RH</span></span>
+                            <span class="badge-soon">Em breve</span>
+                        </span>
+                    </div>
+
+                    <div class="sidebar-group sidebar-group-disabled" title="Logística — Em breve">
+                        <span class="nav-link sidebar-group-toggle sidebar-group-toggle-disabled">
+                            <span><i class="fa-duotone fa-truck-fast me-2 sidebar-menu-icon"></i><span class="sidebar-label">Logística</span></span>
+                            <span class="badge-soon">Em breve</span>
+                        </span>
+                    </div>
+
+                    <div class="sidebar-group sidebar-group-disabled" title="Financeiro — Em breve">
+                        <span class="nav-link sidebar-group-toggle sidebar-group-toggle-disabled">
+                            <span><i class="fa-duotone fa-wallet me-2 sidebar-menu-icon"></i><span class="sidebar-label">Financeiro</span></span>
+                            <span class="badge-soon">Em breve</span>
+                        </span>
+                    </div>
+
+                    <div class="sidebar-group sidebar-group-disabled" title="Configurações — Em breve">
+                        <span class="nav-link sidebar-group-toggle sidebar-group-toggle-disabled">
+                            <span><i class="fa-duotone fa-gears me-2 sidebar-menu-icon"></i><span class="sidebar-label">Configurações</span></span>
+                            <span class="badge-soon">Em breve</span>
+                        </span>
+                    </div>
+                </nav>
+
+                <div class="sidebar-user-compact" id="sidebarUserCompact">
+                    <button class="nav-link user-menu-toggle" type="button" id="sidebarUserToggle" data-sidebar-toggle="sidebarUserMenu" aria-expanded="false" aria-controls="sidebarUserMenu">
+                        <span><i class="fa-solid fa-user me-2"></i>Usuário</span>
+                        <i class="fa-solid fa-chevron-down user-menu-chevron"></i>
+                    </button>
+                    <div class="user-menu-items" id="sidebarUserMenu">
+                        <a class="nav-link" asp-controller="Account" asp-action="MeusDados"><i class="fa-solid fa-id-card me-2"></i>Minha conta</a>
+                        <a class="nav-link" href="javascript:void(0)" data-change-password-action="true"><i class="fa-solid fa-key me-2"></i>Alterar senha</a>
+                        <form method="post" asp-controller="Account" asp-action="Logout" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="nav-link nav-link-button w-100 text-start"><i class="fa-solid fa-right-from-bracket me-2"></i>Sair</button>
+                        </form>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="sic-main">
+                <header class="sic-topbar">
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-outline-secondary d-lg-none" id="sidebarToggle" type="button">
+                            <i class="fa-solid fa-bars"></i>
+                        </button>
+                        <h1 class="h5 m-0">@ViewData["Title"]</h1>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-block me-2">
+                            <img class="avatar"
+                                 id="userAvatar"
+                                 src="@avatarUrl"
+                                 alt="Foto do usuário"
+                                 title="Clique para alterar a foto"
+                                 data-has-photo="@hasUserPhoto.ToString().ToLowerInvariant()" />
+                        </div>
+                        <div class="d-block me-2 d-none d-sm-block">
+                            <h6 class="m-0 p-0">
+                                <strong>
+                                    @userName
+                                </strong>
+                            </h6>
+                            <p class="m-0 p-0 text-muted">
+                                @(!string.IsNullOrWhiteSpace(currentEstabelecimentoNome) ? currentEstabelecimentoNome : "Estabelecimento")
+                            </p>
+                        </div>
+
+                        <button class="btn btn-outline-secondary" id="themeToggle" type="button" title="Alternar tema">
+                            <i class="fa-duotone fa-moon"></i>
+                        </button>
+
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Trocar estabelecimento">
+                                <i class="fa-duotone fa-warehouse"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end sic-establishments-menu">
+                                @if (establishments.Count == 0)
+                                {
+                                    <li><span class="dropdown-item-text text-muted">Nenhum estabelecimento disponível.</span></li>
+                                }
+                                else
+                                {
+                                    @foreach (var item in establishments)
+                                    {
+                                        var isCurrent = item.EstabelecimentoId == currentEstabelecimentoId || item.IsCurrent;
+                                        <li>
+                                            @if (isCurrent)
+                                            {
+                                                <span class="dropdown-item active">
+                                                    <i class="fa-duotone fa-warehouse me-2"></i>
+                                                    @item.NmEstabelecimento [@item.CdEstabelecimento]
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <a class="dropdown-item"
+                                                   asp-controller="Account"
+                                                   asp-action="ChangeEstabelecimento"
+                                                   asp-route-estabelecimentoId="@item.EstabelecimentoId"
+                                                   asp-route-returnUrl="@currentRoute">
+                                                    <i class="fa-duotone fa-warehouse me-2"></i>
+                                                    @item.NmEstabelecimento [@item.CdEstabelecimento]
+                                                </a>
+                                            }
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+
+                        <div class="dropdown top-user-menu">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-duotone fa-user"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Account" asp-action="MeusDados">
+                                        <i class="fa-duotone fa-id-card me-2"></i>Meus Dados
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="javascript:void(0)" data-change-password-action="true">
+                                        <i class="fa-duotone fa-key me-2"></i>Alterar Senha
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form method="post" asp-controller="Account" asp-action="Logout" class="px-2">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fa-duotone fa-right-from-bracket me-2"></i>Sair
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="sic-content">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    }
+    else
+    {
+        <main class="container py-4 py-md-5">
+            @RenderBody()
+        </main>
+    }
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <form id="avatarUploadForm" method="post" asp-controller="Account" asp-action="AvatarUpload" enctype="multipart/form-data" class="d-none">
+        @Html.AntiForgeryToken()
+        <input id="avatarFileInput" name="avatarFile" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
+    </form>
+    <form id="changePasswordForm" method="post" asp-controller="Account" asp-action="ChangePassword" class="d-none">
+        @Html.AntiForgeryToken()
+    </form>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

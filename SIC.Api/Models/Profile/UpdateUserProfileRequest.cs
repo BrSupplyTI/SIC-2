@@ -9,4 +9,6 @@ public sealed class UpdateUserProfileRequest
     public int? Matricula { get; set; }
     public string? Cargo { get; set; }
     public string? Setor { get; set; }
+    public int? DiaAniversario { get; set; }
+    public int? MesAniversario { get; set; }
 }

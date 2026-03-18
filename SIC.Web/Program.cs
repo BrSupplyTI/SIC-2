@@ -7,7 +7,6 @@ using SIC.Web.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddHttpContextAccessor();
@@ -160,7 +159,8 @@ builder.Services
             OnRemoteFailure = context =>
             {
                 var error = Uri.EscapeDataString(context.Failure?.Message ?? "Falha no login SSO.");
-                context.Response.Redirect($"/Account/Login?erro={error}");
+                var basePath = context.Request.PathBase.Value ?? "";
+                context.Response.Redirect($"{basePath}/Account/Login?erro={error}");
                 context.HandleResponse();
                 return Task.CompletedTask;
             }
@@ -169,16 +169,15 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddRazorPages(options =>
-{
-    options.Conventions.AuthorizeFolder("/");
-    options.Conventions.AllowAnonymousToPage("/Account/Login");
-    options.Conventions.AllowAnonymousToPage("/Account/ForgotPassword");
-    options.Conventions.AllowAnonymousToPage("/Account/ResetPassword");
-    options.Conventions.AllowAnonymousToPage("/Error");
-});
-
 var app = builder.Build();
+
+// PathBase DEVE ser o primeiro middleware do pipeline.
+// Ele remove o prefixo do Request.Path para que routing, auth, static files etc. funcionem corretamente.
+var pathBase = builder.Configuration["AppSettings:PathBase"];
+if (!string.IsNullOrWhiteSpace(pathBase))
+{
+    app.UsePathBase(pathBase);
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -196,8 +195,7 @@ app.UseAuthorization();
 app.MapStaticAssets();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages()
+    pattern: "{controller=Home}/{action=Index}/{id?}")
    .WithStaticAssets();
 
 app.Run();

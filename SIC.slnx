@@ -1,5 +1,7 @@
 <Solution>
   <Project Path="SIC.Api/SIC.Api.csproj" />
+  <Project Path="SIC.Domain/SIC.Domain.csproj" />
+  <Project Path="SIC.Infrastructure/SIC.Infrastructure.csproj" />
   <Project Path="SIC.Web/SIC.Web.csproj">
     <BuildDependency Project="SIC.Api/SIC.Api.csproj" />
   </Project>

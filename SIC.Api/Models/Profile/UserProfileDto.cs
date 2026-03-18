@@ -13,5 +13,7 @@ public sealed class UserProfileDto
     public int? AreaId { get; set; }
     public string? AreaNome { get; set; }
     public string? Foto { get; set; }
+    public int? DiaAniversario { get; set; }
+    public int? MesAniversario { get; set; }
     public IReadOnlyList<UserPermissionDto> Permissoes { get; set; } = [];
 }

@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using SIC.Web.Models.Auth;
+using SIC.Web.Models.Pedidos;
 using SIC.Web.Models.Profile;
 
 namespace SIC.Web.Services;
@@ -8,51 +9,28 @@ namespace SIC.Web.Services;
 public sealed class SicAuthApiClient(HttpClient httpClient)
 {
     public Task<AuthApiResultVm?> PasswordLoginAsync(string login, string password, string remoteIp, CancellationToken cancellationToken = default)
-        => SendAsync("api/auth/login", new LoginRequestVm
-        {
-            Login = login,
-            Password = password,
-            RemoteIp = remoteIp
-        }, cancellationToken);
+        => SendAsync("api/auth/login", new { Login = login, Password = password, RemoteIp = remoteIp }, cancellationToken);
 
     public Task<AuthApiResultVm?> SsoLoginAsync(string email, string remoteIp, CancellationToken cancellationToken = default)
-        => SendAsync("api/auth/sso-login", new SsoLoginRequestVm
-        {
-            Email = email,
-            RemoteIp = remoteIp
-        }, cancellationToken);
+        => SendAsync("api/auth/sso-login", new { Email = email, RemoteIp = remoteIp }, cancellationToken);
 
     public Task<OperationResultVm?> ValidateSessionAsync(int usuarioId, string sessionToken, string remoteIp, string? userAgent, CancellationToken cancellationToken = default)
-        => SendOperationAsync("api/auth/validate-session", new
-        {
-            UsuarioId = usuarioId,
-            SessionToken = sessionToken,
-            RemoteIp = remoteIp,
-            UserAgent = userAgent
-        }, cancellationToken);
+        => SendOperationAsync("api/auth/validate-session", new { UsuarioId = usuarioId, SessionToken = sessionToken, RemoteIp = remoteIp, UserAgent = userAgent }, cancellationToken);
 
     public Task<OperationResultVm?> LogoutSessionAsync(int usuarioId, string sessionToken, CancellationToken cancellationToken = default)
-        => SendOperationAsync("api/auth/logout-session", new
-        {
-            UsuarioId = usuarioId,
-            SessionToken = sessionToken
-        }, cancellationToken);
+        => SendOperationAsync("api/auth/logout-session", new { UsuarioId = usuarioId, SessionToken = sessionToken }, cancellationToken);
 
     public Task<OperationResultVm?> ForgotPasswordAsync(string identifier, CancellationToken cancellationToken = default)
         => SendOperationAsync("api/auth/forgot-password", new { Identifier = identifier }, cancellationToken);
 
     public Task<OperationResultVm?> ResetPasswordAsync(string token, string newPassword, CancellationToken cancellationToken = default)
-        => SendOperationAsync("api/auth/reset-password", new ResetPasswordRequestVm
-        {
-            Token = token,
-            NewPassword = newPassword
-        }, cancellationToken);
+        => SendOperationAsync("api/auth/reset-password", new { Token = token, NewPassword = newPassword }, cancellationToken);
 
     public async Task<IReadOnlyList<EstablishmentVm>> GetEstablishmentsAsync(int usuarioId, bool isAdmin, int? currentEstabelecimentoId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("api/auth/establishments", new EstablishmentListRequestVm
+            var response = await httpClient.PostAsJsonAsync("api/auth/establishments", new
             {
                 UsuarioId = usuarioId,
                 IsAdmin = isAdmin,
@@ -69,26 +47,34 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
     }
 
     public Task<OperationResultVm?> ChangeEstablishmentAsync(int usuarioId, bool isAdmin, int estabelecimentoId, CancellationToken cancellationToken = default)
-        => SendOperationAsync("api/auth/change-establishment", new ChangeEstablishmentRequestVm
-        {
-            UsuarioId = usuarioId,
-            IsAdmin = isAdmin,
-            EstabelecimentoId = estabelecimentoId
-        }, cancellationToken);
+        => SendOperationAsync("api/auth/change-establishment", new { UsuarioId = usuarioId, IsAdmin = isAdmin, EstabelecimentoId = estabelecimentoId }, cancellationToken);
 
     public Task<OperationResultVm?> UpdateUserPhotoAsync(int usuarioId, string foto, CancellationToken cancellationToken = default)
-        => SendOperationAsync("api/auth/update-photo", new UpdateUserPhotoRequestVm
-        {
-            UsuarioId = usuarioId,
-            Foto = foto
-        }, cancellationToken);
+        => SendOperationAsync("api/auth/update-photo", new { UsuarioId = usuarioId, Foto = foto }, cancellationToken);
 
     public Task<OperationResultVm?> ChangePasswordAsync(int usuarioId, string newPassword, CancellationToken cancellationToken = default)
-        => SendOperationAsync("api/auth/change-password", new ChangePasswordRequestVm
+        => SendOperationAsync("api/auth/change-password", new { UsuarioId = usuarioId, NewPassword = newPassword }, cancellationToken);
+
+    public Task<OrderSearchResultVm?> SearchOrderByNumberAsync(string? numeroPedido, CancellationToken cancellationToken = default)
+        => SendOrderSearchAsync("api/pedidos/buscar-por-pedido", new { NumeroPedido = numeroPedido }, cancellationToken);
+
+    public Task<OrderSearchResultVm?> SearchOrderByPurchaseOrderAsync(string? ordemCompra, CancellationToken cancellationToken = default)
+        => SendOrderSearchAsync("api/pedidos/buscar-por-ordem-compra", new { OrdemCompra = ordemCompra }, cancellationToken);
+
+    public Task<OrderSearchResultVm?> SearchOrderByInvoiceAsync(string? notaFiscal, int? serie, CancellationToken cancellationToken = default)
+        => SendOrderSearchAsync("api/pedidos/buscar-por-nota-fiscal", new { NotaFiscal = notaFiscal, Serie = serie }, cancellationToken);
+
+    public async Task<OrderHeaderDetailsVm?> GetOrderHeaderDetailsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        try
         {
-            UsuarioId = usuarioId,
-            NewPassword = newPassword
-        }, cancellationToken);
+            return await httpClient.GetFromJsonAsync<OrderHeaderDetailsVm>($"api/pedidos/{pedido}/detalhes-cabecalho", cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     public async Task<IReadOnlyList<AreaVm>> GetAreasAsync(CancellationToken cancellationToken = default)
     {
@@ -103,11 +89,11 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
         }
     }
 
-    public async Task<UserProfileVm?> GetMyProfileAsync(int usuarioId, CancellationToken cancellationToken = default)
+    public async Task<MyDataPageVm?> GetMyProfileAsync(int usuarioId, CancellationToken cancellationToken = default)
     {
         try
         {
-            return await httpClient.GetFromJsonAsync<UserProfileVm>($"api/profile/{usuarioId}", cancellationToken);
+            return await httpClient.GetFromJsonAsync<MyDataPageVm>($"api/profile/{usuarioId}", cancellationToken);
         }
         catch
         {
@@ -115,8 +101,19 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
         }
     }
 
-    public Task<OperationResultVm?> UpdateMyProfileAsync(UpdateUserProfileVm payload, CancellationToken cancellationToken = default)
-        => SendAsyncOperationWithPut("api/profile", payload, cancellationToken);
+    public Task<OperationResultVm?> UpdateMyProfileAsync(MyDataPageVm payload, CancellationToken cancellationToken = default)
+        => SendAsyncOperationWithPut("api/profile", new
+        {
+            UsuarioId = payload.UsuarioId,
+            AreaId = payload.AreaId,
+            Telefone = payload.Telefone,
+            Ramal = payload.Ramal,
+            Matricula = payload.Matricula,
+            Cargo = payload.Cargo,
+            Setor = payload.Setor,
+            DiaAniversario = payload.DiaAniversario,
+            MesAniversario = payload.MesAniversario
+        }, cancellationToken);
 
     public Task<OperationResultVm?> UpdateMyProfilePhotoAsync(int usuarioId, string foto, CancellationToken cancellationToken = default)
         => SendOperationAsync("api/profile/photo", new { UsuarioId = usuarioId, Foto = foto }, cancellationToken);
@@ -184,7 +181,6 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
         try
         {
             var response = await httpClient.PostAsJsonAsync(path, payload, cancellationToken);
-
             if (response.Content.Headers.ContentLength == 0)
             {
                 return new OperationResultVm
@@ -197,9 +193,37 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
 
             return await response.Content.ReadFromJsonAsync<OperationResultVm>(cancellationToken: cancellationToken);
         }
-        catch (Exception)
+        catch
         {
             return new OperationResultVm
+            {
+                Success = false,
+                ErrorCode = "API_UNAVAILABLE",
+                Message = "Não foi possível conectar na API do SIC."
+            };
+        }
+    }
+
+    private async Task<OrderSearchResultVm?> SendOrderSearchAsync<TRequest>(string path, TRequest payload, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync(path, payload, cancellationToken);
+            if (response.Content.Headers.ContentLength == 0)
+            {
+                return new OrderSearchResultVm
+                {
+                    Success = false,
+                    ErrorCode = "EMPTY_RESPONSE",
+                    Message = $"Falha na operação. Status HTTP {(int)response.StatusCode}."
+                };
+            }
+
+            return await response.Content.ReadFromJsonAsync<OrderSearchResultVm>(cancellationToken: cancellationToken);
+        }
+        catch
+        {
+            return new OrderSearchResultVm
             {
                 Success = false,
                 ErrorCode = "API_UNAVAILABLE",
@@ -230,7 +254,6 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
             }
             catch (JsonException)
             {
-                // fallback para texto simples abaixo
             }
         }
 

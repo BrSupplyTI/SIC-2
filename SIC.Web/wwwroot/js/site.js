@@ -3,6 +3,8 @@
 
 // Write your JavaScript code.
 
+const sicPathBase = document.querySelector('meta[name="pathbase"]')?.content || '';
+
 (() => {
   const html = document.documentElement;
   const savedTheme = localStorage.getItem("sic-theme") || "light";
@@ -99,6 +101,39 @@
   }
 
   const sidebarMenuToggles = document.querySelectorAll("[data-sidebar-toggle]");
+
+  // Active page detection: mark the nav-link matching the current URL
+  const currentPath = window.location.pathname.replace(/\/+$/, "").toLowerCase();
+  const navLinks = document.querySelectorAll(".sidebar-nav a[data-sic-nav]");
+  navLinks.forEach((link) => {
+    const href = (link.getAttribute("href") || "").replace(/\/+$/, "").toLowerCase();
+    if (!href || href === "#") return;
+
+    const isActive = currentPath === href || currentPath.startsWith(href + "/");
+    link.classList.toggle("active", isActive);
+
+    if (isActive) {
+      const submenu = link.closest(".sidebar-submenu");
+      const group = link.closest(".sidebar-group");
+      if (submenu) submenu.classList.add("open");
+      if (group) {
+        const toggle = group.querySelector("[data-sidebar-toggle]");
+        if (toggle) toggle.setAttribute("aria-expanded", "true");
+      }
+
+      sidebarMenuToggles.forEach((otherToggle) => {
+        const otherGroup = otherToggle.closest(".sidebar-group");
+        if (otherGroup && otherGroup !== group) {
+          const otherMenu = document.getElementById(otherToggle.getAttribute("data-sidebar-toggle") || "");
+          if (otherMenu) {
+            otherToggle.setAttribute("aria-expanded", "false");
+            otherMenu.classList.remove("open");
+          }
+        }
+      });
+    }
+  });
+
   sidebarMenuToggles.forEach((toggle) => {
     toggle.addEventListener("click", () => {
       const targetId = toggle.getAttribute("data-sidebar-toggle");
@@ -233,7 +268,7 @@
       }
 
       try {
-        const response = await fetch("/Account/Avatar?handler=Upload", {
+        const response = await fetch(`${sicPathBase}/Account/AvatarUpload`, {
           method: "POST",
           body: formData
         });
@@ -313,7 +348,7 @@
       }
 
       try {
-        const response = await fetch("/Account/Security?handler=ChangePassword", {
+        const response = await fetch(`${sicPathBase}/Account/ChangePassword`, {
           method: "POST",
           body: formData
         });

@@ -24,13 +24,13 @@
                     <h5 class="mt-3 mb-1">@Model.Nome</h5>
                     <p class="text-muted mb-3">@Model.Email</p>
 
-                    <form action="/Account/MeusDados/Foto" method="post" enctype="multipart/form-data" class="mb-2">
+                    <form asp-controller="Account" asp-action="Foto" method="post" enctype="multipart/form-data" class="mb-2">
                         @Html.AntiForgeryToken()
                         <input type="file" name="foto" class="form-control mb-2" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required />
                         <button type="submit" class="btn btn-primary w-100">Alterar foto</button>
                     </form>
 
-                    <form action="/Account/MeusDados/Foto/Excluir" method="post">
+                    <form asp-controller="Account" asp-action="FotoExcluir" method="post">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn btn-outline-danger w-100">Excluir foto</button>
                     </form>
@@ -42,7 +42,7 @@
             <div class="card mb-4">
                 <div class="card-header"><strong>Resumo cadastral</strong></div>
                 <div class="card-body">
-                    <form action="/Account/MeusDados" method="post" class="row g-3">
+                    <form asp-controller="Account" asp-action="MeusDados" method="post" class="row g-3">
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="UsuarioId" />
 
@@ -97,6 +97,38 @@
                             </select>
                         </div>
 
+                        <div class="col-md-3">
+                            <label asp-for="MesAniversario" class="form-label">Mês de Aniversário</label>
+                            <select asp-for="MesAniversario" class="form-select">
+                                <option value="">Mês</option>
+                                <option value="1">Janeiro</option>
+                                <option value="2">Fevereiro</option>
+                                <option value="3">Março</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Maio</option>
+                                <option value="6">Junho</option>
+                                <option value="7">Julho</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Setembro</option>
+                                <option value="10">Outubro</option>
+                                <option value="11">Novembro</option>
+                                <option value="12">Dezembro</option>
+                            </select>
+                            <span asp-validation-for="MesAniversario" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label asp-for="DiaAniversario" class="form-label">Dia de Aniversário</label>
+                            <select asp-for="DiaAniversario" class="form-select">
+                                <option value="">Dia</option>
+                                @for (var d = 1; d <= 31; d++)
+                                {
+                                    <option value="@d">@d</option>
+                                }
+                            </select>
+                            <span asp-validation-for="DiaAniversario" class="text-danger"></span>
+                        </div>                        
+
                         <div class="col-12 text-end">
                             <button type="submit" class="btn btn-success">Salvar alterações</button>
                         </div>
@@ -143,3 +175,34 @@
     </div>
 </div>
 
+@section Scripts {
+<script>
+    (function () {
+        const mesSelect = document.getElementById('MesAniversario');
+        const diaSelect = document.getElementById('DiaAniversario');
+        if (!mesSelect || !diaSelect) return;
+
+        const maxDays = { 2: 29, 4: 30, 6: 30, 9: 30, 11: 30 };
+
+        function adjustDays() {
+            const mes = parseInt(mesSelect.value, 10);
+            const max = maxDays[mes] || 31;
+            const currentDia = parseInt(diaSelect.value, 10) || 0;
+
+            Array.from(diaSelect.options).forEach(opt => {
+                if (opt.value === '') return;
+                const day = parseInt(opt.value, 10);
+                opt.hidden = day > max;
+                opt.disabled = day > max;
+            });
+
+            if (currentDia > max) {
+                diaSelect.value = '';
+            }
+        }
+
+        mesSelect.addEventListener('change', adjustDays);
+        adjustDays();
+    })();
+</script>
+}

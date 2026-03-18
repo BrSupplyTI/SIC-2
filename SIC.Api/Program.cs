@@ -1,5 +1,7 @@
 using SIC.Api.Services;
-using SIC.Api.Repositories;
+using SIC.Domain.Abstractions;
+using SIC.Infrastructure.Integrations;
+using SIC.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,14 +9,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<ISicAuthService, SicAuthService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<IAuthRepository, SqlAuthRepository>();
 builder.Services.AddScoped<IUserProfileRepository, SqlUserProfileRepository>();
+builder.Services.AddScoped<IOrderSearchRepository, SqlOrderSearchRepository>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+builder.Services.AddScoped<IOrderSearchService, OrderSearchService>();
 
 var app = builder.Build();
 
@@ -22,8 +26,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "SIC API");
+    });
 }
 
 app.UseHttpsRedirection();

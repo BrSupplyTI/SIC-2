@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "SIC - Portal Corporativo";
+}
+
+<iframe src="https://intranet.brsupply.com.br/intranet/html/busca_pedido.php" title="Descrição" width="100%" height="600px" frameborder="0"></iframe>
+
+<div class="text-center">
+    <h1 class="display-5">SIC - Portal Corporativo</h1>
+    <p>Login autenticado com sucesso.</p>
+
+    <div class="alert alert-light border">
+        <strong>Usuário:</strong> @User.FindFirst("sic_nome")?.Value <br />
+        <strong>Login:</strong> @User.FindFirst("sic_login")?.Value
+    </div>
+</div>

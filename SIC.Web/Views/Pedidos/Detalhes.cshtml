@@ -1,0 +1,849 @@
+@model SIC.Web.Models.Pedidos.PedidoDetalhesViewModel
+@{
+    ViewData["Title"] = $"Pedido #{Model.PedidoId}";
+
+    var statusId = Model.Header.StatusID ?? 0;
+    var (corBadge, iconeBadge) = statusId switch
+    {
+        13 => ("badge-status-success", "fa-solid fa-check"),
+        4 or 9 or 19 => ("badge-status-danger", "fa-solid fa-times"),
+        1 or 2 => ("badge-status-info", "fa-solid fa-user"),
+        22 => ("badge-status-danger", "fa-solid fa-ban"),
+        _ => ("badge-status-primary", "fa-solid fa-chevron-right")
+    };
+}
+
+@section Styles {
+    <style>
+        .pedido-accordion-icon {
+            transition: transform .2s ease, color .2s ease;
+            transform-origin: center;
+        }
+
+        .accordion-button:not(.collapsed) .pedido-accordion-icon {
+            transform: scale(2);
+        }
+    </style>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0">Pedido #@Model.PedidoId</h2>
+                    <span class="badge-status @corBadge fs-6">
+                        <i class="@iconeBadge me-1"></i>@Model.Header.Status
+                    </span>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.Header.StatusAuxiliar))
+                {
+                    <p class="text-muted mt-1 mb-0 ms-0">@Model.Header.StatusAuxiliar</p>
+                }
+            </div>
+            <a asp-controller="Pedidos" asp-action="Busca" class="btn btn-outline-primary">
+                <i class="fa-solid fa-arrow-left me-2"></i>Voltar para consulta
+            </a>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="border rounded-3 p-3 bg-body-tertiary card-pedido">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fa-duotone fa-hashtag text-br"></i>
+                        <small class="text-muted">Pedido</small>
+                    </div>
+                    <h5 class="p-0 m-0"><strong>@Model.Header.NumeroPedido</strong></h5>
+                    <small class="text-muted">@Model.Header.DataCriacao</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded-3 p-3 bg-body-tertiary card-pedido">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fa-duotone fa-globe text-br"></i>
+                        <small class="text-muted">Origem</small>
+                    </div>
+                    <p class="fw-semibold mb-0">@Model.Header.Origem</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded-3 p-3 bg-body-tertiary card-pedido">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fa-duotone fa-warehouse text-br"></i>
+                        <small class="text-muted">Estabelecimento</small>
+                    </div>
+                    <p class="fw-semibold mb-0">@Model.Header.Estabelecimento</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded-3 p-3 bg-body-tertiary card-pedido d-flex justify-content-center align-items-center">
+                    @if (!string.IsNullOrWhiteSpace(Model.Cliente.LogoCliente))
+                    {
+                        <img class="logo-dark logo-pedido" src="https://www.supplymanager.com.br/content/images/logotipo/@Model.Cliente.ClienteID/@Model.Cliente.LogoCliente" />
+                        <img class="logo-light logo-pedido" src="https://www.supplymanager.com.br/content/images/logotipo/@Model.Cliente.ClienteID/@Model.Cliente.LogoClienteDark" />
+                    }
+                    else
+                    {
+                        if (Model.Header.Origem == "OceanoB2B")
+                        {
+                            <img class="logo-pedido" src="https://www.supplymanager.com.br/content/images/logotipo/oceanob2b.png" />
+                        }
+                        else
+                        {
+                            <strong>@Model.Cliente.Nome</strong>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Header.CotacaoIdOriginal > 0)
+        {
+            <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert">
+                <i class="fa-solid fa-circle-info fa-lg"></i>
+                <div class="flex-grow-1">
+                    Este pedido foi gerado para substituir o pedido <strong>#@Model.Header.CotacaoIdOriginal</strong>.
+                </div>
+                <a class="btn btn-sm btn-info text-nowrap" asp-route-area="" asp-controller="Pedidos" asp-action="Detalhes" asp-route-pedido="@Model.Header.CotacaoIdOriginal">
+                    <i class="fa-solid fa-arrow-right me-1"></i>Ver original
+                </a>
+            </div>
+        }
+
+        @if (Model.Header.CotacaoIDSubstituta > 0)
+        {
+            <div class="alert alert-warning d-flex align-items-center gap-2 mb-3" role="alert">
+                <i class="fa-solid fa-triangle-exclamation fa-lg"></i>
+                <div class="flex-grow-1">
+                    Este pedido foi substituído pelo pedido <strong>#@Model.Header.CotacaoIDSubstituta</strong>.
+                </div>
+                <a class="btn btn-sm btn-warning text-nowrap" asp-route-area="" asp-controller="Pedidos" asp-action="Detalhes" asp-route-pedido="@Model.Header.CotacaoIDSubstituta">
+                    <i class="fa-solid fa-arrow-right me-1"></i>Ver substituto
+                </a>
+            </div>
+        }
+
+        <div class="accordion" id="pedidoDetalhesAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingPedido">
+                    <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePedido" aria-expanded="true" aria-controls="collapsePedido">
+                        <i class="fa-duotone fa-thin fa-box-open me-3 pedido-accordion-icon"></i> Dados do Pedido
+                    </button>
+                </h2>
+                <div id="collapsePedido" class="accordion-collapse collapse show" aria-labelledby="headingPedido" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Origem</div>
+                            <div class="cad-info"> @Model.Header.Origem</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Ordem de Compra</div>
+                            <div class="cad-info"> @Model.Header.OrdemCompra</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Canal de Venda</div>
+                            <div class="cad-info"> @Model.Header.CanalVenda</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Carteira</div>
+                            <div class="cad-info"> @Model.Header.Carteira</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Categoria</div>
+                            <div class="cad-info"> @Model.Header.Categoria</div>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Header.InfoCategoria))
+                        {
+                            <div class="cad-row">
+                                @if (!string.IsNullOrWhiteSpace(Model.Header.LabelInfoCategoria))
+                                {
+                                    <div class="cad-label text-muted">@Model.Header.LabelInfoCategoria</div>
+                                }
+                                else
+                                {
+                                    if (Model.Header.Origem == "OceanoB2B")
+                                    {
+                                        <div class="cad-label text-muted">ID Oceano</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="cad-label text-muted">Info. Categoria</div>
+                                    }
+                                }
+                                <div class="cad-info"> @Model.Header.InfoCategoria</div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Header.InfoCarrinho))
+                        {
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">@Model.Header.LabelInfoCarrinho</div>
+                                <div class="cad-info"> @Model.Header.InfoCarrinho</div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Header.NrContrato))
+                        {
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Contrato Comodato</div>
+                                <div class="cad-info"> @Model.Header.NrContrato</div>
+                            </div>
+                        }
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Tipo de Ordem</div>
+                            <div class="cad-info"> @Model.Header.TipoOVSAP - @Model.Header.DescTipoOVSAP</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Nome do Solicitante</div>
+                            <div class="cad-info"> @Model.Header.NmSolicitante</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">E-mail do Solicitante</div>
+                            <div class="cad-info text-lowercase"> @Model.Header.EmailSolicitante</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingCliente">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCliente" aria-expanded="false" aria-controls="collapseCliente">
+                        <i class="fa-duotone fa-thin fa-user-tie me-3 pedido-accordion-icon"></i> Dados do Cliente
+                    </button>
+                </h2>
+                <div id="collapseCliente" class="accordion-collapse collapse" aria-labelledby="headingCliente" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="cad-row">
+                            @if (Model.Cliente.FlagTipoDocumento == "CPF")
+                            {
+                                <div class="cad-label text-muted">Nome Completo</div>
+                            }
+                            else
+                            {
+                                <div class="cad-label text-muted">Razão Social</div>
+                            }
+                            <div class="cad-info"> @Model.Cliente.Nome</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">@Model.Cliente.FlagTipoDocumento</div>
+                            <div class="cad-info"> @Model.Cliente.CNPJCliente</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Inscrição Estadual</div>
+                            <div class="cad-info"> @Model.Cliente.InscrEstCliente</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Código SAP / ID SIC</div>
+                            <div class="cad-info"> @Model.Cliente.CodigoExterno / @Model.Cliente.ClienteID</div>
+                        </div>
+                                                                       
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFaturamento">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFaturamento" aria-expanded="false" aria-controls="collapseFaturamento">
+                        <i class="fa-duotone fa-thin fa-money-check-dollar-pen me-3 pedido-accordion-icon"></i> Faturamento e Entrega
+                    </button>
+                </h2>
+                <div id="collapseFaturamento" class="accordion-collapse collapse" aria-labelledby="headingFaturamento" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Condição de Pagamento</div>
+                            <div class="cad-info"> @Model.Faturamento.CondPagto</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Forma de Pagamento</div>
+                            <div class="cad-info"> @Model.Faturamento.FormaPagto</div>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Faturamento.HashPagamento))
+                        {
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Hash de Pagamento</div>
+                                <div class="cad-info"> @Model.Faturamento.HashPagamento</div>
+                            </div>
+                        }
+                        <div class="cad-row">
+                            @if (Model.Faturamento.FlagTipoDocumentoEndereco == "CPF")
+                            {
+                                <div class="cad-label text-muted">Nome Completo</div>
+                            }
+                            else
+                            {
+                                <div class="cad-label text-muted">Razão Social</div>
+                            }
+                            <div class="cad-info"> @Model.Faturamento.RazaoSocialEndereco</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">@Model.Faturamento.FlagTipoDocumentoEndereco</div>
+                            <div class="cad-info"> @Model.Faturamento.CpfCnpj</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Código SAP / ID SIC</div>
+                            <div class="cad-info"> @Model.Faturamento.CodClienteEndereco / @Model.Faturamento.ClienteEnderecoID</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Local de Entrega</div>
+                            <div class="cad-info"> @Model.Faturamento.NmLocalEntrega</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Código de Controle</div>
+                            <div class="cad-info"> @Model.Faturamento.CdControle</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Observação do Local</div>
+                            <div class="cad-info"> @Model.Observacao.ObsLocalEntrega</div>
+                        </div>
+                        <div class="row marcador-br">
+                            <h5 class="m-3">Endereço de Faturamento</h5>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Endereço de Faturamento</div>
+                            <div class="cad-info"> @Model.Faturamento.RuaEndereco, @Model.Faturamento.NumeroEndereco, @Model.Faturamento.ComplementoEndereco</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Cidade / UF</div>
+                            <div class="cad-info"> @Model.Faturamento.CidadeEndereco / @Model.Faturamento.UFEndereco</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">CEP</div>
+                            <div class="cad-info"> @Model.Faturamento.CepEndereco</div>
+                        </div>
+                        <div class="row marcador-br">
+                            <h5 class="m-3">Endereço de Entrega</h5>
+                        </div>
+                        @if (Model.Faturamento.FlagEnderecoDirerente == 1)
+                        {
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Endereço de Entrega</div>
+                                <div class="cad-info"> @Model.Faturamento.RuaLocal, @Model.Faturamento.NumeroLocal, @Model.Faturamento.ComplementoLocal</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Cidade / UF</div>
+                                <div class="cad-info"> @Model.Faturamento.CidadeLocal / @Model.Faturamento.UFLocal</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">CEP</div>
+                                <div class="cad-info"> @Model.Faturamento.CEPLocal</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row">
+                                <div class="">Mesmo endereço de faturamento</div>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Frete.TransportadoraID > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingFrete">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFrete" aria-expanded="false" aria-controls="collapseFrete">
+                            <i class="fa-duotone fa-thin fa-truck-fast me-3 pedido-accordion-icon"></i> Programação de Frete
+                        </button>
+                    </h2>
+                    <div id="collapseFrete" class="accordion-collapse collapse" aria-labelledby="headingFrete" data-bs-parent="#pedidoDetalhesAccordion">
+                        <div class="accordion-body">
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Transportadora</div>
+                                <div class="cad-info"> @Model.Frete.NmTransportadora <span class="text-muted">(Id @Model.Frete.TransportadoraID.ToString())</span></div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">CNPJ</div>
+                                <div class="cad-info"> @Model.Frete.CNPJTransportadora</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Prazo Transportadora</div>
+                                @if (@Model.Frete.PrazoEntregaTransp == 1)
+                                {
+                                    <div class="cad-info">@Model.Frete.PrazoEntregaTransp.ToString() dia útil</div>
+                                }
+                                else
+                                {
+                                    <div class="cad-info">@Model.Frete.PrazoEntregaTransp.ToString() dias úteis</div>
+                                }
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Prazo Total (c/ Operação)</div>
+                                @if (Model.Frete.PrazoEntregaCalc == 1)
+                                {
+                                    <div class="cad-info">@Model.Frete.PrazoEntregaCalc.ToString() dia útil</div>
+                                }
+                                else
+                                {
+                                    <div class="cad-info">@Model.Frete.PrazoEntregaCalc.ToString() dias úteis</div>
+                                }
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Valor do Frete</div>
+                                <div class="cad-info">R$ @Model.Frete.VlrFreteCalc?.ToString("0.00")</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Programação de Liberação</div>
+                                <div class="cad-info"> @Model.Frete.DtProgLiberacao</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Planejamento de Operação</div>
+                                <div class="cad-info"> @Model.Frete.DtPlanejadaOperacao</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Programação de Embarque</div>
+                                <div class="cad-info"> @Model.Frete.DtProgEmbarque</div>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(Model.Frete.DtProgEmbFollow))
+                            {
+                                <div class="cad-row">
+                                    <div class="cad-label text-muted">Follow de Embarque</div>
+                                    <div class="cad-info text-primary"> @Model.Frete.DtProgEmbFollow</div>
+                                </div>
+                            }
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Programação de Entrega</div>
+                                <div class="cad-info"> @Model.Frete.DtProgEntrega</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Previsão de Entrega</div>
+                                <div class="cad-info fw-semibold"> @Model.Frete.DtPrevisaoEntrega</div>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(Model.Frete.DtPrevEntFollow))
+                            {
+                                <div class="cad-row">
+                                    <div class="cad-label text-muted">Follow de Entrega</div>
+                                    <div class="cad-info text-primary"> @Model.Frete.DtPrevEntFollow</div>
+                                </div>
+                            }
+                            <div class="cad-row">
+                                @{
+                                    var corsla = "text-success";
+                                    if (Model.Frete.StatusSLA == "ATRASO")
+                                    {
+                                        corsla = "text-danger";
+                                    }
+                                }
+                                <div class="cad-label text-muted">Limite SLA do Cliente</div>
+                                <div class="cad-info @corsla"> @Model.Frete.DtSLACliente</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Agrupamento de Frete</div>
+                                <div class="cad-info"> @Model.Frete.FreteAgrupado</div>
+                            </div>
+                            <div class="buttons my-2">
+                                <a href="#" class="btn btn-outline-primary me-2" id="BtnHistoricoFrete"><i class="fa-solid fa-history me-2"></i> Histórico do Cálculo</a>
+                                <a href="#" class="btn btn-info me-2" id="BtnCalcularFrete"><i class="fa-solid fa-calculator-alt me-2"></i> Simular Frete Atual</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (Model.Header.FlagIntegradoSAP > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingSAP">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSAP" aria-expanded="false" aria-controls="collapseSAP">
+                            <i class="fa-duotone fa-thin fa-link me-3 pedido-accordion-icon"></i> Integração SAP
+                        </button>
+                    </h2>
+                    <div id="collapseSAP" class="accordion-collapse collapse" aria-labelledby="headingSAP" data-bs-parent="#pedidoDetalhesAccordion">
+                        <div class="accordion-body">
+                            @if (Model.Itens.Count == 0)
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
+                                    Nenhum item encontrado.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive" id="divTblIntegracaoSAP">
+                                    <table class="table table-sm table-striped align-middle mb-0" id="tblIntegracaoSAP">
+                                        <thead>
+                                            <tr>
+                                                <th>Código</th>
+                                                <th>Descrição</th>
+                                                <th class="text-center">Qtd</th>
+                                                <th class="text-end">Vlr. Unit.</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.Itens)
+                                            {
+                                                <tr>
+                                                    <td>@item.Codigo</td>
+                                                    <td>@item.Descricao</td>
+                                                    <td class="text-center">@item.Quantidade</td>
+                                                    <td class="text-end">@item.ValorUnitario</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">ROL</div>
+                                <div class="cad-info">R$ @Model.Header.ROL</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">LB</div>
+                                <div class="cad-info">R$ @Model.Header.LB</div>
+                            </div>
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">MB</div>
+                                <div class="cad-info">@Model.Header.MargemBruta %</div>
+                            </div>
+                            <div class="buttons my-2">
+                                <a href="#" class="btn btn-outline-primary me-2" id="BtnVerImpostos"><i class="fa-solid fa-chart-pie-simple-circle-dollar me-2"></i> Ver Impostos</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (@Model.Total.QtItensBRSupply > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingItensBR">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseItensBR" aria-expanded="false" aria-controls="collapseItensBR">
+                            <i class="fa-duotone fa-thin fa-pump-soap me-3 pedido-accordion-icon"></i> Itens Br Supply
+                            <span class="badge rounded-pill bg-secondary ms-2">@Model.Total.QtItensBRSupply</span>
+                        </button>
+                    </h2>
+                    <div id="collapseItensBR" class="accordion-collapse collapse" aria-labelledby="headingItensBR" data-bs-parent="#pedidoDetalhesAccordion">
+                        <div class="accordion-body">
+                            @if (Model.Itens.Count == 0)
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
+                                    Nenhum item encontrado.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped align-middle mb-0">
+                                        <thead><tr><th>Código</th><th>Descrição</th><th class="text-center">Qtd</th><th class="text-end">Vlr. Unit.</th></tr></thead>
+                                        <tbody>
+                                            @foreach (var item in Model.Itens)
+                                            {
+                                                <tr>
+                                                    <td>@item.Codigo</td>
+                                                    <td>@item.Descricao</td>
+                                                    <td class="text-center">@item.Quantidade</td>
+                                                    <td class="text-end">@item.ValorUnitario</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (@Model.Total.QtItensTerceiros > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingItensMktplc">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseItensMktplc" aria-expanded="false" aria-controls="collapseItensMktplc">
+                            <i class="fa-duotone fa-thin fa-computer me-3 pedido-accordion-icon"></i> Itens Marketplace
+                            <span class="badge rounded-pill bg-secondary ms-2">@Model.Total.QtItensTerceiros</span>
+                        </button>
+                    </h2>
+                    <div id="collapseItensMktplc" class="accordion-collapse collapse" aria-labelledby="headingItensMktplc" data-bs-parent="#pedidoDetalhesAccordion">
+                        <div class="accordion-body">
+                            @if (Model.Itens.Count == 0)
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
+                                    Nenhum item encontrado.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped align-middle mb-0">
+                                        <thead><tr><th>Código</th><th>Descrição</th><th class="text-center">Qtd</th><th class="text-end">Vlr. Unit.</th></tr></thead>
+                                        <tbody>
+                                            @foreach (var item in Model.Itens)
+                                            {
+                                                <tr>
+                                                    <td>@item.Codigo</td>
+                                                    <td>@item.Descricao</td>
+                                                    <td class="text-center">@item.Quantidade</td>
+                                                    <td class="text-end">@item.ValorUnitario</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (@Model.Total.QtItensRuptura > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingItensRuptura">
+                        <button class="accordion-button fw-semibold collapsed text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseItensRuptura" aria-expanded="false" aria-controls="collapseItensRuptura">
+                            <i class="fa-duotone fa-thin fa-wine-glass-crack me-3 pedido-accordion-icon"></i> Rupturas de Estoque
+                            <span class="badge rounded-pill bg-danger ms-2">@Model.Total.QtItensRuptura</span>
+                        </button>
+                    </h2>
+                    <div id="collapseItensRuptura" class="accordion-collapse collapse" aria-labelledby="headingItensRuptura" data-bs-parent="#pedidoDetalhesAccordion">
+                        <div class="accordion-body">
+                            @if (Model.Itens.Count == 0)
+                            {
+                                <div class="text-center text-muted py-4">
+                                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
+                                    Nenhum item encontrado.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped align-middle mb-0">
+                                        <thead><tr><th>Código</th><th>Descrição</th><th class="text-center">Qtd</th><th class="text-end">Vlr. Unit.</th></tr></thead>
+                                        <tbody>
+                                            @foreach (var item in Model.Itens)
+                                            {
+                                                <tr>
+                                                    <td>@item.Codigo</td>
+                                                    <td>@item.Descricao</td>
+                                                    <td class="text-center">@item.Quantidade</td>
+                                                    <td class="text-end">@item.ValorUnitario</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingAprovacao">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAprovacao" aria-expanded="false" aria-controls="collapseAprovacao">
+                        <i class="fa-duotone fa-thin fa-gavel me-3 pedido-accordion-icon"></i> Logs de Aprovação
+                        <span class="badge rounded-pill bg-secondary ms-2">@Model.LogsAprovacao.Count</span>
+                    </button>
+                </h2>
+                <div id="collapseAprovacao" class="accordion-collapse collapse" aria-labelledby="headingAprovacao" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        @if (Model.LogsAprovacao.Count == 0)
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fa-duotone fa-clipboard-list fa-2x mb-2 d-block"></i>
+                                Nenhum log de aprovação registrado.
+                            </div>
+                        }
+                        else
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var log in Model.LogsAprovacao)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                        <span><strong>@log.Usuario</strong> — @log.Acao</span>
+                                        <small class="text-muted text-nowrap ms-3">@log.DataHora</small>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingObservacoes">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseObservacoes" aria-expanded="false" aria-controls="collapseObservacoes">
+                        <i class="fa-duotone fa-thin fa-message me-3 pedido-accordion-icon"></i> Observações
+                    </button>
+                </h2>
+                <div id="collapseObservacoes" class="accordion-collapse collapse" aria-labelledby="headingObservacoes" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Observação do Solicitante</div>
+                            <div class="cad-info"> @Model.Observacao.ObsCotacao</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Observação do Aprovador</div>
+                            <div class="cad-info"> @Model.Observacao.ObsAprovacao</div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Observação para Nota Fiscal</div>
+                            <div class="cad-info"> @Model.Observacao.ObsNota</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingNf">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNf" aria-expanded="false" aria-controls="collapseNf">
+                        <i class="fa-duotone fa-thin fa-file-invoice me-3 pedido-accordion-icon"></i> Notas Fiscais
+                        <span class="badge rounded-pill bg-secondary ms-2">@Model.NotasFiscaisRelacionadas.Count</span>
+                    </button>
+                </h2>
+                <div id="collapseNf" class="accordion-collapse collapse" aria-labelledby="headingNf" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        @if (Model.NotasFiscaisRelacionadas.Count == 0)
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fa-duotone fa-file-circle-xmark fa-2x mb-2 d-block"></i>
+                                Nenhuma nota fiscal relacionada.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped align-middle mb-0">
+                                    <thead><tr><th>Número</th><th>Série</th><th>Emissão</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var nf in Model.NotasFiscaisRelacionadas)
+                                        {
+                                            <tr>
+                                                <td>@nf.Numero</td>
+                                                <td>@nf.Serie</td>
+                                                <td>@nf.Emissao</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTracking">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTracking" aria-expanded="false" aria-controls="collapseTracking">
+                        <i class="fa-duotone fa-thin fa-map-location me-3 pedido-accordion-icon"></i> Tracking
+                        <span class="badge rounded-pill bg-secondary ms-2">@Model.Trackings.Count</span>
+                    </button>
+                </h2>
+                <div id="collapseTracking" class="accordion-collapse collapse" aria-labelledby="headingTracking" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        @{
+                            var setor = Model.Header.Setor?.ToUpperInvariant() ?? "";
+                            var isCancelado = setor is "CANCELADO" or "ERRO";
+                            var etapa1 = isCancelado ? "incomplete"
+                                       : setor is "CLIENTE" or "COMERCIAL" or "DISTRIBUIÇÃO" or "FATURAMENTO" or "OPERAÇÃO" or "TRANSPORTE" or "ENTREGUE" ? "complete" : "";
+                            var etapa2 = setor is "DISTRIBUIÇÃO" or "FATURAMENTO" or "OPERAÇÃO" or "TRANSPORTE" or "ENTREGUE" ? "complete" : "";
+                            var etapa3 = setor is "TRANSPORTE" or "ENTREGUE" ? "complete" : "";
+                            var etapa4 = setor == "ENTREGUE" ? "complete" : "";
+                        }
+
+                        <div class="pedido-timeline my-4">
+                            <div class="pedido-timeline-track">
+                                <div class="pedido-timeline-step @etapa1">
+                                    <div class="pedido-timeline-dot"></div>
+                                    <span class="pedido-timeline-label">Pedido</span>
+                                </div>
+                                <div class="pedido-timeline-bar @etapa2"></div>
+                                <div class="pedido-timeline-step @etapa2">
+                                    <div class="pedido-timeline-dot"></div>
+                                    <span class="pedido-timeline-label">Operação</span>
+                                </div>
+                                <div class="pedido-timeline-bar @etapa3"></div>
+                                <div class="pedido-timeline-step @etapa3">
+                                    <div class="pedido-timeline-dot"></div>
+                                    <span class="pedido-timeline-label">Transporte</span>
+                                </div>
+                                <div class="pedido-timeline-bar @etapa4"></div>
+                                <div class="pedido-timeline-step @etapa4">
+                                    <div class="pedido-timeline-dot"></div>
+                                    <span class="pedido-timeline-label">Entregue</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (Model.Trackings.Count == 0)
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fa-duotone fa-map-location-dot fa-2x mb-2 d-block"></i>
+                                Nenhum evento de tracking registrado.
+                            </div>
+                        }
+                        else
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var tr in Model.Trackings)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                        <span>@tr.Evento — @tr.Local</span>
+                                        <small class="text-muted text-nowrap ms-3">@tr.DataHora</small>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="totalizadores-section mt-4">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="fa-duotone fa-calculator text-br fa-lg"></i>
+                <h5 class="mb-0 fw-semibold">Totalizadores</h5>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-3">
+                    <div class="border rounded-3 p-3 bg-body-tertiary totalizador-card">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fa-duotone fa-boxes-stacked text-br"></i>
+                            <small class="text-muted">Itens Br Supply</small>
+                        </div>
+                        <p class="fw-semibold mb-0 totalizador-valor">R$ @Model.Total.ValorItensBRSupply.ToString("N2", new System.Globalization.CultureInfo("pt-BR"))</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="border rounded-3 p-3 bg-body-tertiary totalizador-card">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fa-duotone fa-store text-br"></i>
+                            <small class="text-muted">Itens Marketplace</small>
+                        </div>
+                        <p class="fw-semibold mb-0 totalizador-valor">R$ @Model.Total.ValorItensTerceiros.ToString("N2", new System.Globalization.CultureInfo("pt-BR"))</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="border rounded-3 p-3 bg-body-tertiary totalizador-card">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fa-duotone fa-truck text-br"></i>
+                            <small class="text-muted">Valor do Frete</small>
+                        </div>
+                        <p class="fw-semibold mb-0 totalizador-valor">R$ @Model.Total.VlrFrete.ToString("N2", new System.Globalization.CultureInfo("pt-BR"))</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="border rounded-3 p-3 bg-body-tertiary totalizador-card">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fa-duotone fa-wrench text-br"></i>
+                            <small class="text-muted">Valor do Serviço</small>
+                        </div>
+                        <p class="fw-semibold mb-0 totalizador-valor">R$ @Model.Total.VlrTaxaServico.ToString("N2", new System.Globalization.CultureInfo("pt-BR"))</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="border rounded-3 p-3 totalizador-card totalizador-total">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-duotone fa-coins fa-lg"></i>
+                                <span class="fw-semibold fs-6">Valor Total do Pedido</span>
+                            </div>
+                            <span class="fw-bold fs-4 totalizador-total-valor">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

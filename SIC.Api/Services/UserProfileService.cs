@@ -1,14 +1,21 @@
 using SIC.Api.Models.Auth;
 using SIC.Api.Models.Profile;
-using SIC.Api.Repositories;
+using SIC.Domain.Abstractions;
 
 namespace SIC.Api.Services;
 
-public sealed class UserProfileService(IUserProfileRepository repository) : IUserProfileService
+public sealed class UserProfileService : IUserProfileService
 {
+    private readonly IUserProfileRepository _repository;
+
+    public UserProfileService(IUserProfileRepository repository)
+    {
+        _repository = repository;
+    }
+
     public async Task<IReadOnlyList<AreaOptionDto>> GetAreasAsync(CancellationToken cancellationToken = default)
     {
-        var areas = await repository.GetAreasAsync(cancellationToken);
+        var areas = await _repository.GetAreasAsync(cancellationToken);
         return areas.Select(x => new AreaOptionDto
         {
             AreaId = x.AreaId,
@@ -18,13 +25,13 @@ public sealed class UserProfileService(IUserProfileRepository repository) : IUse
 
     public async Task<UserProfileDto?> GetProfileAsync(int usuarioId, CancellationToken cancellationToken = default)
     {
-        var profile = await repository.GetProfileAsync(usuarioId, cancellationToken);
+        var profile = await _repository.GetProfileAsync(usuarioId, cancellationToken);
         if (profile is null)
         {
             return null;
         }
 
-        var permissions = (await repository.GetPermissionsAsync(usuarioId, cancellationToken)).ToList();
+        var permissions = (await _repository.GetPermissionsAsync(usuarioId, cancellationToken)).ToList();
 
         if (profile.FlagAdmin)
         {
@@ -66,6 +73,8 @@ public sealed class UserProfileService(IUserProfileRepository repository) : IUse
             AreaId = profile.AreaId,
             AreaNome = profile.AreaNome,
             Foto = profile.Foto,
+            DiaAniversario = profile.DiaAniversario,
+            MesAniversario = profile.MesAniversario,
             Permissoes = permissions.Select(x => new UserPermissionDto
             {
                 Modulo = x.Modulo,
@@ -76,7 +85,7 @@ public sealed class UserProfileService(IUserProfileRepository repository) : IUse
         };
     }
 
-    public async Task<OperationResult> UpdateProfileAsync(int usuarioId, int? areaId, string? telefone, string? ramal, int? matricula, string? cargo, string? setor, CancellationToken cancellationToken = default)
+    public async Task<OperationResult> UpdateProfileAsync(int usuarioId, int? areaId, string? telefone, string? ramal, int? matricula, string? cargo, string? setor, int? diaAniversario, int? mesAniversario, CancellationToken cancellationToken = default)
     {
         if (usuarioId <= 0)
         {
@@ -88,7 +97,37 @@ public sealed class UserProfileService(IUserProfileRepository repository) : IUse
             };
         }
 
-        var updated = await repository.UpdateProfileAsync(usuarioId, areaId, telefone, ramal, matricula, cargo, setor, cancellationToken);
+        if (diaAniversario.HasValue || mesAniversario.HasValue)
+        {
+            if (!diaAniversario.HasValue || !mesAniversario.HasValue)
+            {
+                return new OperationResult
+                {
+                    Success = false,
+                    ErrorCode = "INVALID_BIRTHDAY",
+                    Message = "Informe o dia e o mês do aniversário."
+                };
+            }
+
+            var maxDia = mesAniversario.Value switch
+            {
+                2 => 29,
+                4 or 6 or 9 or 11 => 30,
+                _ => 31
+            };
+
+            if (mesAniversario.Value < 1 || mesAniversario.Value > 12 || diaAniversario.Value < 1 || diaAniversario.Value > maxDia)
+            {
+                return new OperationResult
+                {
+                    Success = false,
+                    ErrorCode = "INVALID_BIRTHDAY",
+                    Message = $"Data de aniversário inválida. O mês selecionado possui no máximo {maxDia} dias."
+                };
+            }
+        }
+
+        var updated = await _repository.UpdateProfileAsync(usuarioId, areaId, telefone, ramal, matricula, cargo, setor, diaAniversario, mesAniversario, cancellationToken);
         return new OperationResult
         {
             Success = updated,
@@ -109,7 +148,7 @@ public sealed class UserProfileService(IUserProfileRepository repository) : IUse
             };
         }
 
-        var updated = await repository.UpdatePhotoAsync(usuarioId, foto, cancellationToken);
+        var updated = await _repository.UpdatePhotoAsync(usuarioId, foto, cancellationToken);
         return new OperationResult
         {
             Success = updated,
@@ -130,7 +169,7 @@ public sealed class UserProfileService(IUserProfileRepository repository) : IUse
             };
         }
 
-        var updated = await repository.RemovePhotoAsync(usuarioId, cancellationToken);
+        var updated = await _repository.RemovePhotoAsync(usuarioId, cancellationToken);
         return new OperationResult
         {
             Success = updated,

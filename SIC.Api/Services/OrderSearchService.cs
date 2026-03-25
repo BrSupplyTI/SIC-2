@@ -131,8 +131,404 @@ public sealed class OrderSearchService(IOrderSearchRepository repository) : IOrd
             ValorItensTerceiros = data.ValorItensTerceiros,
             VlrFrete = data.VlrFrete,
             VlrTaxaServico = data.VlrTaxaServico,
-            FlagIntegradoSAP = data.FlagIntegradoSAP
+            FlagIntegradoSAP = data.FlagIntegradoSAP,
+            QtNotasFiscais = data.QtNotasFiscais,
+            QtRomaneios = data.QtRomaneios,
+            QtChamados = data.QtChamados,
+            QtAnaliseCredito = data.QtAnaliseCredito
         };
+    }
+
+    public async Task<IReadOnlyList<OrderSapIntegrationItemDto>> GetOrderSapIntegrationAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderSapIntegrationAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderSapIntegrationItemDto
+        {
+            NrPedCli = item.NrPedCli,
+            OrdemVenda = item.OrdemVenda,
+            MsgRetorno = item.MsgRetorno,
+            DtHrEnvioSAP = item.DtHrEnvioSAP,
+            RemessaSAP = item.RemessaSAP,
+            FaturaSAP = item.FaturaSAP,
+            NrNF = item.NrNF,
+            TipoOVSAP = item.TipoOVSAP
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderTaxItemDto>> GetOrderTaxesAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderTaxesAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderTaxItemDto
+        {
+            MVA = item.MVA,
+            VlrTotalNF = item.VlrTotalNF,
+            ItemDocumentoSAP = item.ItemDocumentoSAP,
+            CdItem = item.CdItem,
+            MKUP = item.MKUP,
+            VlrUnitario = item.VlrUnitario,
+            VlrCustoAquisicao = item.VlrCustoAquisicao,
+            MargemEnviada = item.MargemEnviada,
+            PercentualICMS = item.PercentualICMS,
+            PercentualFCP = item.PercentualFCP,
+            PercentualIPI = item.PercentualIPI,
+            PercentualCOFINS = item.PercentualCOFINS,
+            PercentualPIS = item.PercentualPIS,
+            ValorICMS = item.ValorICMS,
+            ValorIPI = item.ValorIPI,
+            ValorST = item.ValorST,
+            ValorISS = item.ValorISS,
+            ValorISSRetido = item.ValorISSRetido,
+            ValorCOFINS = item.ValorCOFINS,
+            ValorPIS = item.ValorPIS,
+            ValorFCPST = item.ValorFCPST,
+            ValorICMSPartilhaOrigem = item.ValorICMSPartilhaOrigem,
+            ValorICMSPartilhaDestino = item.ValorICMSPartilhaDestino,
+            ValorFundoCombPobreza = item.ValorFundoCombPobreza,
+            ValorPISRetido = item.ValorPISRetido,
+            ValorCOFINSRetido = item.ValorCOFINSRetido,
+            ValorCSLRetido = item.ValorCSLRetido,
+            ValorIRRetido = item.ValorIRRetido,
+            MargemCalculada = item.MargemCalculada,
+            LB = item.LB,
+            ROL = item.ROL
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<FreightCalculationItemDto>> GetFreightCalculationHistoryAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetFreightCalculationHistoryAsync(pedido, cancellationToken);
+        return items.Select(item => new FreightCalculationItemDto
+        {
+            TransportadoraID = item.TransportadoraID,
+            NomeTransportadora = item.NomeTransportadora,
+            PrazoLogistico = item.PrazoLogistico,
+            PrazoComercial = item.PrazoComercial,
+            TaxaExtra = item.TaxaExtra,
+            QtItensRestritos = item.QtItensRestritos,
+            ClienteRestrito = item.FlagClienteRestrito != 0,
+            ClienteFixo = item.FlagClienteFixo != 0,
+            ObrigatoriaCanalVenda = item.FlagObrigatoriaCanalVenda != 0,
+            ValorFrete = item.ValorFrete
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<FreightCalculationItemDto>> GetFreightCalculationAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetFreightCalculationAsync(pedido, cancellationToken);
+        return items.Select(item => new FreightCalculationItemDto
+        {
+            TransportadoraID = item.TransportadoraID,
+            NomeTransportadora = item.NomeTransportadora,
+            PrazoLogistico = item.PrazoLogistico,
+            PrazoComercial = item.PrazoComercial,
+            TaxaExtra = item.TaxaExtra,
+            QtItensRestritos = item.QtItensRestritos,
+            ClienteRestrito = item.FlagClienteRestrito != 0,
+            ClienteFixo = item.FlagClienteFixo != 0,
+            ObrigatoriaCanalVenda = item.FlagObrigatoriaCanalVenda != 0,
+            ValorFrete = item.ValorFrete
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderBrSupplyItemDto>> GetOrderBrSupplyItemsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderBrSupplyItemsAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderBrSupplyItemDto
+        {
+            ClienteID = item.ClienteID,
+            ItemID = item.ItemID,
+            CdItem = item.CdItem,
+            NmItem = item.NmItem,
+            QtItem = item.QtItem,
+            VlrFinal = item.VlrFinal,
+            VlrTotal = item.VlrTotal,
+            VlrOriginal = item.VlrOriginal,
+            OrdemCliente = item.OrdemCliente,
+            SituacaoItem = item.SituacaoItem,
+            DtAlocacao = item.DtAlocacao?.ToString("dd/MM/yyyy HH:mm"),
+            MargemCalculada = item.MargemCalculada,
+            Versao = item.Versao
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderBrSupplyItemDto>> GetOrderMarketplaceItemsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderMarketplaceItemsAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderBrSupplyItemDto
+        {
+            ClienteID = item.ClienteID,
+            ItemID = item.ItemID,
+            CdItem = item.CdItem,
+            NmItem = item.NmItem,
+            QtItem = item.QtItem,
+            VlrFinal = item.VlrFinal,
+            VlrTotal = item.VlrTotal,
+            VlrOriginal = item.VlrOriginal,
+            OrdemCliente = item.OrdemCliente,
+            PathFoto = item.PathFoto,
+            NmFornecedor = item.NmFornecedor
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderBrSupplyItemDto>> GetOrderBrSupplyItemsRupturaAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderBrSupplyItemsRupturaAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderBrSupplyItemDto
+        {
+            ClienteID = item.ClienteID,
+            ItemID = item.ItemID,
+            CdItem = item.CdItem,
+            NmItem = item.NmItem,
+            QtItem = item.QtItem,
+            VlrFinal = item.VlrFinal,
+            VlrTotal = item.VlrTotal,
+            VlrOriginal = item.VlrOriginal,
+            OrdemCliente = item.OrdemCliente,
+            MensagemRuptura = item.MensagemRuptura,
+            DtPrevEntrega = item.DtPrevEntrega?.ToString("dd/MM/yyyy"),
+            QtDisponivel = item.QtDisponivel,
+            QtItemPrevEntrega = item.QtItemPrevEntrega
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderApprovalItemDto>> GetOrderApprovalItemsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderApprovalItemsAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderApprovalItemDto
+        {
+            NrSequencia = item.NrSequencia ?? 0,
+            NmUsuario = item.NmUsuario,
+            TipoAlcada = item.TipoAlcada,
+            StatusAlcada = item.StatusAlcada,
+            StatusAlcadaID = item.StatusAlcadaID ?? 0,
+            DtAprovacao = item.DtAprovacao?.ToString("dd/MM/yyyy HH:mm")
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderInvoiceItemDto>> GetOrderInvoiceItemsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderInvoiceItemsAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderInvoiceItemDto
+        {
+            NotaFiscalID = item.NotaFiscalID,
+            NrNotaFiscal = item.NrNotaFiscal,
+            Serie = item.Serie,
+            Chave = item.Chave,
+            Operacao = item.Operacao,
+            EmitCNPJ = item.EmitCNPJ,
+            DtEmissao = item.DtEmissao,
+            Versao = item.Versao,
+            QtdeVolumes = item.QtdeVolumes ?? 0,
+            PesoBruto = item.PesoBruto ?? 0,
+            VlrTotalNF = item.VlrTotalNF,
+            StatusNF = item.StatusNF,
+            MotivoCancelamento = item.MotivoCancelamento,
+            DsStatusCancelamento = item.DsStatusCancelamento,
+            CubagemNF = item.CubagemNF ?? "0",
+            TipoAtestoID = item.TipoAtestoID ?? 0,
+            DsAtestoRecebimento = item.DsAtestoRecebimento
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderRomaneioItemDto>> GetOrderRomaneiosAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderRomaneiosAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderRomaneioItemDto
+        {
+            RomaneioID = item.RomaneioID,
+            NrNotaFiscal = item.NrNotaFiscal,
+            Serie = item.Serie,
+            NmTipoRomaneio = item.NmTipoRomaneio,
+            CdEstabelecimento = item.CdEstabelecimento,
+            NmCurto = item.NmCurto,
+            Transportadora = item.Transportadora,
+            DtPortaria = item.DtPortaria?.ToString("dd/MM/yyyy HH:mm"),
+            NmRecebedor = item.NmRecebedor,
+            DtEntrega = item.DtEntrega?.ToString("dd/MM/yyyy"),
+            NmHub = item.NmHub,
+            FlagTemComprovante = item.FlagTemComprovante,
+            NmArquivoComprovante = item.NmArquivoComprovante,
+            SituacaoRomaneio = item.SituacaoRomaneio
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderTrackingItemDto>> GetOrderTrackingAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderTrackingAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderTrackingItemDto
+        {
+            DtEvento = item.DtEvento?.ToString("dd/MM/yyyy HH:mm"),
+            Evento = item.Evento,
+            Detalhes = item.Detalhes,
+            Usuario = item.Usuario
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderVolumeColetaItemDto>> GetVolumesColetaAsync(string pedCli, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(pedCli))
+        {
+            return [];
+        }
+
+        var items = await repository.GetVolumesColetaAsync(pedCli, cancellationToken);
+        return items.Select(item => new OrderVolumeColetaItemDto
+        {
+            CdItem = item.CdItem,
+            NmItem = item.NmItem,
+            QtSolicitada = item.QtSolicitada,
+            QtColetada = item.QtColetada,
+            Volume = item.Volume,
+            NumVol = item.NumVol,
+            DataColeta = item.DataColeta,
+            NmOperador = item.NmOperador,
+            EnderecoAtual = item.EnderecoAtual,
+            ObsCarga = item.ObsCarga,
+            DtLeituraRomaneio = item.DtLeituraRomaneio
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderTicketItemDto>> GetOrderTicketsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderTicketsAsync(pedido, cancellationToken);
+        return items.Select(item => new OrderTicketItemDto
+        {
+            Protocolo = item.Protocolo,
+            Origem = item.Origem,
+            OrigemValor = item.OrigemValor,
+            NmSolicitante = item.NmSolicitante,
+            EmailSolicitante = item.EmailSolicitante,
+            NmArea = item.NmArea,
+            NmNivel = item.NmNivel,
+            NmProblema = item.NmProblema,
+            Situacao = item.Situacao,
+            Atraso = item.Atraso,
+            DtHrAbertura = item.DtHrAbertura?.ToString("dd/MM/yyyy HH:mm"),
+            DtHrEncerramento = item.DtHrEncerramento?.ToString("dd/MM/yyyy HH:mm"),
+            PrazoResolucao = item.PrazoResolucao?.ToString("dd/MM/yyyy HH:mm")
+        }).ToList();
+    }
+
+    public async Task<OrderCreditAnalysisDto?> GetOrderCreditAnalysisAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return null;
+        }
+
+        var data = await repository.GetOrderCreditAnalysisAsync(pedido, cancellationToken);
+        if (data is null)
+        {
+            return null;
+        }
+
+        return new OrderCreditAnalysisDto
+        {
+            MotivoBloqueio = data.MotivoBloqueio,
+            FlagAprovado = data.FlagAprovado,
+            StatusAprovacao = data.StatusAprovacao,
+            DataHoraBloqueio = data.DataHoraBloqueio?.ToString("dd/MM/yyyy HH:mm"),
+            NmUsuario = data.NmUsuario,
+            DataHoraAprovacao = data.DataHoraAprovacao?.ToString("dd/MM/yyyy HH:mm"),
+            MotivoAprovacao = data.MotivoAprovacao
+        };
+    }
+
+    public async Task<IReadOnlyList<OrderValidationItemDto>> GetOrderValidationsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderValidationsAsync(pedido, cancellationToken);
+
+        return items.Select(item => new OrderValidationItemDto
+        {
+            Erro = item.Erro,
+            Correcao = item.Correcao
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<OrderLogItemDto>> GetOrderLogsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        if (pedido <= 0)
+        {
+            return [];
+        }
+
+        var items = await repository.GetOrderLogsAsync(pedido, cancellationToken);
+
+        return items
+            .OrderByDescending(i => i.DataHora)
+            .Select(item => new OrderLogItemDto
+            {
+                Origem = item.Origem,
+                DataHora = item.DataHora?.ToString("dd/MM/yyyy HH:mm"),
+                Acao = item.Acao,
+                Descricao = item.Descricao,
+                NmUsuario = item.NmUsuario
+            }).ToList();
     }
 
     public async Task<OrderSearchResultDto> SearchByPurchaseOrderAsync(string? ordemCompra, CancellationToken cancellationToken = default)
@@ -227,4 +623,7 @@ public sealed class OrderSearchService(IOrderSearchRepository repository) : IOrd
                 Message = "ERRO: A nota fiscal informada não existe !"
             };
     }
+
+    public Task<string?> GetInvoiceXmlAsync(string chaveDanfe, CancellationToken cancellationToken = default)
+        => repository.GetInvoiceXmlAsync(chaveDanfe, cancellationToken);
 }

@@ -95,4 +95,8 @@ public sealed class OrderHeaderDetailsVm
     public decimal VlrFrete { get; set; } = 0;
     public decimal VlrTaxaServico { get; set; } = 0;
     public int FlagIntegradoSAP { get; set; } = 0;
+    public int QtNotasFiscais { get; set; } = 0;
+    public int QtRomaneios { get; set; } = 0;
+    public int QtChamados { get; set; } = 0;
+    public int QtAnaliseCredito { get; set; } = 0;
 }

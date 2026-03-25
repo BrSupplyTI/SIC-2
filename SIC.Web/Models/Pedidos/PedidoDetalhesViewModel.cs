@@ -11,7 +11,7 @@ public sealed class PedidoDetalhesViewModel
     public ObservacaoSection Observacao { get; set; } = new();
     public TotalSection Total { get; set; } = new();
 
-    public IReadOnlyList<ItemSection> Itens { get; set; } = [];
+    //public IReadOnlyList<ItemSection> Itens { get; set; } = [];
     public IReadOnlyList<LogAprovacaoSection> LogsAprovacao { get; set; } = [];
     public IReadOnlyList<NotaFiscalRelacionadaSection> NotasFiscaisRelacionadas { get; set; } = [];
     public IReadOnlyList<TrackingSection> Trackings { get; set; } = [];
@@ -46,6 +46,10 @@ public sealed class PedidoDetalhesViewModel
         public string NmSolicitante { get; set; } = string.Empty;
         public string EmailSolicitante { get; set; } = string.Empty;
         public int FlagIntegradoSAP { get; set; } = 0;
+        public int QtNotasFiscais { get; set; } = 0;
+        public int QtRomaneios { get; set; } = 0;
+        public int QtChamados { get; set; } = 0;
+        public int QtAnaliseCredito { get; set; } = 0;
     }
 
     public sealed class ClienteSection
@@ -113,7 +117,7 @@ public sealed class PedidoDetalhesViewModel
         public string? DtPrevisaoEntrega { get; set; }
         public string StatusSLA { get; set; } = string.Empty;
     }
-
+    /*
     public sealed class ItemSection
     {
         public string Codigo { get; set; } = string.Empty;
@@ -121,7 +125,7 @@ public sealed class PedidoDetalhesViewModel
         public int Quantidade { get; set; }
         public string ValorUnitario { get; set; } = string.Empty;
     }
-
+    */
     public sealed class LogAprovacaoSection
     {
         public string DataHora { get; set; } = string.Empty;

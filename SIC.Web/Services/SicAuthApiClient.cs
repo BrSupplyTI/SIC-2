@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using SIC.Web.Models.Auth;
-using SIC.Web.Models.Pedidos;
 using SIC.Web.Models.Profile;
 
 namespace SIC.Web.Services;
@@ -54,27 +53,6 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
 
     public Task<OperationResultVm?> ChangePasswordAsync(int usuarioId, string newPassword, CancellationToken cancellationToken = default)
         => SendOperationAsync("api/auth/change-password", new { UsuarioId = usuarioId, NewPassword = newPassword }, cancellationToken);
-
-    public Task<OrderSearchResultVm?> SearchOrderByNumberAsync(string? numeroPedido, CancellationToken cancellationToken = default)
-        => SendOrderSearchAsync("api/pedidos/buscar-por-pedido", new { NumeroPedido = numeroPedido }, cancellationToken);
-
-    public Task<OrderSearchResultVm?> SearchOrderByPurchaseOrderAsync(string? ordemCompra, CancellationToken cancellationToken = default)
-        => SendOrderSearchAsync("api/pedidos/buscar-por-ordem-compra", new { OrdemCompra = ordemCompra }, cancellationToken);
-
-    public Task<OrderSearchResultVm?> SearchOrderByInvoiceAsync(string? notaFiscal, int? serie, CancellationToken cancellationToken = default)
-        => SendOrderSearchAsync("api/pedidos/buscar-por-nota-fiscal", new { NotaFiscal = notaFiscal, Serie = serie }, cancellationToken);
-
-    public async Task<OrderHeaderDetailsVm?> GetOrderHeaderDetailsAsync(int pedido, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            return await httpClient.GetFromJsonAsync<OrderHeaderDetailsVm>($"api/pedidos/{pedido}/detalhes-cabecalho", cancellationToken);
-        }
-        catch
-        {
-            return null;
-        }
-    }
 
     public async Task<IReadOnlyList<AreaVm>> GetAreasAsync(CancellationToken cancellationToken = default)
     {
@@ -196,34 +174,6 @@ public sealed class SicAuthApiClient(HttpClient httpClient)
         catch
         {
             return new OperationResultVm
-            {
-                Success = false,
-                ErrorCode = "API_UNAVAILABLE",
-                Message = "Não foi possível conectar na API do SIC."
-            };
-        }
-    }
-
-    private async Task<OrderSearchResultVm?> SendOrderSearchAsync<TRequest>(string path, TRequest payload, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var response = await httpClient.PostAsJsonAsync(path, payload, cancellationToken);
-            if (response.Content.Headers.ContentLength == 0)
-            {
-                return new OrderSearchResultVm
-                {
-                    Success = false,
-                    ErrorCode = "EMPTY_RESPONSE",
-                    Message = $"Falha na operação. Status HTTP {(int)response.StatusCode}."
-                };
-            }
-
-            return await response.Content.ReadFromJsonAsync<OrderSearchResultVm>(cancellationToken: cancellationToken);
-        }
-        catch
-        {
-            return new OrderSearchResultVm
             {
                 Success = false,
                 ErrorCode = "API_UNAVAILABLE",

@@ -8,7 +8,7 @@ namespace SIC.Web.Controllers;
 
 [Authorize]
 [Route("Pedidos")]
-public sealed class PedidosController(SicAuthApiClient apiClient) : Controller
+public sealed class PedidosController(PedidoApiClient apiClient) : Controller
 {
     [HttpGet("Busca")]
     public IActionResult Busca()
@@ -51,7 +51,11 @@ public sealed class PedidosController(SicAuthApiClient apiClient) : Controller
                 ROL = headerData?.ROL ?? 0,
                 NmSolicitante = headerData?.NmSolicitante ?? string.Empty,
                 EmailSolicitante = headerData?.EmailSolicitante ?? string.Empty,
-                FlagIntegradoSAP = headerData?.FlagIntegradoSAP ?? 0
+                FlagIntegradoSAP = headerData?.FlagIntegradoSAP ?? 0,
+                QtNotasFiscais = headerData?.QtNotasFiscais ?? 0,
+                QtRomaneios = headerData?.QtRomaneios ?? 0,
+                QtChamados = headerData?.QtChamados ?? 0,
+                QtAnaliseCredito = headerData?.QtAnaliseCredito ?? 0
             },
             Cliente = new PedidoDetalhesViewModel.ClienteSection
             {
@@ -133,16 +137,12 @@ public sealed class PedidosController(SicAuthApiClient apiClient) : Controller
                 VlrFrete = headerData?.VlrFrete ?? 0,
                 VlrTaxaServico = headerData?.VlrTaxaServico ?? 0,
             },
-            Itens =
+           /* Itens =
             [
                 new PedidoDetalhesViewModel.ItemSection { Codigo = "PROD-001", Descricao = "Produto exemplo 1", Quantidade = 2, ValorUnitario = "R$ 150,00" },
                 new PedidoDetalhesViewModel.ItemSection { Codigo = "PROD-002", Descricao = "Produto exemplo 2", Quantidade = 1, ValorUnitario = "R$ 950,00" }
-            ],
-            LogsAprovacao =
-            [
-                new PedidoDetalhesViewModel.LogAprovacaoSection { DataHora = DateTime.Now.AddDays(-2).ToString("dd/MM/yyyy HH:mm"), Usuario = "maria.silva", Acao = "Pedido criado" },
-                new PedidoDetalhesViewModel.LogAprovacaoSection { DataHora = DateTime.Now.AddDays(-1).ToString("dd/MM/yyyy HH:mm"), Usuario = "joao.souza", Acao = "Aprovado comercial" }
-            ],
+            ],*/
+            LogsAprovacao = [],
             NotasFiscaisRelacionadas =
             [
                 new PedidoDetalhesViewModel.NotaFiscalRelacionadaSection { Numero = "445566", Serie = "1", Emissao = DateTime.Now.AddDays(-1).ToString("dd/MM/yyyy") }
@@ -155,6 +155,125 @@ public sealed class PedidosController(SicAuthApiClient apiClient) : Controller
         };
 
         return View(vm);
+    }
+
+    [HttpGet("{pedido:int}/integracao-sap")]
+    public async Task<IActionResult> IntegracaoSap(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderSapIntegrationAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/impostos")]
+    public async Task<IActionResult> Impostos(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderTaxesAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/historico-frete")]
+    public async Task<IActionResult> HistoricoFrete(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetFreightCalculationHistoryAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/calculo-frete")]
+    public async Task<IActionResult> CalculoFrete(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetFreightCalculationAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/itens-br-supply")]
+    public async Task<IActionResult> ItensBrSupply(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderBrSupplyItemsAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/itens-marketplace")]
+    public async Task<IActionResult> ItensMarketplace(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderMarketplaceItemsAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/itens-br-supply-ruptura")]
+    public async Task<IActionResult> ItensBrRuptura(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderBrSupplyItemsRupturaAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/logs-aprovacao")]
+    public async Task<IActionResult> LogsAprovacao(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderApprovalItemsAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/notas-fiscais")]
+    public async Task<IActionResult> NotasFiscais(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderInvoiceItemsAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/romaneios")]
+    public async Task<IActionResult> Romaneios(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderRomaneiosAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/logs-tracking")]
+    public async Task<IActionResult> LogsTracking(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderTrackingAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("volumes-coleta")]
+    public async Task<IActionResult> VolumesColeta([FromQuery] string pedCli, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetVolumesColetaAsync(pedCli, cancellationToken);
+        return Json(result);
+    }
+
+    public async Task<IActionResult> Chamados(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderTicketsAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/analise-credito")]
+    public async Task<IActionResult> AnaliseCredito(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderCreditAnalysisAsync(pedido, cancellationToken);
+        return result is null ? Json(null as object) : Json(result);
+    }
+
+    [HttpGet("{pedido:int}/validacoes")]
+    public async Task<IActionResult> Validacoes(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderValidationsAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("{pedido:int}/registros-logs")]
+    public async Task<IActionResult> RegistrosLogs(int pedido, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.GetOrderLogsAsync(pedido, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpGet("nf-xml/{chave}")]
+    public async Task<IActionResult> DownloadInvoiceXml(string chave, CancellationToken cancellationToken)
+    {
+        var bytes = await apiClient.GetInvoiceXmlAsync(chave, cancellationToken);
+        if (bytes is null) return NotFound();
+        return File(bytes, "application/xml", $"{chave}.xml");
     }
 
     [HttpPost("BuscarPorPedido")]

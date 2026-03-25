@@ -1,15 +1,320 @@
+@using System.Text;
 @{
     ViewData["Title"] = "SIC - Portal Corporativo";
+
+    var data = DateTime.Now;
+
+    var dataFormatada = data.ToString("dd/MM/yyyy HH:mm");
+    var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(dataFormatada));
+
+    var userName = User.FindFirst("sic_nome")?.Value ?? "Usuário";
+    var firstName = userName.Split(' ')[0];
+    var hora = DateTime.Now.Hour;
+    var saudacao = hora switch
+    {
+        < 12 => "Bom dia",
+        < 18 => "Boa tarde",
+        _ => "Boa noite"
+    };
 }
 
-<iframe src="https://intranet.brsupply.com.br/intranet/html/busca_pedido.php" title="Descrição" width="100%" height="600px" frameborder="0"></iframe>
+<div class="container-fluid">
 
-<div class="text-center">
-    <h1 class="display-5">SIC - Portal Corporativo</h1>
-    <p>Login autenticado com sucesso.</p>
-
-    <div class="alert alert-light border">
-        <strong>Usuário:</strong> @User.FindFirst("sic_nome")?.Value <br />
-        <strong>Login:</strong> @User.FindFirst("sic_login")?.Value
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+        <div>
+            <h2 class="h4 mb-1">@saudacao, @firstName! 👋</h2>
+            <p class="text-muted mb-0">Aqui está o resumo do seu dia — @DateTime.Now.ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("pt-BR")).</p>
+        </div>
     </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #ec4899 15%, transparent);">
+                        <i class="fa-duotone fa-cake-candles fa-lg" style="color:#ec4899;"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Aniversariantes</p>
+                        <h4 class="mb-0 fw-bold">3</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #f59e0b 15%, transparent);">
+                        <i class="fa-duotone fa-ticket fa-lg" style="color:#f59e0b;"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Chamados Pendentes</p>
+                        <h4 class="mb-0 fw-bold">7</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #6366f1 15%, transparent);">
+                        <i class="fa-duotone fa-file-signature fa-lg" style="color:#6366f1;"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Docs p/ Assinar</p>
+                        <h4 class="mb-0 fw-bold">2</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #10b981 15%, transparent);">
+                        <i class="fa-duotone fa-boxes-stacked fa-lg" style="color:#10b981;"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Pedidos Hoje</p>
+                        <h4 class="mb-0 fw-bold">42</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-lg-8">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-bullhorn text-br"></i>
+                    <strong>Avisos Importantes</strong>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex align-items-start gap-3 py-3">
+                            <span class="badge rounded-pill bg-danger mt-1">Urgente</span>
+                            <div>
+                                <p class="mb-1 fw-semibold">Manutenção programada no SAP — 21/06 das 22h às 02h</p>
+                                <small class="text-muted">Publicado em 18/06/2025 por TI Corporativa</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex align-items-start gap-3 py-3">
+                            <span class="badge rounded-pill bg-warning text-dark mt-1">Atenção</span>
+                            <div>
+                                <p class="mb-1 fw-semibold">Novo procedimento para solicitação de crédito a partir de Julho</p>
+                                <small class="text-muted">Publicado em 15/06/2025 por Financeiro</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex align-items-start gap-3 py-3">
+                            <span class="badge rounded-pill bg-info mt-1">Info</span>
+                            <div>
+                                <p class="mb-1 fw-semibold">Confraternização de meio de ano — 27/06 a partir das 17h</p>
+                                <small class="text-muted">Publicado em 12/06/2025 por RH</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-cake-candles text-br"></i>
+                    <strong>Aniversariantes do Dia</strong>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex align-items-center gap-3 py-3">
+                            <div class="rounded-circle bg-body-tertiary d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                <i class="fa-duotone fa-user text-muted"></i>
+                            </div>
+                            <div>
+                                <p class="mb-0 fw-semibold">Maria Silva</p>
+                                <small class="text-muted">Comercial</small>
+                            </div>
+                            <span class="ms-auto" style="font-size:1.2rem;">🎂</span>
+                        </div>
+                        <div class="list-group-item d-flex align-items-center gap-3 py-3">
+                            <div class="rounded-circle bg-body-tertiary d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                <i class="fa-duotone fa-user text-muted"></i>
+                            </div>
+                            <div>
+                                <p class="mb-0 fw-semibold">João Pereira</p>
+                                <small class="text-muted">Logística</small>
+                            </div>
+                            <span class="ms-auto" style="font-size:1.2rem;">🎂</span>
+                        </div>
+                        <div class="list-group-item d-flex align-items-center gap-3 py-3">
+                            <div class="rounded-circle bg-body-tertiary d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                <i class="fa-duotone fa-user text-muted"></i>
+                            </div>
+                            <div>
+                                <p class="mb-0 fw-semibold">Ana Souza</p>
+                                <small class="text-muted">Financeiro</small>
+                            </div>
+                            <span class="ms-auto" style="font-size:1.2rem;">🎂</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-sun text-br"></i>
+                    <strong>Clima</strong>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-2" style="font-size:2.5rem;">⛅</div>
+                    <h3 class="fw-bold mb-0">27°C</h3>
+                    <p class="text-muted mb-1">Parcialmente nublado</p>
+                    <small class="text-muted">São Paulo, SP</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-dollar-sign text-br"></i>
+                    <strong>Cotações</strong>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fi fi-us rounded-1" style="font-size:1.1rem;"></span>
+                            <span class="fw-semibold">Dólar (USD)</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold">R$ 5,47</span>
+                            <br /><small class="text-success"><i class="fa-solid fa-caret-down me-1"></i>-0,32%</small>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fi fi-eu rounded-1" style="font-size:1.1rem;"></span>
+                            <span class="fw-semibold">Euro (EUR)</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold">R$ 6,15</span>
+                            <br /><small class="text-danger"><i class="fa-solid fa-caret-up me-1"></i>+0,18%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-rocket text-br"></i>
+                    <strong>Atalhos Rápidos</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6 col-md-4">
+                            <a asp-controller="Pedidos" asp-action="Busca" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
+                                <i class="fa-duotone fa-magnifying-glass fa-lg mb-1"></i>
+                                Consultar Pedido
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a asp-controller="Account" asp-action="MeusDados" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
+                                <i class="fa-duotone fa-id-card fa-lg mb-1"></i>
+                                Meus Dados
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a href="#" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
+                                <i class="fa-duotone fa-chart-mixed fa-lg mb-1"></i>
+                                Relatórios
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a href="#" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
+                                <i class="fa-duotone fa-user-tie fa-lg mb-1"></i>
+                                Clientes
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a href="#" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
+                                <i class="fa-duotone fa-truck-fast fa-lg mb-1"></i>
+                                Logística
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a href="https://intranet.brsupply.com.br/intranet/html/valida_login.php?u=@User.FindFirst("sic_login")?.Value&h=@base64" target="_blank" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
+                                <i class="fa-duotone fa-globe fa-lg mb-1"></i>
+                                SIC Antigo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card border-0">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-clock-rotate-left text-br"></i>
+                    <strong>Últimas Atividades</strong>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Atividade</th>
+                                    <th>Módulo</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-end">Data/Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><i class="fa-duotone fa-box-open me-2 text-br"></i>Pedido #84521 aprovado</td>
+                                    <td>Comercial</td>
+                                    <td class="text-center"><span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Concluído</span></td>
+                                    <td class="text-end text-muted">Hoje, 09:32</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fa-duotone fa-file-signature me-2 text-br"></i>Contrato #1203 enviado para assinatura</td>
+                                    <td>Jurídico</td>
+                                    <td class="text-center"><span class="badge-status badge-status-info"><i class="fa-solid fa-clock me-1"></i>Pendente</span></td>
+                                    <td class="text-end text-muted">Hoje, 08:45</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fa-duotone fa-truck me-2 text-br"></i>Embarque NF 5892 confirmado</td>
+                                    <td>Logística</td>
+                                    <td class="text-center"><span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Concluído</span></td>
+                                    <td class="text-end text-muted">Ontem, 17:10</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fa-duotone fa-ticket me-2 text-br"></i>Chamado #TI-445 — Acesso VPN</td>
+                                    <td>TI</td>
+                                    <td class="text-center"><span class="badge-status badge-status-primary"><i class="fa-solid fa-chevron-right me-1"></i>Em andamento</span></td>
+                                    <td class="text-end text-muted">Ontem, 14:22</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fa-duotone fa-box-open me-2 text-br"></i>Pedido #84490 integrado no SAP</td>
+                                    <td>Comercial</td>
+                                    <td class="text-center"><span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Concluído</span></td>
+                                    <td class="text-end text-muted">Ontem, 11:03</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>

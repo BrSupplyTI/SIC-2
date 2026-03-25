@@ -11,19 +11,13 @@
         22 => ("badge-status-danger", "fa-solid fa-ban"),
         _ => ("badge-status-primary", "fa-solid fa-chevron-right")
     };
+
 }
 
 @section Styles {
-    <style>
-        .pedido-accordion-icon {
-            transition: transform .2s ease, color .2s ease;
-            transform-origin: center;
-        }
-
-        .accordion-button:not(.collapsed) .pedido-accordion-icon {
-            transform: scale(2);
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.3/css/buttons.bootstrap5.min.css" />
 }
 
 <div class="card border-0 shadow-sm mb-4">
@@ -122,6 +116,8 @@
                 </a>
             </div>
         }
+
+        <div id="msgValidacaoPedido"></div>
 
         <div class="accordion" id="pedidoDetalhesAccordion">
             <div class="accordion-item">
@@ -242,7 +238,7 @@
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingFaturamento">
                     <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFaturamento" aria-expanded="false" aria-controls="collapseFaturamento">
-                        <i class="fa-duotone fa-thin fa-money-check-dollar-pen me-3 pedido-accordion-icon"></i> Faturamento e Entrega
+                        <i class="fa-duotone fa-thin fa-cash-register me-3 pedido-accordion-icon"></i> Dados de Faturamento
                     </button>
                 </h2>
                 <div id="collapseFaturamento" class="accordion-collapse collapse" aria-labelledby="headingFaturamento" data-bs-parent="#pedidoDetalhesAccordion">
@@ -336,6 +332,33 @@
                     </div>
                 </div>
             </div>
+            @if (Model.Header.QtAnaliseCredito > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingCredito">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCredito" aria-expanded="false" aria-controls="collapseCredito">
+                            <i class="fa-duotone fa-thin fa-circle-dollar me-3 pedido-accordion-icon"></i> Análise de Crédito                            
+                        </button>
+                    </h2>
+                    <div id="collapseCredito" class="accordion-collapse collapse" aria-labelledby="headingCredito" data-bs-parent="#pedidoDetalhesAccordion">
+                        <div class="accordion-body">
+                                <div class="text-center text-muted py-4 d-none" id="creditoLoader">
+                                    <div class="spinner-border text-primary mb-2" role="status">
+                                        <span class="visually-hidden">Carregando...</span>
+                                    </div>
+                                    <div>Carregando dados...</div>
+                                </div>
+                                <div class="alert alert-danger d-none" id="creditoError" role="alert">
+                                    Não foi possível carregar os dados de análise de crédito.
+                                </div>
+                                <div class="alert alert-secondary d-none" id="creditoEmpty">
+                                    Nenhuma análise de crédito para este pedido.
+                                </div>
+                                <div class="d-none" id="divCreditoContent"></div>
+                        </div>
+                    </div>
+                </div>
+            }
 
             @if (Model.Frete.TransportadoraID > 0)
             {
@@ -432,7 +455,7 @@
                             </div>
                             <div class="buttons my-2">
                                 <a href="#" class="btn btn-outline-primary me-2" id="BtnHistoricoFrete"><i class="fa-solid fa-history me-2"></i> Histórico do Cálculo</a>
-                                <a href="#" class="btn btn-info me-2" id="BtnCalcularFrete"><i class="fa-solid fa-calculator-alt me-2"></i> Simular Frete Atual</a>
+                                <a href="#" class="btn btn-info me-2" id="BtnCalculoFrete"><i class="fa-solid fa-calculator-alt me-2"></i> Simular Frete Atual</a>
                             </div>
                         </div>
                     </div>
@@ -443,44 +466,40 @@
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingSAP">
                         <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSAP" aria-expanded="false" aria-controls="collapseSAP">
-                            <i class="fa-duotone fa-thin fa-link me-3 pedido-accordion-icon"></i> Integração SAP
+                            <i class="fa-duotone fa-thin fa-gear-api me-3 pedido-accordion-icon"></i> Integração SAP
                         </button>
                     </h2>
                     <div id="collapseSAP" class="accordion-collapse collapse" aria-labelledby="headingSAP" data-bs-parent="#pedidoDetalhesAccordion">
                         <div class="accordion-body">
-                            @if (Model.Itens.Count == 0)
-                            {
-                                <div class="text-center text-muted py-4">
-                                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
-                                    Nenhum item encontrado.
+                            <div class="text-center text-muted py-4 d-none" id="sapIntegrationLoader">
+                                <div class="spinner-border text-primary mb-2" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
                                 </div>
-                            }
-                            else
-                            {
-                                <div class="table-responsive" id="divTblIntegracaoSAP">
-                                    <table class="table table-sm table-striped align-middle mb-0" id="tblIntegracaoSAP">
-                                        <thead>
-                                            <tr>
-                                                <th>Código</th>
-                                                <th>Descrição</th>
-                                                <th class="text-center">Qtd</th>
-                                                <th class="text-end">Vlr. Unit.</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var item in Model.Itens)
-                                            {
-                                                <tr>
-                                                    <td>@item.Codigo</td>
-                                                    <td>@item.Descricao</td>
-                                                    <td class="text-center">@item.Quantidade</td>
-                                                    <td class="text-end">@item.ValorUnitario</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
+                                <div>Carregando dados...</div>
+                            </div>
+                            <div class="alert alert-danger d-none" id="sapIntegrationError" role="alert">
+                                Não foi possível carregar os dados da integração SAP.
+                            </div>
+                            <div class="alert alert-secondary d-none" id="sapIntegrationEmpty">
+                                Nenhum registro de integração SAP para este pedido.
+                            </div>
+                            <div class="table-responsive d-none" id="divTblIntegracaoSAP">
+                                <table class="table styled-table align-middle my-2" id="tblIntegracaoSAP">
+                                    <thead>
+                                        <tr class="text-muted">
+                                            <th class="text-center hide-sm">Pedido</th>
+                                            <th class="text-center">Ordem de Venda</th>
+                                            <th class="text-center hide-lg">Remessa</th>
+                                            <th>Mensagem de Retorno</th>
+                                            <th class="text-center  hide-lg">Últ. Atualização</th>
+                                            <th class="text-center hide-md">Tipo OV SAP</th>
+                                            <th class="text-center hide-lg">Fatura SAP</th>
+                                            <th class="text-center">Nr. Nota</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                             <div class="cad-row">
                                 <div class="cad-label text-muted">ROL</div>
                                 <div class="cad-info">R$ @Model.Header.ROL</div>
@@ -512,34 +531,40 @@
                     </h2>
                     <div id="collapseItensBR" class="accordion-collapse collapse" aria-labelledby="headingItensBR" data-bs-parent="#pedidoDetalhesAccordion">
                         <div class="accordion-body">
-                            @if (Model.Itens.Count == 0)
-                            {
-                                <div class="text-center text-muted py-4">
-                                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
-                                    Nenhum item encontrado.
+                            <div class="text-center text-muted py-4 d-none" id="itensBrLoader">
+                                <div class="spinner-border text-primary mb-2" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
                                 </div>
-                            }
-                            else
-                            {
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-striped align-middle mb-0">
-                                        <thead><tr><th>Código</th><th>Descrição</th><th class="text-center">Qtd</th><th class="text-end">Vlr. Unit.</th></tr></thead>
-                                        <tbody>
-                                            @foreach (var item in Model.Itens)
-                                            {
-                                                <tr>
-                                                    <td>@item.Codigo</td>
-                                                    <td>@item.Descricao</td>
-                                                    <td class="text-center">@item.Quantidade</td>
-                                                    <td class="text-end">@item.ValorUnitario</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
+                                <div>Carregando dados...</div>
+                            </div>
+                            <div class="alert alert-danger d-none" id="itensBrError" role="alert">
+                                Não foi possível carregar os itens Br Supply.
+                            </div>
+                            <div class="alert alert-secondary d-none" id="itensBrEmpty">
+                                Nenhum item encontrado.
+                            </div>
+                            <div class="table-responsive d-none" id="divTblItensBrSupply">
+                                <table class="table table-sm styled-table align-middle mb-0" id="tblItensBrSupply">
+                                    <thead>
+                                        <tr>
+                                            <th data-priority="5" data-orderable="false">Foto</th>
+                                            <th data-priority="1" class="text-center">Código</th>
+                                            <th data-priority="4">Descrição</th>
+                                            <th data-priority="1" class="text-center">Qtd</th>
+                                            <th data-priority="5" class="text-end">Vlr. Unit.</th>
+                                            <th data-priority="1" class="text-end">Vlr. Total</th>
+                                            <th data-priority="7" class="text-center">Ordem/Seq.</th>
+                                            <th data-priority="2" class="text-center">Situação</th>
+                                            <th data-priority="3" class="text-end">Margem</th>
+                                            <th data-priority="6" class="text-center">Vrs</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
+
                 </div>
             }
 
@@ -554,32 +579,35 @@
                     </h2>
                     <div id="collapseItensMktplc" class="accordion-collapse collapse" aria-labelledby="headingItensMktplc" data-bs-parent="#pedidoDetalhesAccordion">
                         <div class="accordion-body">
-                            @if (Model.Itens.Count == 0)
-                            {
-                                <div class="text-center text-muted py-4">
-                                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
-                                    Nenhum item encontrado.
+                            <div class="text-center text-muted py-4 d-none" id="itensMarketplaceLoader">
+                                <div class="spinner-border text-primary mb-2" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
                                 </div>
-                            }
-                            else
-                            {
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-striped align-middle mb-0">
-                                        <thead><tr><th>Código</th><th>Descrição</th><th class="text-center">Qtd</th><th class="text-end">Vlr. Unit.</th></tr></thead>
-                                        <tbody>
-                                            @foreach (var item in Model.Itens)
-                                            {
-                                                <tr>
-                                                    <td>@item.Codigo</td>
-                                                    <td>@item.Descricao</td>
-                                                    <td class="text-center">@item.Quantidade</td>
-                                                    <td class="text-end">@item.ValorUnitario</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
+                                <div>Carregando dados...</div>
+                            </div>
+                            <div class="alert alert-danger d-none" id="itensMarketplaceError" role="alert">
+                                Não foi possível carregar os itens Marketplace.
+                            </div>
+                            <div class="alert alert-secondary d-none" id="itensMarketplaceEmpty">
+                                Nenhum item encontrado.
+                            </div>
+                            <div class="table-responsive d-none" id="divTblItensMarketplace">
+                                <table class="table table-sm styled-table align-middle mb-0" id="tblItensMarketplace">
+                                    <thead>
+                                        <tr>
+                                            <th data-priority="6" data-orderable="false">Foto</th>
+                                            <th data-priority="1" class="text-center">Código</th>
+                                            <th data-priority="4">Descrição</th>
+                                            <th data-priority="5">Fornecedor</th>
+                                            <th data-priority="1" class="text-center">Qtd</th>
+                                            <th data-priority="3" class="text-end">Vlr. Unit.</th>
+                                            <th data-priority="2" class="text-end">Vlr. Total</th>
+                                            <th data-priority="7" class="text-center">Ordem/Seq.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -589,39 +617,42 @@
             {
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingItensRuptura">
-                        <button class="accordion-button fw-semibold collapsed text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseItensRuptura" aria-expanded="false" aria-controls="collapseItensRuptura">
+                        <button class="accordion-button fw-semibold collapsed text-ruptura" type="button" data-bs-toggle="collapse" data-bs-target="#collapseItensRuptura" aria-expanded="false" aria-controls="collapseItensRuptura">
                             <i class="fa-duotone fa-thin fa-wine-glass-crack me-3 pedido-accordion-icon"></i> Rupturas de Estoque
                             <span class="badge rounded-pill bg-danger ms-2">@Model.Total.QtItensRuptura</span>
                         </button>
                     </h2>
                     <div id="collapseItensRuptura" class="accordion-collapse collapse" aria-labelledby="headingItensRuptura" data-bs-parent="#pedidoDetalhesAccordion">
                         <div class="accordion-body">
-                            @if (Model.Itens.Count == 0)
-                            {
-                                <div class="text-center text-muted py-4">
-                                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
-                                    Nenhum item encontrado.
+                            <div class="text-center text-muted py-4 d-none" id="itensBrRupturaLoader">
+                                <div class="spinner-border text-primary mb-2" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
                                 </div>
-                            }
-                            else
-                            {
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-striped align-middle mb-0">
-                                        <thead><tr><th>Código</th><th>Descrição</th><th class="text-center">Qtd</th><th class="text-end">Vlr. Unit.</th></tr></thead>
-                                        <tbody>
-                                            @foreach (var item in Model.Itens)
-                                            {
-                                                <tr>
-                                                    <td>@item.Codigo</td>
-                                                    <td>@item.Descricao</td>
-                                                    <td class="text-center">@item.Quantidade</td>
-                                                    <td class="text-end">@item.ValorUnitario</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
+                                <div>Carregando dados...</div>
+                            </div>
+                            <div class="alert alert-danger d-none" id="itensBrRupturaError" role="alert">
+                                Não foi possível carregar os itens com ruptura de estoque.
+                            </div>
+                            <div class="alert alert-secondary d-none" id="itensBrRupturaEmpty">
+                                Nenhum item encontrado.
+                            </div>
+                            <div class="table-responsive d-none" id="divTblItensBrRuptura">
+                                <table class="table table-sm styled-table align-middle mb-0" id="tblItensBrRuptura">
+                                    <thead>
+                                        <tr>
+                                            <th data-priority="5" data-orderable="false">Foto</th>
+                                            <th data-priority="1" class="text-center">Código</th>
+                                            <th data-priority="4">Descrição</th>
+                                            <th data-priority="1" class="text-center">Qtd</th>
+                                            <th data-priority="1" class="text-end">Vlr. Total</th>
+                                            <th data-priority="6">Mensagem</th>
+                                            <th data-priority="2" class="text-center">Qt Disp</th>
+                                            <th data-priority="3" class="text-end">Prev. Reabast.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -630,31 +661,37 @@
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingAprovacao">
                     <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAprovacao" aria-expanded="false" aria-controls="collapseAprovacao">
-                        <i class="fa-duotone fa-thin fa-gavel me-3 pedido-accordion-icon"></i> Logs de Aprovação
-                        <span class="badge rounded-pill bg-secondary ms-2">@Model.LogsAprovacao.Count</span>
+                        <i class="fa-duotone fa-thin fa-gavel me-3 pedido-accordion-icon"></i> Aprovação
                     </button>
                 </h2>
                 <div id="collapseAprovacao" class="accordion-collapse collapse" aria-labelledby="headingAprovacao" data-bs-parent="#pedidoDetalhesAccordion">
                     <div class="accordion-body">
-                        @if (Model.LogsAprovacao.Count == 0)
-                        {
-                            <div class="text-center text-muted py-4">
-                                <i class="fa-duotone fa-clipboard-list fa-2x mb-2 d-block"></i>
-                                Nenhum log de aprovação registrado.
+                        <div class="text-center text-muted py-4 d-none" id="logsAprovacaoLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
                             </div>
-                        }
-                        else
-                        {
-                            <ul class="list-group list-group-flush">
-                                @foreach (var log in Model.LogsAprovacao)
-                                {
-                                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                                        <span><strong>@log.Usuario</strong> — @log.Acao</span>
-                                        <small class="text-muted text-nowrap ms-3">@log.DataHora</small>
-                                    </li>
-                                }
-                            </ul>
-                        }
+                            <div>Carregando dados...</div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="logsAprovacaoError" role="alert">
+                            Não foi possível carregar os logs de aprovação.
+                        </div>
+                        <div class="alert alert-secondary d-none" id="logsAprovacaoEmpty">
+                            Nenhum log de aprovação para este pedido.
+                        </div>
+                        <div class="table-responsive d-none" id="divTblLogsAprovacao">
+                            <table class="table table-sm styled-table align-middle mb-0" id="tblLogsAprovacao">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Seq.</th>
+                                        <th>Aprovador</th>
+                                        <th>Tipo Alçada</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-center">Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -687,36 +724,50 @@
                 <h2 class="accordion-header" id="headingNf">
                     <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNf" aria-expanded="false" aria-controls="collapseNf">
                         <i class="fa-duotone fa-thin fa-file-invoice me-3 pedido-accordion-icon"></i> Notas Fiscais
-                        <span class="badge rounded-pill bg-secondary ms-2">@Model.NotasFiscaisRelacionadas.Count</span>
+                        <span class="badge rounded-pill bg-secondary ms-2">@Model.Header.QtNotasFiscais</span>
                     </button>
                 </h2>
                 <div id="collapseNf" class="accordion-collapse collapse" aria-labelledby="headingNf" data-bs-parent="#pedidoDetalhesAccordion">
                     <div class="accordion-body">
-                        @if (Model.NotasFiscaisRelacionadas.Count == 0)
-                        {
-                            <div class="text-center text-muted py-4">
-                                <i class="fa-duotone fa-file-circle-xmark fa-2x mb-2 d-block"></i>
-                                Nenhuma nota fiscal relacionada.
+                        <div class="text-center text-muted py-4 d-none" id="notasFiscaisLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
                             </div>
-                        }
-                        else
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-sm table-striped align-middle mb-0">
-                                    <thead><tr><th>Número</th><th>Série</th><th>Emissão</th></tr></thead>
-                                    <tbody>
-                                        @foreach (var nf in Model.NotasFiscaisRelacionadas)
-                                        {
-                                            <tr>
-                                                <td>@nf.Numero</td>
-                                                <td>@nf.Serie</td>
-                                                <td>@nf.Emissao</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                            <div>Carregando dados...</div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="notasFiscaisError" role="alert">
+                            Não foi possível carregar as notas fiscais.
+                        </div>
+                        <div class="alert alert-secondary d-none" id="notasFiscaisEmpty">
+                            Nenhuma nota fiscal para este pedido.
+                        </div>
+                        <div class="row g-3 d-none" id="divNotasFiscaisCards"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingRomaneio">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRomaneio" aria-expanded="false" aria-controls="collapseRomaneio">
+                        <i class="fa-duotone fa-thin fa-forklift me-3 pedido-accordion-icon"></i> Transporte e Entrega
+                        <span class="badge rounded-pill bg-secondary ms-2">@Model.Header.QtRomaneios</span>
+                    </button>
+                </h2>
+                <div id="collapseRomaneio" class="accordion-collapse collapse" aria-labelledby="headingRomaneio" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="text-center text-muted py-4 d-none" id="romaneiosLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
                             </div>
-                        }
+                            <div>Carregando dados...</div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="romaneiosError" role="alert">
+                            Não foi possível carregar os romaneios.
+                        </div>
+                        <div class="alert alert-secondary d-none" id="romaneiosEmpty">
+                            Nenhum romaneio para este pedido.
+                        </div>
+                        <div class="row g-3 d-none" id="divRomaneiosCards"></div>
                     </div>
                 </div>
             </div>
@@ -725,7 +776,6 @@
                 <h2 class="accordion-header" id="headingTracking">
                     <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTracking" aria-expanded="false" aria-controls="collapseTracking">
                         <i class="fa-duotone fa-thin fa-map-location me-3 pedido-accordion-icon"></i> Tracking
-                        <span class="badge rounded-pill bg-secondary ms-2">@Model.Trackings.Count</span>
                     </button>
                 </h2>
                 <div id="collapseTracking" class="accordion-collapse collapse" aria-labelledby="headingTracking" data-bs-parent="#pedidoDetalhesAccordion">
@@ -763,26 +813,118 @@
                                 </div>
                             </div>
                         </div>
-
-                        @if (Model.Trackings.Count == 0)
-                        {
-                            <div class="text-center text-muted py-4">
-                                <i class="fa-duotone fa-map-location-dot fa-2x mb-2 d-block"></i>
-                                Nenhum evento de tracking registrado.
+                        <div class="row marcador-br">
+                            <h5 class="m-0 ms-3">Eventos de tracking</h5>
+                            <span class="m-0 ms-3 text-muted">Abaixo são listados todos os eventos de tracking do pedido</span>
+                        </div>
+                        <div class="text-center text-muted py-4 d-none" id="logsTrackingLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
                             </div>
-                        }
-                        else
-                        {
-                            <ul class="list-group list-group-flush">
-                                @foreach (var tr in Model.Trackings)
-                                {
-                                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                                        <span>@tr.Evento — @tr.Local</span>
-                                        <small class="text-muted text-nowrap ms-3">@tr.DataHora</small>
-                                    </li>
-                                }
-                            </ul>
-                        }
+                            <div>Carregando dados...</div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="logsTrackingError" role="alert">
+                            Não foi possível carregar os logs de tracking.
+                        </div>
+                        <div class="alert alert-secondary d-none" id="logsTrackingEmpty">
+                            Nenhum log de tracking para este pedido.
+                        </div>
+                        <div class="table-responsive d-none" id="divTblLogsTracking">
+                            <table class="table table-sm styled-table align-middle mb-0 mt-3" id="tblLogsTracking">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Data / Hora</th>
+                                        <th>Evento</th>
+                                        <th>Usuário</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingChamados">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseChamados" aria-expanded="false" aria-controls="collapseChamados">
+                        <i class="fa-duotone fa-thin fa-user-headset me-3 pedido-accordion-icon"></i> Chamados
+                        <span class="badge rounded-pill bg-secondary ms-2">@Model.Header.QtChamados</span>
+                    </button>
+                </h2>
+                <div id="collapseChamados" class="accordion-collapse collapse" aria-labelledby="headingChamados" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="text-center text-muted py-4 d-none" id="chamadosLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <div>Carregando dados...</div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="chamadosError" role="alert">
+                            Não foi possível carregar os chamados.
+                        </div>
+                        <div class="alert alert-secondary d-none" id="chamadosEmpty">
+                            Nenhum chamado para este pedido.
+                        </div>
+                        <div class="row g-3 d-none" id="divChamadosCards"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingRegistrosLogs">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRegistrosLogs" aria-expanded="false" aria-controls="collapseAprovacao">
+                        <i class="fa-duotone fa-thin fa-arrow-progress me-3 pedido-accordion-icon"></i> Registros de Log
+                    </button>
+                </h2>
+                <div id="collapseRegistrosLogs" class="accordion-collapse collapse" aria-labelledby="headingRegistrosLogs" data-bs-parent="#pedidoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="text-center text-muted py-4 d-none" id="logsRegistrosLogsLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <div>Carregando dados...</div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="logsRegistrosLogsError" role="alert">
+                            Não foi possível carregar os logs do pedido.
+                        </div>
+                        <div class="alert alert-secondary d-none" id="logsRegistrosLogsEmpty">
+                            Nenhum log registrado para esta origem.
+                        </div>
+                        <div class="log-filter-bar mb-3 d-none" id="filtroOrigemLogs">
+                            <button type="button" class="log-filter-btn active" data-origem="Pedido">
+                                <i class="fa-duotone fa-box-open"></i> Pedido
+                                <span class="log-filter-count" data-count-origem="Pedido">0</span>
+                            </button>
+                            <button type="button" class="log-filter-btn" data-origem="Aprovação">
+                                <i class="fa-duotone fa-gavel"></i> Aprovação
+                                <span class="log-filter-count" data-count-origem="Aprovação">0</span>
+                            </button>
+                            <button type="button" class="log-filter-btn" data-origem="Backoffice">
+                                <i class="fa-duotone fa-desktop"></i> Backoffice
+                                <span class="log-filter-count" data-count-origem="Backoffice">0</span>
+                            </button>
+                            <button type="button" class="log-filter-btn" data-origem="Distribuição">
+                                <i class="fa-duotone fa-truck-fast"></i> Distribuição
+                                <span class="log-filter-count" data-count-origem="Distribuição">0</span>
+                            </button>
+                            <button type="button" class="log-filter-btn" data-origem="Integração">
+                                <i class="fa-duotone fa-gear-api"></i> Integração
+                                <span class="log-filter-count" data-count-origem="Integração">0</span>
+                            </button>
+                        </div>
+                        <div class="table-responsive d-none" id="divTblRegistrosLogs">
+                            <table class="table table-sm styled-table align-middle mb-0" id="tblRegistrosLogs">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Data / Hora</th>
+                                        <th>Ação</th>
+                                        <th>Usuário</th>                                        
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -812,26 +954,41 @@
                         <p class="fw-semibold mb-0 totalizador-valor">R$ @Model.Total.ValorItensTerceiros.ToString("N2", new System.Globalization.CultureInfo("pt-BR"))</p>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="border rounded-3 p-3 bg-body-tertiary totalizador-card">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <i class="fa-duotone fa-truck text-br"></i>
-                            <small class="text-muted">Valor do Frete</small>
+                @if (Model.Total.VlrTaxaServico == 0)
+                {
+                    <div class="col-md-6 col-lg-3">
+                        <div class="border rounded-3 p-3 bg-body-tertiary totalizador-card">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-duotone fa-truck text-br"></i>
+                                <small class="text-muted">Valor do Frete</small>
+                            </div>
+                            <p class="fw-semibold mb-0 totalizador-valor">R$ @Model.Total.VlrFrete.ToString("N2", new System.Globalization.CultureInfo("pt-BR"))</p>
                         </div>
-                        <p class="fw-semibold mb-0 totalizador-valor">R$ @Model.Total.VlrFrete.ToString("N2", new System.Globalization.CultureInfo("pt-BR"))</p>
                     </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="border rounded-3 p-3 bg-body-tertiary totalizador-card">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <i class="fa-duotone fa-wrench text-br"></i>
-                            <small class="text-muted">Valor do Serviço</small>
+                }
+                else
+                {
+                    <div class="col-md-6 col-lg-3">
+                        <div class="border rounded-3 p-3 bg-body-tertiary totalizador-card">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-duotone fa-wrench text-br"></i>
+                                <small class="text-muted">Valor do Serviço</small>
+                            </div>
+                            <p class="fw-semibold mb-0 totalizador-valor">R$ @Model.Total.VlrTaxaServico.ToString("N2", new System.Globalization.CultureInfo("pt-BR"))</p>
                         </div>
-                        <p class="fw-semibold mb-0 totalizador-valor">R$ @Model.Total.VlrTaxaServico.ToString("N2", new System.Globalization.CultureInfo("pt-BR"))</p>
+                    </div>
+                }
+                <div class="col-md-6 col-lg-3">
+                    <div class="border rounded-3 p-3 bg-body-tertiary totalizador-total">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fa-duotone fa-coins text-br"></i>
+                            <small class="text-white">Valor Total do Pedido</small>
+                        </div>
+                        <p class="fw-bold fs-5 mb-0 totalizador-total-valor ">R$ @((Model.Total.ValorItensBRSupply + Model.Total.ValorItensTerceiros + Model.Total.VlrFrete + Model.Total.VlrTaxaServico).ToString("N2", new System.Globalization.CultureInfo("pt-BR")))</p>
                     </div>
                 </div>
             </div>
-            <div class="row mt-3">
+            <!--div class="row mt-3">
                 <div class="col-12">
                     <div class="border rounded-3 p-3 totalizador-card totalizador-total">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -843,7 +1000,2150 @@
                         </div>
                     </div>
                 </div>
+            </div-->
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalImpostos" tabindex="-1" aria-labelledby="modalImpostosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalImpostosLabel">
+                    <i class="fa-duotone fa-chart-pie-simple-circle-dollar me-2 text-br"></i>Impostos — Pedido #@Model.PedidoId
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center text-muted py-4" id="impostosLoader">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <div>Carregando impostos...</div>
+                </div>
+                <div class="alert alert-danger d-none" id="impostosError" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Não foi possível carregar os dados de impostos.
+                </div>
+                <div class="text-center text-muted py-4 d-none" id="impostosEmpty">
+                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
+                    Nenhum registro de imposto encontrado.
+                </div>
+                <div class="table-responsive d-none" id="divTblImpostos">
+                    <table class="table table-sm table-striped styled-table align-middle w-100" id="tblImpostos">
+                        <thead>
+                            <tr>
+                                <th data-priority="1">Item SAP</th>
+                                <th data-priority="1">Cód. Item</th>
+                                <!--th class="text-end">MVA</th-->
+                                <!--th class="text-end">MKUP</th-->
+                                <th data-priority="3" class="text-end">Margem Calc.</th>
+                                <th data-priority="4" class="text-end">ICMS</th>
+                                <th data-priority="10" class="text-end">FCP</th>
+                                <th data-priority="5" class="text-end">IPI</th>
+                                <th data-priority="6" class="text-end">COFINS</th>
+                                <th data-priority="6" class="text-end">PIS</th>
+                                <th data-priority="7" class="text-end">ICMS Orig.</th>
+                                <th data-priority="7" class="text-end">ICMS Dest.</th>
+                                <th data-priority="8" class="text-end">ST</th>
+                                <th data-priority="9" class="text-end">FCP ST</th>
+                                <th data-priority="2" class="text-end">ROL / LB</th>
+                                <th data-priority="1" class="text-end">Unit / Total NF</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalVolumesColeta" tabindex="-1" aria-labelledby="modalVolumesColetaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVolumesColetaLabel">
+                    <i class="fa-duotone fa-chart-pie-simple-circle-dollar me-2 text-br"></i>Volumes Coletados — Nota Fiscal 000000 - 0
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center text-muted py-4" id="volumesColetaLoader">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <div>Carregando volumes coletados...</div>
+                </div>
+                <div class="alert alert-danger d-none" id="volumesColetaError" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Não foi possível carregar os dados de volumes coletados.
+                </div>
+                <div class="text-center text-muted py-4 d-none" id="volumesColetaEmpty">
+                     <div class="alert alert-secondary">
+                        <i class="fa-duotone fa-exclamation-circle me-2"></i> Nenhum registro de volume encontrado para este pedido.
+                    </div>
+                </div>
+                <div class="table-responsive d-none" id="divTblVolumesColeta">
+                    <table class="table table-sm table-striped styled-table align-middle w-100" id="tblVolumesColeta">
+                        <thead>
+                            <tr>
+                                <th data-priority="1">Cód. Item</th>
+                                <th data-priority="5" class="text-start">Descrição</th>
+                                <th data-priority="2" class="text-center">Solic. / Colet.</th>
+                                <th data-priority="3" class="text-center">Data Coleta</th>
+                                <th data-priority="4" class="text-start">Operador</th>
+                                <th data-priority="6" class="text-center">Num. Vol.</th>
+                                <th data-priority="7" class="text-center">Volume / Ender.</th>
+                                <th data-priority="8" class="text-center">Leitura Romaneio</th>
+                                <th data-priority="9" class="text-center">Obs Carga</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalHistoricoFrete" tabindex="-1" aria-labelledby="modalHistoricoFreteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalHistoricoFreteLabel">
+                    <i class="fa-duotone fa-truck-fast me-2 text-br"></i>Histórico do Cálculo de Frete — Pedido #@Model.PedidoId
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i>As informações listadas aqui são um histórico do cálculo de fretes, no dia da programação do pedido. Elas não representam as condições atuais de negociação com as transportadoras.
+                </div>
+                <div class="text-center text-muted py-4" id="historicoFreteLoader">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <div>Carregando histórico...</div>
+                </div>
+                <div class="alert alert-danger d-none" id="historicoFreteError" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Não foi possível carregar o histórico do cálculo de frete.
+                </div>
+                <div class="text-center text-muted py-4 d-none" id="historicoFreteEmpty">
+                    <div class="alert alert-secondary">
+                        <i class="fa-duotone fa-exclamation-circle me-2"></i> Nenhum histórico de cálculo de frete encontrado para este pedido.
+                    </div>
+                </div>
+                <div class="table-responsive d-none" id="divTblHistoricoFrete">
+                    <table class="table table-sm table-striped styled-table align-middle w-100" id="tblHistoricoFrete">
+                        <thead>
+                            <tr>
+                                <th class="hide-lg">ID</th>
+                                <th>Transportadora</th>
+                                <th class="text-center hide-sm">Prazo Logístico</th>
+                                <th class="text-center">Prazo Comercial</th>
+                                <th class="text-end">Valor do Frete</th>
+                                <th class="text-end">Taxa Extra</th>
+                                <th class="text-center">Itens Restritos</th>
+                                <th class="text-center hide-md">Cliente Restrito</th>
+                                <th class="text-center hide-sm">Cliente Fixo</th>
+                                <th class="text-center hide-md">Obrig. Canal Venda</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCalculoFrete" tabindex="-1" aria-labelledby="modalCalculoFreteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCalculoFreteLabel">
+                    <i class="fa-duotone fa-truck-fast me-2 text-br"></i>Simulação de Frete — Pedido #@Model.PedidoId
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i>As informações listadas aqui são uma simulação fretes atualizada, com os dados do pedido (origem, destino, peso e valor). Não representam as condições no dia da programação do pedido.
+                </div>
+                <div class="text-center text-muted py-4" id="calculoFreteLoader">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <div>Carregando simulação...</div>
+                </div>
+                <div class="alert alert-danger d-none" id="calculoFreteError" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Não foi possível simular frete para o pedido.
+                </div>
+                <div class="text-center text-muted py-4 d-none" id="calculoFreteEmpty">
+                    <div class="alert alert-secondary">
+                        <i class="fa-duotone fa-exclamation-circle me-2"></i> Nenhuma transportadora encontrada na simulação com este pedido.
+                    </div>
+                </div>
+                <div class="table-responsive d-none" id="divTblCalculoFrete">
+                    <table class="table table-sm table-striped styled-table align-middle w-100" id="tblCalculoFrete">
+                        <thead>
+                            <tr>
+                                <th class="hide-lg">ID</th>
+                                <th>Transportadora</th>
+                                <th class="text-center hide-sm">Prazo Logístico</th>
+                                <th class="text-center">Prazo Comercial</th>
+                                <th class="text-end">Valor do Frete</th>
+                                <th class="text-end">Taxa Extra</th>
+                                <th class="text-center">Itens Restritos</th>
+                                <th class="text-center hide-md">Cliente Restrito</th>
+                                <th class="text-center hide-sm">Cliente Fixo</th>
+                                <th class="text-center hide-md">Obrig. Canal Venda</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.min.js"></script>
+    <script type="text/javascript">        
+        document.addEventListener('DOMContentLoaded', function() {
+
+        // --- Integração SAP (lazy load) ---
+        const sapCollapse = document.getElementById('collapseSAP');
+
+        if (sapCollapse) {
+        const loader = document.getElementById('sapIntegrationLoader');
+        const error = document.getElementById('sapIntegrationError');
+        const empty = document.getElementById('sapIntegrationEmpty');
+        const tableWrapper = document.getElementById('divTblIntegracaoSAP');
+        const tableBody = document.querySelector('#tblIntegracaoSAP tbody');
+        const endpoint = '@Url.Action("IntegracaoSap", "Pedidos", new { pedido = Model.PedidoId })';
+        let loaded = false;
+        let loading = false;
+
+        function toggleState(element, show) {
+        if (element) {
+        element.classList.toggle('d-none', !show);
+        }
+        }
+
+        function createCell(value, className) {
+        const cell = document.createElement('td');
+        cell.textContent = value || '';
+
+        if (className) {
+        cell.className = className;
+        }
+
+        return cell;
+        }
+
+        async function loadSapIntegration() {
+        if (loaded || loading) {
+        return;
+        }
+
+        loading = true;
+        toggleState(loader, true);
+        toggleState(error, false);
+        toggleState(empty, false);
+        toggleState(tableWrapper, false);
+
+        try {
+        const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+        }
+        });
+
+        if (!response.ok) {
+        throw new Error('Falha ao carregar a integração SAP.');
+        }
+
+        const items = await response.json();
+        tableBody.innerHTML = '';
+
+        if (!items || items.length === 0) {
+        toggleState(empty, true);
+        loaded = true;
+        return;
+        }
+
+        items.forEach(function(item) {
+        const row = document.createElement('tr');
+        row.appendChild(createCell(item.nrPedCli, 'text-center hide-sm'));
+        row.appendChild(createCell(item.ordemVenda, 'text-center'));
+        row.appendChild(createCell(item.remessaSAP, 'text-center hide-lg'));
+        row.appendChild(createCell(item.msgRetorno));
+        row.appendChild(createCell(item.dtHrEnvioSAP, 'text-center hide-lg'));
+        row.appendChild(createCell(item.tipoOVSAP, 'text-center hide-md'));
+        row.appendChild(createCell(item.faturaSAP, 'text-center hide-lg'));
+        row.appendChild(createCell(item.nrNF, 'text-center'));
+        tableBody.appendChild(row);
+        });
+
+        toggleState(tableWrapper, true);
+        loaded = true;
+        }
+        catch {
+        toggleState(error, true);
+        }
+        finally {
+        toggleState(loader, false);
+        loading = false;
+        }
+        }
+
+        sapCollapse.addEventListener('shown.bs.collapse', loadSapIntegration);
+        }
+
+        // --- Análise de Crédito (lazy load) ---
+        const creditoCollapse = document.getElementById('collapseCredito');
+
+        if (creditoCollapse) {
+        const creditoLoader = document.getElementById('creditoLoader');
+        const creditoError = document.getElementById('creditoError');
+        const creditoEmpty = document.getElementById('creditoEmpty');
+        const creditoContent = document.getElementById('divCreditoContent');
+        const creditoEndpoint = '@Url.Action("AnaliseCredito", "Pedidos", new { pedido = Model.PedidoId })';
+        let creditoLoaded = false;
+
+        function toggleCreditoState(element, show) {
+        if (element) element.classList.toggle('d-none', !show);
+        }
+
+        function statusBadge(flagAprovado, label) {
+        if (flagAprovado === 0) return '<span class="badge-status badge-status-warning"><i class="fa-solid fa-clock me-1"></i>' + label + '</span>';
+        if (flagAprovado === 1) return '<span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>' + label + '</span>';
+        return '<span class="badge-status badge-status-danger"><i class="fa-solid fa-times me-1"></i>' + label + '</span>';
+        }
+
+        async function loadAnaliseCredito() {
+        if (creditoLoaded) return;
+
+        toggleCreditoState(creditoLoader, true);
+        toggleCreditoState(creditoError, false);
+        toggleCreditoState(creditoEmpty, false);
+        toggleCreditoState(creditoContent, false);
+
+        try {
+        const response = await fetch(creditoEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) {
+        if (response.status === 404) {
+        toggleCreditoState(creditoEmpty, true);
+        creditoLoaded = true;
+        return;
+        }
+        throw new Error();
+        }
+
+        const data = await response.json();
+
+        if (!data) {
+        toggleCreditoState(creditoEmpty, true);
+        creditoLoaded = true;
+        return;
+        }
+
+        creditoContent.innerHTML =
+        '<div class="cad-row">' +
+        '<div class="cad-label text-muted">Status</div>' +
+        '<div class="cad-info">' + statusBadge(data.flagAprovado, data.statusAprovacao || '') + '</div>' +
+        '</div>' +
+        '<div class="cad-row">' +
+        '<div class="cad-label text-muted">Motivo do Bloqueio</div>' +
+        '<div class="cad-info">' + (data.motivoBloqueio || '—') + '</div>' +
+        '</div>' +
+        '<div class="cad-row">' +
+        '<div class="cad-label text-muted">Data / Hora do Bloqueio</div>' +
+        '<div class="cad-info">' + (data.dataHoraBloqueio || '—') + '</div>' +
+        '</div>' +
+        '<div class="cad-row">' +
+        '<div class="cad-label text-muted">Aprovador</div>' +
+        '<div class="cad-info">' + (data.nmUsuario || '—') + '</div>' +
+        '</div>' +
+        '<div class="cad-row">' +
+        '<div class="cad-label text-muted">Data / Hora da Aprovação</div>' +
+        '<div class="cad-info">' + (data.dataHoraAprovacao || '—') + '</div>' +
+        '</div>' +
+        '<div class="cad-row">' +
+        '<div class="cad-label text-muted">Motivo da Aprovação</div>' +
+        '<div class="cad-info">' + (data.motivoAprovacao || '—') + '</div>' +
+        '</div>';
+
+        toggleCreditoState(creditoContent, true);
+        creditoLoaded = true;
+        }
+        catch {
+        toggleCreditoState(creditoError, true);
+        }
+        finally {
+        toggleCreditoState(creditoLoader, false);
+        }
+        }
+
+        creditoCollapse.addEventListener('shown.bs.collapse', loadAnaliseCredito);
+        }
+
+        // --- Itens Br Supply (lazy load) ---
+        const itensBrCollapse = document.getElementById('collapseItensBR');
+
+        if (itensBrCollapse) {
+        const itensBrLoader = document.getElementById('itensBrLoader');
+        const itensBrError = document.getElementById('itensBrError');
+        const itensBrEmpty = document.getElementById('itensBrEmpty');
+        const divTblItensBr = document.getElementById('divTblItensBrSupply');
+        const itensBrTbody = document.querySelector('#tblItensBrSupply tbody');
+        const itensBrEndpoint = '@Url.Action("ItensBrSupply", "Pedidos", new { pedido = Model.PedidoId })';
+        let itensBrLoaded = false;
+        let dtInstanceItens = null;
+
+        function toggleItensBrState(element, show) {
+        if (element) {
+        element.classList.toggle('d-none', !show);
+        }
+        }
+
+        function fmtBrlItens(value) {
+        if (value === null || value === undefined) return '—';
+        return 'R$ ' + Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function fmtPerItens(value) {
+        if (value === null || value === undefined) return '—';
+        return Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+        }
+
+        async function loadItensBrSupply() {
+        if (itensBrLoaded) return;
+
+        toggleItensBrState(itensBrLoader, true);
+        toggleItensBrState(itensBrError, false);
+        toggleItensBrState(itensBrEmpty, false);
+        toggleItensBrState(divTblItensBr, false);
+
+        try {
+        const response = await fetch(itensBrEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleItensBrState(itensBrEmpty, true);
+        itensBrLoaded = true;
+        return;
+        }
+
+        itensBrTbody.innerHTML = '';
+        items.forEach(function(item) {
+        const row = document.createElement('tr');
+        var vlrOriginalHtml = '';
+        if (item.vlrOriginal > 0) {
+        vlrOriginalHtml = '<small class="text-muted text-decoration-line-through">' + fmtBrlItens(item.vlrOriginal) + '</small><br />';
+        } else {
+        vlrOriginalHtml = '';
+        }
+
+        row.innerHTML =
+        '<td><img class="icone-produto" src="' + (item.foto || '') + '" /></td>' +
+        '<td class="text-center">' + (item.cdItem || '') + '</td>' +
+        '<td>' + (item.nmItem || '') + '</td>' +
+        '<td class="text-center fw-semibold">' + item.qtItem + '</td>' +
+        '<td class="text-end text-nowrap" data-order="' + item.vlrFinal + '">' + vlrOriginalHtml + fmtBrlItens(item.vlrFinal) + '</td>' +
+        '<td class="text-end text-nowrap fw-semibold" data-order="' + item.vlrTotal + '">' + fmtBrlItens(item.vlrTotal) + '</td>' +
+        '<td class="text-center">' + (item.ordemCliente || '') + '</td>' +
+        '<td class="text-center" data-order="' + item.situacaoItem + '">' + (item.situacaoItem || '') + '<br /><small class="text-muted">' + (item.dtAlocacao || '') + '</small></td>' +
+        '<td class="text-end" data-order="' + item.margemCalculada + '">' + fmtPerItens(item.margemCalculada) + '</td>' +
+        '<td class="text-center">' + (item.versao || '') + '</td>';
+        itensBrTbody.appendChild(row);
+        });
+
+        toggleItensBrState(divTblItensBr, true);
+
+        const exportBodyFormat = function(data) {
+        return data.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+        };
+
+        dtInstanceItens = new DataTable('#tblItensBrSupply', {
+        pageLength: 10,
+        lengthMenu: [[-1, 10, 25, 50, 100, -1], ["Todos", 10, 25, 50, 100]],
+        order: [[1, 'asc']],
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: { details: false },
+        scrollX: true,
+        layout: {
+        topStart: 'search',
+        topEnd: 'pageLength',
+        bottomStart: 'info',
+        bottomEnd: 'paging'
+        },
+        language: {
+        emptyTable: 'Nenhum registro encontrado',
+        info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+        infoEmpty: 'Nenhum registro',
+        infoFiltered: '(filtrado de _MAX_ registros)',
+        lengthMenu: 'Exibir _MENU_ registros',
+        search: 'Buscar:',
+        zeroRecords: 'Nenhum registro encontrado',
+        paginate: {
+        first: 'Primeiro',
+        last: 'Último',
+        next: 'Próximo',
+        previous: 'Anterior'
+        }
+        },
+        columnDefs: [
+        { className: 'text-end text-nowrap', targets: [4, 5, 8] },
+        { className: 'text-center', targets: [3, 7, 9] },
+        { className: 'text-nowrap', targets: [0, 1] }
+        ]
+        });
+
+        itensBrLoaded = true;
+        }
+        catch {
+        toggleItensBrState(itensBrError, true);
+        }
+        finally {
+        toggleItensBrState(itensBrLoader, false);
+        }
+        }
+        itensBrCollapse.addEventListener('shown.bs.collapse', function() {
+        loadItensBrSupply();
+        if (dtInstanceItens) {
+        dtInstanceItens.columns.adjust();
+        }
+        });
+        }
+
+        // --- Itens Marketplace (lazy load) ---
+        const itensMarketplaceCollapse = document.getElementById('collapseItensMktplc');
+
+        if (itensMarketplaceCollapse) {
+        const itensMarketplaceLoader = document.getElementById('itensMarketplaceLoader');
+        const itensMarketplaceError = document.getElementById('itensMarketplaceError');
+        const itensMarketplaceEmpty = document.getElementById('itensMarketplaceEmpty');
+        const divTblItensMarketplace = document.getElementById('divTblItensMarketplace');
+        const itensMarketplaceTbody = document.querySelector('#tblItensMarketplace tbody');
+        const itensMarketplaceEndpoint = '@Url.Action("ItensMarketplace", "Pedidos", new { pedido = Model.PedidoId })';
+        let itensMarketplaceLoaded = false;
+        let dtInstanceItens = null;
+
+        function toggleItensMarketplaceState(element, show) {
+        if (element) {
+        element.classList.toggle('d-none', !show);
+        }
+        }
+
+        function fmtMarketplacelItens(value) {
+        if (value === null || value === undefined) return '—';
+        return 'R$ ' + Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function fmtPerItens(value) {
+        if (value === null || value === undefined) return '—';
+        return Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+        }
+
+        async function loadItensMarketplace() {
+        if (itensMarketplaceLoaded) return;
+
+        toggleItensMarketplaceState(itensMarketplaceLoader, true);
+        toggleItensMarketplaceState(itensMarketplaceError, false);
+        toggleItensMarketplaceState(itensMarketplaceEmpty, false);
+        toggleItensMarketplaceState(divTblItensMarketplace, false);
+
+        try {
+        const response = await fetch(itensMarketplaceEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleItensMarketplaceState(itensMarketplaceEmpty, true);
+        itensMarketplaceLoaded = true;
+        return;
+        }
+
+        itensMarketplaceTbody.innerHTML = '';
+        items.forEach(function(item) {
+        const row = document.createElement('tr');
+        var vlrOriginalHtml = '';
+        if (item.vlrOriginal > 0) {
+        vlrOriginalHtml = '<small class="text-muted text-decoration-line-through">' + fmtMarketplacelItens(item.vlrOriginal) + '</small><br />';
+        } else {
+        vlrOriginalHtml = '';
+        }
+
+        row.innerHTML =
+        '<td><img class="icone-produto" src="' + (item.foto || '') + '" /></td>' +
+        '<td class="text-center">' + (item.cdItem || '') + '</td>' +
+        '<td>' + (item.nmItem || '') + '</td>' +
+        '<td>' + (item.nmFornecedor || '') + '</td>' +
+        '<td class="text-center fw-semibold">' + item.qtItem + '</td>' +
+        '<td class="text-end text-nowrap" data-order="' + item.vlrFinal + '">' + vlrOriginalHtml + fmtMarketplacelItens(item.vlrFinal) + '</td>' +
+        '<td class="text-end text-nowrap fw-semibold" data-order="' + item.vlrTotal + '">' + fmtMarketplacelItens(item.vlrTotal) + '</td>' +
+        '<td class="text-center">' + (item.ordemCliente || '') + '</td>';
+        itensMarketplaceTbody.appendChild(row);
+        });
+
+        toggleItensMarketplaceState(divTblItensMarketplace, true);
+
+        const exportBodyFormat = function(data) {
+        return data.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+        };
+
+        dtInstanceItens = new DataTable('#tblItensMarketplace', {
+        pageLength: 10,
+        lengthMenu: [[-1, 10, 25, 50, 100, -1], ["Todos", 10, 25, 50, 100]],
+        order: [[1, 'asc']],
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: { details: false },
+        scrollX: true,
+        layout: {
+        topStart: 'search',
+        topEnd: 'pageLength',
+        bottomStart: 'info',
+        bottomEnd: 'paging'
+        },
+        language: {
+        emptyTable: 'Nenhum registro encontrado',
+        info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+        infoEmpty: 'Nenhum registro',
+        infoFiltered: '(filtrado de _MAX_ registros)',
+        lengthMenu: 'Exibir _MENU_ registros',
+        search: 'Buscar:',
+        zeroRecords: 'Nenhum registro encontrado',
+        paginate: {
+        first: 'Primeiro',
+        last: 'Último',
+        next: 'Próximo',
+        previous: 'Anterior'
+        }
+        },
+        columnDefs: [
+        { className: 'text-end text-nowrap', targets: [5, 6] },
+        { className: 'text-center', targets: [4, 7] },
+        { className: 'text-nowrap', targets: [0, 1] }
+        ]
+        });
+
+        itensMarketplaceLoaded = true;
+        }
+        catch {
+        toggleItensMarketplaceState(itensMarketplaceError, true);
+        }
+        finally {
+        toggleItensMarketplaceState(itensMarketplaceLoader, false);
+        }
+        }
+        itensMarketplaceCollapse.addEventListener('shown.bs.collapse', function() {
+        loadItensMarketplace();
+        if (dtInstanceItens) {
+        dtInstanceItens.columns.adjust();
+        }
+        });
+        }
+
+        // --- Itens em Ruptura (lazy load) ---
+        const itensBrRupturaCollapse = document.getElementById('collapseItensRuptura');
+
+        if (itensBrRupturaCollapse) {
+        const itensBrRupturaLoader = document.getElementById('itensBrRupturaLoader');
+        const itensBrRupturaError = document.getElementById('itensBrRupturaError');
+        const itensBrRupturaEmpty = document.getElementById('itensBrRupturaEmpty');
+        const divTblItensBrRuptura = document.getElementById('divTblItensBrRuptura');
+        const itensBrRupturaTbody = document.querySelector('#tblItensBrRuptura tbody');
+        const itensBrRupturaEndpoint = '@Url.Action("ItensBrRuptura", "Pedidos", new { pedido = Model.PedidoId })';
+        let itensBrRupturaLoaded = false;
+        let dtInstanceItensRuptura = null;
+
+        function toggleItensBrRupturaState(element, show) {
+        if (element) {
+        element.classList.toggle('d-none', !show);
+        }
+        }
+
+        function fmtBrlItens(value) {
+        if (value === null || value === undefined) return '—';
+        return 'R$ ' + Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function fmtPerItens(value) {
+        if (value === null || value === undefined) return '—';
+        return Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+        }
+
+        async function loadItensBrRuptura() {
+        if (itensBrRupturaLoaded) return;
+
+        toggleItensBrRupturaState(itensBrRupturaLoader, true);
+        toggleItensBrRupturaState(itensBrRupturaError, false);
+        toggleItensBrRupturaState(itensBrRupturaEmpty, false);
+        toggleItensBrRupturaState(divTblItensBrRuptura, false);
+
+        try {
+        const response = await fetch(itensBrRupturaEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleItensBrRupturaState(itensBrRupturaEmpty, true);
+        itensBrRupturaLoaded = true;
+        return;
+        }
+
+        itensBrRupturaTbody.innerHTML = '';
+        items.forEach(function(item) {
+        const row = document.createElement('tr');
+
+        row.innerHTML =
+        '<td><img class="icone-produto" src="' + (item.foto || '') + '" /></td>' +
+        '<td class="text-center">' + (item.cdItem || '') + '</td>' +
+        '<td>' + (item.nmItem || '') + '</td>' +
+        '<td class="text-center fw-semibold">' + item.qtItem + '</td>' +
+        '<td class="text-end text-nowrap" data-order="' + item.vlrTotal + '">' + fmtBrlItens(item.vlrTotal) + '</td>' +
+        '<td>' + (item.mensagemRuptura || '') + '</td>' +
+        '<td class="text-center fw-semibold">' + item.qtDisponivel + '</td>' +
+        '<td class="text-center"><span class="fw-semibold">' + item.qtItemPrevEntrega + '</span><br />' + (item.dtPrevEntrega || '') + '</td>';
+
+        itensBrRupturaTbody.appendChild(row);
+        });
+
+        toggleItensBrRupturaState(divTblItensBrRuptura, true);
+
+        const exportBodyFormat = function(data) {
+        return data.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+        };
+
+        dtInstanceItensRuptura = new DataTable('#tblItensBrRuptura', {
+        pageLength: 10,
+        lengthMenu: [[-1, 10, 25, 50, 100, -1], ["Todos", 10, 25, 50, 100]],
+        order: [[1, 'asc']],
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: { details: false },
+        scrollX: true,
+        layout: {
+        topStart: 'search',
+        topEnd: 'pageLength',
+        bottomStart: 'info',
+        bottomEnd: 'paging'
+        },
+        language: {
+        emptyTable: 'Nenhum registro encontrado',
+        info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+        infoEmpty: 'Nenhum registro',
+        infoFiltered: '(filtrado de _MAX_ registros)',
+        lengthMenu: 'Exibir _MENU_ registros',
+        search: 'Buscar:',
+        zeroRecords: 'Nenhum registro encontrado',
+        paginate: {
+        first: 'Primeiro',
+        last: 'Último',
+        next: 'Próximo',
+        previous: 'Anterior'
+        }
+        },
+        columnDefs: [
+        { className: 'text-end text-nowrap', targets: [4] },
+        { className: 'text-center', targets: [3, 6, 7] },
+        { className: 'text-nowrap', targets: [0, 1] }
+        ]
+        });
+
+        itensBrRupturaLoaded = true;
+        }
+        catch {
+        toggleItensBrRupturaState(itensBrRupturaError, true);
+        }
+        finally {
+        toggleItensBrRupturaState(itensBrRupturaLoader, false);
+        }
+        }
+        itensBrRupturaCollapse.addEventListener('shown.bs.collapse', function() {
+        loadItensBrRuptura();
+        if (dtInstanceItensRuptura) {
+        dtInstanceItensRuptura.columns.adjust();
+        }
+        });
+        }
+
+        // --- Logs de Aprovação (lazy load) ---
+        const aprovacaoCollapse = document.getElementById('collapseAprovacao');
+
+        if (aprovacaoCollapse) {
+        const aprovacaoLoader = document.getElementById('logsAprovacaoLoader');
+        const aprovacaoError = document.getElementById('logsAprovacaoError');
+        const aprovacaoEmpty = document.getElementById('logsAprovacaoEmpty');
+        const divTblAprovacao = document.getElementById('divTblLogsAprovacao');
+        const aprovacaoTbody = document.querySelector('#tblLogsAprovacao tbody');
+        const aprovacaoEndpoint = '@Url.Action("LogsAprovacao", "Pedidos", new { pedido = Model.PedidoId })';
+        let aprovacaoLoaded = false;
+
+        function toggleAprovacaoState(element, show) {
+        if (element) {
+        element.classList.toggle('d-none', !show);
+        }
+        }
+
+        function badgeStatus(statusId, label) {
+        const map = {
+        1: 'badge-status-secondary',
+        2: 'badge-status-warning text-dark',
+        3: 'badge-status-success',
+        4: 'badge-status-danger',
+        5: 'badge-status-dark'
+        };
+        const cls = map[statusId] || 'badge-status-secondary';
+        return '<span class="badge-status ' + cls + '">' + label + '</span>';
+        }
+
+        async function loadLogsAprovacao() {
+        if (aprovacaoLoaded) return;
+
+        toggleAprovacaoState(aprovacaoLoader, true);
+        toggleAprovacaoState(aprovacaoError, false);
+        toggleAprovacaoState(aprovacaoEmpty, false);
+        toggleAprovacaoState(divTblAprovacao, false);
+
+        try {
+        const response = await fetch(aprovacaoEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleAprovacaoState(aprovacaoEmpty, true);
+        aprovacaoLoaded = true;
+        return;
+        }
+
+        aprovacaoTbody.innerHTML = '';
+        items.forEach(function(item) {
+        const row = document.createElement('tr');
+        row.innerHTML =
+        '<td class="text-center">' + item.nrSequencia + '</td>' +
+        '<td>' + (item.nmUsuario || '') + '</td>' +
+        '<td>' + (item.tipoAlcada || '') + '</td>' +
+        '<td class="text-center">' + badgeStatus(item.statusAlcadaID, item.statusAlcada || '') + '</td>' +
+        '<td class="text-center">' + (item.dtAprovacao || '—') + '</td>';
+        aprovacaoTbody.appendChild(row);
+        });
+
+        toggleAprovacaoState(divTblAprovacao, true);
+        aprovacaoLoaded = true;
+        }
+        catch {
+        toggleAprovacaoState(aprovacaoError, true);
+        }
+        finally {
+        toggleAprovacaoState(aprovacaoLoader, false);
+        }
+        }
+
+        aprovacaoCollapse.addEventListener('shown.bs.collapse', loadLogsAprovacao);
+        }
+
+        // --- Notas Fiscais (lazy load — cards) ---
+        const nfCollapse = document.getElementById('collapseNf');
+
+        if (nfCollapse) {
+        const nfLoader = document.getElementById('notasFiscaisLoader');
+        const nfError = document.getElementById('notasFiscaisError');
+        const nfEmpty = document.getElementById('notasFiscaisEmpty');
+        const nfCards = document.getElementById('divNotasFiscaisCards');
+        const nfEndpoint = '@Url.Action("NotasFiscais", "Pedidos", new { pedido = Model.PedidoId })';
+        let nfLoaded = false;
+
+        function toggleNfState(el, show) { if (el) el.classList.toggle('d-none', !show); }
+
+        function fmtBrlNf(v) {
+        if (v === null || v === undefined) return '—';
+        return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function fmtDecNf(v) {
+        if (v === null || v === undefined) return '—';
+        return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function fmtDateNf(v) {
+        if (!v) return '—';
+        return new Date(v).toLocaleDateString('pt-BR');
+        }
+
+        function buildNfCard(item) {
+        const statusNF = Number(item.statusNF);
+        let statusBadge, borderCls;
+        if (statusNF === 0) {
+        statusBadge = '<span class="badge-status badge-status-danger"><i class="fa-solid fa-ban me-1"></i>Cancelada</span>';
+        borderCls = 'border border-danger';
+        } else if (statusNF === 9) {
+        statusBadge = '<span class="badge-status badge-status-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Ocorrência</span>';
+        borderCls = 'border border-warning';
+        } else {
+        statusBadge = '<span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Válida</span>';
+        borderCls = 'border';
+        }
+
+        let cancelHtml = '';
+        if ((statusNF === 0 || statusNF === 9) && item.motivoCancelamento) {
+        cancelHtml = '<div class="alert alert-danger py-1 px-2 mb-2 small mb-3">' +
+        '<i class="fa-solid fa-triangle-exclamation me-1"></i>' + item.motivoCancelamento + '</div>';
+        }
+
+        let atestoHtml = '';
+        if (item.tipoAtestoID === 1) {
+        atestoHtml = '<div class="row g-2">' +
+        '<div class="col-12 me-4">' +
+        '<small class="text-muted d-block">Confirmação de Recebimento (Atesto)</small>' +
+        '<span class="small"><i class="fa-solid fa-check me-1 text-success"></i>' + item.dsAtestoRecebimento + '</span>' +
+        '</div>' +
+        '</div>';
+        } else if (item.tipoAtestoID === 2) {
+        atestoHtml = '<div class="row g-2">' +
+        '<div class="col-12 me-4">' +
+        '<small class="text-muted d-block">Confirmação de Recebimento (Atesto)</small>' +
+        '<span class="small"><i class="fa-solid fa-ban me-1 text-warning"></i>' + item.dsAtestoRecebimento + '</span>' +
+        '</div>' +
+        '</div>';
+        } else if (item.tipoAtestoID === 3) {
+        atestoHtml = '<div class="row g-2">' +
+        '<div class="col-12 me-4">' +
+        '<small class="text-muted d-block">Confirmação de Recebimento (Atesto)</small>' +
+        '<span class="small"><i class="fa-solid fa-xmark me-1 text-danger"></i>' + item.dsAtestoRecebimento + '</span>' +
+        '</div>' +
+        '</div>';
+        }
+      
+
+        const dtEmissaoFmt = item.dtEmissao ? new Date(item.dtEmissao).toISOString().slice(0, 10) : '';
+        const pdfUrl = 'https://www.supplymanager.com.br/danfe/' + dtEmissaoFmt + '/' + item.chave + '-nfe.pdf';
+
+        return '<div class="col-12">' +
+        '<div class="' + borderCls + ' rounded-3 bg-body-tertiary overflow-hidden h-100 d-flex flex-column">' +
+        '<div class="d-flex justify-content-between align-items-center p-3 border-bottom">' +
+        '<div class="row d-flex align-items-center gap-2">' +
+                                
+        '<div class="col-auto me-4 pe-4 border-end">' +
+        '<small class="text-muted d-block mb-1"><i class="fa-duotone fa-file-invoice text-br me-1"></i>Nota Fiscal / Série</small>' +
+        '<span class="fw-bold fs-5">' + (item.nrNotaFiscal || '—') + ' - ' + (item.serie || '—') + '</span>' +
+        '</div>' +
+        '<div class="col me-4">' +
+        '<small class="text-muted d-block"><i class="fa-solid fa-calendar me-1"></i>Emissão</small>' +
+        '<span class="fw-semibold">' + fmtDateNf(item.dtEmissao) + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4 hide-sm">' +
+        '<small class="text-muted d-block mb-1"><i class="fa-solid fa-key me-1"></i>Chave Danfe</small>' +
+        '<span class="font-monospace text-break user-select-all">' + item.chave + '</span>' +
+        '</div>' +
+        '</div>' +
+        statusBadge +
+        '</div>' +
+        '<div class="p-3 flex-grow-1">' +
+        cancelHtml +
+        '<div class="row g-2 mb-3">' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Operação</small>' +
+        '<span>' + (item.operacao || '—') + '</span>' +
+        '</div>' +
+        '<div class="col me-4">' +
+        '<small class="text-muted d-block">Volumes</small>' +
+        '<span class="fw-semibold">' + (item.qtdeVolumes ?? '—') + '</span>' +
+        '</div>' +
+        '<div class="col me-4">' +
+        '<small class="text-muted d-block">Peso (kg)</small>' +
+        '<span>' + fmtDecNf(item.pesoBruto) + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Cub. (m³)</small>' +
+        '<span>' + (item.cubagemNF || '—') + '</span>' +
+        '</div>' +
+        '</div>' +
+        '<div class="row g-2 mb-3">' +
+        '<div class="col me-4 hide-sm">' +
+        '<small class="text-muted d-block">CNPJ Emitente</small>' +
+        '<span class="small">' + (item.emitCNPJ || '—') + '</span>' +
+        '</div>' +
+        '<div class="col me-4">' +
+        '<small class="text-muted d-block">Versão</small>' +
+        '<span>' + (item.versao || '—') + '</span>' +
+        '</div>' +
+        '<div class="col me-4 justify-content-end text-end border-start ps-3">' +
+        '<small class="text-muted d-block">Valor Total</small>' +
+        '<span class="fw-bold text-br fs-6">' + fmtBrlNf(item.vlrTotalNF) + '</span>' +
+        '</div>' +
+        '</div>' +
+        atestoHtml +
+        '</div>' +
+        '<div class="d-flex justify-content-end align-items-center px-3 py-2 border-top">' +
+        '<a href="' + pdfUrl + '" target="_blank" class="btn btn-sm btn-outline-primary me-2"><i class="fa-solid fa-file-invoice me-2"></i> Visualizar PDF </a>' +
+        '<a href="#" class="btn btn-sm btn-outline-info me-2" data-chave="' + item.chave + '" id="btnDownloadXML"><i class="fa-solid fa-file-xml me-2"></i> Download do XML </a>' +
+        '<a href="#" class="btn btn-sm btn-outline-secondary me-2 btnVisualizarVolumes" data-pedcli="' + item.versao + '-' + @Model.Header.NumeroPedido + '" id="btnVisualizarVolumes"><i class="fa-solid fa-box-open me-2"></i> Volumes </a>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+        }
+
+        async function loadNotasFiscais() {
+        if (nfLoaded) return;
+
+        toggleNfState(nfLoader, true);
+        toggleNfState(nfError, false);
+        toggleNfState(nfEmpty, false);
+        toggleNfState(nfCards, false);
+
+        try {
+        const response = await fetch(nfEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleNfState(nfEmpty, true);
+        nfLoaded = true;
+        return;
+        }
+
+        nfCards.innerHTML = items.map(buildNfCard).join('');
+        toggleNfState(nfCards, true);
+        nfLoaded = true;
+        }
+        catch {
+        toggleNfState(nfError, true);
+        }
+        finally {
+        toggleNfState(nfLoader, false);
+        }
+        }
+
+        nfCollapse.addEventListener('shown.bs.collapse', loadNotasFiscais);
+
+        nfCards.addEventListener('click', function(e) {
+        const btn = e.target.closest('#btnDownloadXML');
+        if (!btn) return;
+        e.preventDefault();
+        const chave = btn.dataset.chave;
+        if (chave) {
+        window.location.href = '@Url.Action("DownloadInvoiceXml", "Pedidos", new { chave = "__CHAVE__" })'.replace('__CHAVE__', chave);
+        }
+        });
+
+        // --- Modal Volumes Coleta ---
+        const volumesModalEl = document.getElementById('modalVolumesColeta');
+        const volumesModal = new bootstrap.Modal(volumesModalEl);
+        const volumesLoader = document.getElementById('volumesColetaLoader');
+        const volumesError = document.getElementById('volumesColetaError');
+        const volumesEmpty = document.getElementById('volumesColetaEmpty');
+        const divTblVolumes = document.getElementById('divTblVolumesColeta');
+        const volumesTbody = document.querySelector('#tblVolumesColeta tbody');
+        const volumesTitle = document.getElementById('modalVolumesColetaLabel');
+        let dtInstanceVolumes = null;
+
+        function toggleVolumesState(element, show) {
+        if (element) element.classList.toggle('d-none', !show);
+        }
+
+        nfCards.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.btnVisualizarVolumes');
+        if (!btn) return;
+        e.preventDefault();
+
+        const pedCli = btn.dataset.pedcli;
+        if (!pedCli) return;
+
+        const nfLabel = btn.closest('.col-12')?.querySelector('.fw-bold.fs-5')?.textContent || '';
+        volumesTitle.innerHTML = '<i class="fa-duotone fa-box-open me-2 text-br"></i>Volumes Coletados — Nota Fiscal ' + nfLabel;
+
+        volumesModal.show();
+
+        if (dtInstanceVolumes) {
+        dtInstanceVolumes.destroy();
+        dtInstanceVolumes = null;
+        }
+        volumesTbody.innerHTML = '';
+
+        toggleVolumesState(volumesLoader, true);
+        toggleVolumesState(volumesError, false);
+        toggleVolumesState(volumesEmpty, false);
+        toggleVolumesState(divTblVolumes, false);
+
+        try {
+        const endpoint = '@Url.Action("VolumesColeta", "Pedidos")' + '?pedCli=' + encodeURIComponent(pedCli);
+        const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleVolumesState(volumesEmpty, true);
+        return;
+        }
+
+        items.forEach(function(item) {
+        const row = document.createElement('tr');
+        row.innerHTML =
+        '<td>' + (item.cdItem || '') + '</td>' +
+        '<td>' + (item.nmItem || '') + '</td>' +
+        '<td class="text-center">' + item.qtSolicitada + ' / ' + item.qtColetada + '</td>' +
+        '<td class="text-center">' + (item.dataColeta || '') + '</td>' +
+        '<td>' + (item.nmOperador || '') + '</td>' +
+        '<td class="text-center">' + item.numVol + '</td>' +
+        '<td class="text-center">' + (item.volume || '') + '<br /><small class="text-muted">' + (item.enderecoAtual || '') + '</small></td>' +
+        '<td class="text-center">' + (item.dtLeituraRomaneio || '') + '</td>' +
+        '<td>' + (item.obsCarga || '') + '</td>';
+        volumesTbody.appendChild(row);
+        });
+
+        toggleVolumesState(divTblVolumes, true);
+
+        dtInstanceVolumes = new DataTable('#tblVolumesColeta', {
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        order: [[0, 'asc']],
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: { details: false },
+        scrollX: true,
+        layout: {
+        topStart: 'search',
+        topEnd: 'pageLength',
+        bottomStart: 'info',
+        bottomEnd: 'paging'
+        },
+        language: {
+        emptyTable: 'Nenhum registro encontrado',
+        info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+        infoEmpty: 'Nenhum registro',
+        infoFiltered: '(filtrado de _MAX_ registros)',
+        lengthMenu: 'Exibir _MENU_ registros',
+        search: 'Buscar:',
+        zeroRecords: 'Nenhum registro encontrado',
+        paginate: {
+        first: 'Primeiro',
+        last: 'Último',
+        next: 'Próximo',
+        previous: 'Anterior'
+        }
+        },
+        columnDefs: [
+        { className: 'text-center', targets: [2, 3, 5, 6, 7] }
+        ]
+        });
+        }
+        catch {
+        toggleVolumesState(volumesError, true);
+        }
+        finally {
+        toggleVolumesState(volumesLoader, false);
+        }
+        });
+
+        volumesModalEl.addEventListener('shown.bs.modal', function() {
+        if (dtInstanceVolumes) {
+        dtInstanceVolumes.columns.adjust();
+        }
+        });
+        }
+
+        // --- Romaneios (lazy load — cards) ---
+        const romaneioCollapse = document.getElementById('collapseRomaneio');
+
+        if (romaneioCollapse) {
+        const romaneioLoader = document.getElementById('romaneiosLoader');
+        const romaneioError = document.getElementById('romaneiosError');
+        const romaneioEmpty = document.getElementById('romaneiosEmpty');
+        const romaneioCards = document.getElementById('divRomaneiosCards');
+        const romaneioEndpoint = '@Url.Action("Romaneios", "Pedidos", new { pedido = Model.PedidoId })';
+        let romaneioLoaded = false;
+
+        function toggleRomaneioState(element, show) {
+        if (element) element.classList.toggle('d-none', !show);
+        }
+
+        function buildRomaneioCard(item) {
+        let entregaHtml = '';
+        if (item.dtEntrega) {
+        entregaHtml =
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block"><i class="fa-solid fa-flag-checkered me-1"></i>Entrega</small>' +
+        '<span class="fw-semibold text-success">' + item.dtEntrega + '</span>' +
+        '</div>';
+        }
+
+        let recebedorHtml = '';
+        if (item.nmRecebedor) {
+        if (item.nmRecebedor === 'EXTRAVIO TOTAL' || item.nmRecebedor === 'Retorno para Reembarque') {
+        recebedorHtml =
+        '<div class="col me-4">' +
+        '<small class="text-muted d-block">Recebedor</small>' +
+        '<span class="text-danger fw-semibold"><i class="fa-solid fa-exclamation-triangle me-2"></i>' + item.nmRecebedor + '</span>' +
+        '</div>';
+        } else {
+        recebedorHtml =
+        '<div class="col me-4">' +
+        '<small class="text-muted d-block">Recebedor</small>' +
+        '<span>' + item.nmRecebedor + '</span>' +
+        '</div>';
+        }
+        }
+
+        let hubHtml = '';
+        if (item.nmHub) {
+        hubHtml =
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Hub</small>' +
+        '<span>' + item.nmHub + '</span>' +
+        '</div>';
+        }
+
+        let comprovanteHtml = '';
+        if (item.flagTemComprovante === 1) {
+        comprovanteHtml = '<div class="d-flex justify-content-end align-items-center px-3 py-2 border-top">' +
+        '<a href="https://www.supplymanager.com.br/comprovantes/' + item.nmArquivoComprovante + '" target="_blank" class="btn btn-sm btn-outline-primary me-2"><i class="fa-solid fa-stamp me-2"></i> Comprovante de Entrega </a>' +
+        '</div>';
+        }
+
+        let statusBadge, borderCls;
+        if (item.situacaoRomaneio === 'Em Embarque') {
+        statusBadge = '<span class="badge-status badge-status-info"><i class="fa-solid fa-forklift me-1"></i>Em Embarque</span>';
+        borderCls = 'border border-info';
+        } else if (item.situacaoRomaneio === 'Em Rota') {
+        statusBadge = '<span class="badge-status badge-status-primary"><i class="fa-solid fa-truck-fast me-1"></i>Em Rota</span>';
+        borderCls = 'border border-primary';
+        } else if (item.situacaoRomaneio === 'Com Ocorrência') {
+        statusBadge = '<span class="badge-status badge-status-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Com Ocorrência</span>';
+        borderCls = 'border border-warning';
+        } else {
+        statusBadge = '<span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Entregue</span>';
+        statusBadge = '<span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Entregue</span>';
+        borderCls = 'border';
+        }
+
+        return '<div class="col-12">' +
+        '<div class="' + borderCls + ' border rounded-3 bg-body-tertiary overflow-hidden h-100 d-flex flex-column">' +
+        '<div class="d-flex justify-content-between align-items-center p-3 border-bottom">' +
+        '<div class="row d-flex align-items-center gap-2">' +
+        '<div class="col-auto me-4 pe-4 border-end">' +
+        '<small class="text-muted d-block mb-1"><i class="fa-duotone fa-forklift text-br me-1"></i>Romaneio</small>' +
+        '<span class="fw-bold fs-5">' + (item.romaneioID || '—') + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4 pe-4">' +
+        '<small class="text-muted d-block"><i class="fa-solid fa-file-invoice me-1"></i>NF / Série</small>' +
+        '<span class="fw-semibold">' + (item.nrNotaFiscal || '—') + ' - ' + (item.serie || '—') + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4 ps-4 border-start">' +
+        '<small class="text-muted d-block">Tipo</small>' +
+        '<span class="">' + (item.nmTipoRomaneio || '—') + '</span>' +
+        '</div>' +
+        hubHtml +
+        '</div>' +
+        statusBadge +
+        '</div>' +
+        '<div class="p-3 flex-grow-1">' +
+        '<div class="row g-2 mb-3">' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Transportadora</small>' +
+        '<span class="fw-semibold">' + (item.transportadora || '—') + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Estabelecimento</small>' +
+        '<span>' + (item.nmCurto || '') + '</span>' +
+        '</div>' +
+        '</div>' +
+        '<div class="row g-2">' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block"><i class="fa-solid fa-calendar-arrow-up me-1"></i>Despacho</small>' +
+        '<span>' + (item.dtPortaria || '—') + '</span>' +
+        '</div>' +
+        entregaHtml +
+        recebedorHtml +
+        '</div>' +
+        '</div>' +
+        comprovanteHtml +
+        '</div>' +
+        '</div>';
+        }
+
+        async function loadRomaneios() {
+        if (romaneioLoaded) return;
+
+        toggleRomaneioState(romaneioLoader, true);
+        toggleRomaneioState(romaneioError, false);
+        toggleRomaneioState(romaneioEmpty, false);
+        toggleRomaneioState(romaneioCards, false);
+
+        try {
+        const response = await fetch(romaneioEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleRomaneioState(romaneioEmpty, true);
+        romaneioLoaded = true;
+        return;
+        }
+
+        romaneioCards.innerHTML = items.map(buildRomaneioCard).join('');
+        toggleRomaneioState(romaneioCards, true);
+        romaneioLoaded = true;
+        }
+        catch {
+        toggleRomaneioState(romaneioError, true);
+        }
+        finally {
+        toggleRomaneioState(romaneioLoader, false);
+        }
+        }
+
+        romaneioCollapse.addEventListener('shown.bs.collapse', loadRomaneios);
+        }
+
+        // --- Logs de Tracking (lazy load) ---
+        const trackingCollapse = document.getElementById('collapseTracking');
+
+        if (trackingCollapse) {
+        const trackingLoader = document.getElementById('logsTrackingLoader');
+        const trackingError = document.getElementById('logsTrackingError');
+        const trackingEmpty = document.getElementById('logsTrackingEmpty');
+        const divTblTracking = document.getElementById('divTblLogsTracking');
+        const trackingTbody = document.querySelector('#tblLogsTracking tbody');
+        const trackingEndpoint = '@Url.Action("LogsTracking", "Pedidos", new { pedido = Model.PedidoId })';
+        let trackingLoaded = false;
+        let dtInstanceTracking = null;
+
+        function toggleTrackingState(element, show) {
+        if (element) element.classList.toggle('d-none', !show);
+        }
+
+        async function loadLogsTracking() {
+        if (trackingLoaded) return;
+
+        toggleTrackingState(trackingLoader, true);
+        toggleTrackingState(trackingError, false);
+        toggleTrackingState(trackingEmpty, false);
+        toggleTrackingState(divTblTracking, false);
+
+        try {
+        const response = await fetch(trackingEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleTrackingState(trackingEmpty, true);
+        trackingLoaded = true;
+        return;
+        }
+
+        trackingTbody.innerHTML = '';
+        items.forEach(function(item) {
+        const row = document.createElement('tr');
+        row.innerHTML =
+        '<td class="text-center text-nowrap">' + (item.dtEvento || '—') + '</td>' +
+        '<td><span class="fw-semibold">' + (item.evento || '') + '</span><br /><span class="text-muted">' + (item.detalhes || '') + '</span></td>' +
+        '<td>' + (item.usuario || '') + '</td>';
+        trackingTbody.appendChild(row);
+        });
+
+        toggleTrackingState(divTblTracking, true);
+
+        dtInstanceTracking = new DataTable('#tblLogsTracking', {
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        order: [[0, 'desc']],
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: { details: false },
+        scrollX: true,
+        layout: {
+        topStart: 'search',
+        topEnd: 'pageLength',
+        bottomStart: 'info',
+        bottomEnd: 'paging'
+        },
+        language: {
+        emptyTable: 'Nenhum registro encontrado',
+        info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+        infoEmpty: 'Nenhum registro',
+        infoFiltered: '(filtrado de _MAX_ registros)',
+        lengthMenu: 'Exibir _MENU_ registros',
+        search: 'Buscar:',
+        zeroRecords: 'Nenhum registro encontrado',
+        paginate: {
+        first: 'Primeiro',
+        last: 'Último',
+        next: 'Próximo',
+        previous: 'Anterior'
+        }
+        },
+        columnDefs: [
+        { className: 'text-center text-nowrap', targets: [0] }
+        ]
+        });
+
+        trackingLoaded = true;
+        }
+        catch {
+        toggleTrackingState(trackingError, true);
+        }
+        finally {
+        toggleTrackingState(trackingLoader, false);
+        }
+        }
+
+        trackingCollapse.addEventListener('shown.bs.collapse', function() {
+        loadLogsTracking();
+        if (dtInstanceTracking) {
+        dtInstanceTracking.columns.adjust();
+        }
+        });
+        }
+
+        // --- Chamados (lazy load — cards) ---
+        const chamadosCollapse = document.getElementById('collapseChamados');
+
+        if (chamadosCollapse) {
+        const chamadosLoader = document.getElementById('chamadosLoader');
+        const chamadosError = document.getElementById('chamadosError');
+        const chamadosEmpty = document.getElementById('chamadosEmpty');
+        const chamadosCards = document.getElementById('divChamadosCards');
+        const chamadosEndpoint = '@Url.Action("Chamados", "Pedidos", new { pedido = Model.PedidoId })';
+        let chamadosLoaded = false;
+
+        function toggleChamadosState(element, show) {
+        if (element) element.classList.toggle('d-none', !show);
+        }
+
+        function buildChamadoCard(item) {
+        let statusBadge, borderCls;
+        const sit = (item.situacao || '').toLowerCase();
+        if (sit === 'encerrado') {
+        statusBadge = '<span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>' + item.situacao + '</span>';
+        borderCls = 'border';
+        } else if (sit === 'cancelado') {
+        statusBadge = '<span class="badge-status badge-status-danger"><i class="fa-solid fa-ban me-1"></i>' + item.situacao + '</span>';
+        borderCls = 'border border-danger';
+        } else {
+        statusBadge = '<span class="badge-status badge-status-primary"><i class="fa-solid fa-headset me-1"></i>' + item.situacao + '</span>';
+        borderCls = 'border border-primary';
+        }
+
+        let atrasoHtml = '';
+        if (item.atraso) {
+        atrasoHtml = '<span class="badge bg-danger ms-2"><i class="fa-solid fa-clock me-1"></i>' + item.atraso + '</span>';
+        }
+
+        return '<div class="col-12">' +
+        '<div class="' + borderCls + ' rounded-3 bg-body-tertiary overflow-hidden h-100 d-flex flex-column">' +
+        '<div class="d-flex justify-content-between align-items-center p-3 border-bottom">' +
+        '<div class="row d-flex align-items-center gap-2">' +
+        '<div class="col-auto me-4 pe-4 border-end">' +
+        '<small class="text-muted d-block mb-1"><i class="fa-duotone fa-user-headset text-br me-1"></i>Protocolo</small>' +
+        '<span class="fw-bold fs-5">' + item.protocolo + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Origem</small>' +
+        '<span class="fw-semibold">' + (item.origem || '—') + '</span>' +
+        '<span class="text-muted ms-1">(' + (item.origemValor || '') + ')</span>' +
+        '</div>' +
+        '<div class="col-auto me-4 hide-sm">' +
+        '<small class="text-muted d-block">Prazo de Resolução</small>' +
+        '<span class="fw-semibold">' + (item.prazoResolucao || '—') + '</span>' +
+        atrasoHtml +
+        '</div>' +
+        '</div>' +
+        statusBadge +
+        '</div>' +
+        '<div class="p-3 flex-grow-1">' +
+        '<div class="row g-2 mb-3">' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Área</small>' +
+        '<span class="fw-semibold">' + (item.nmArea || '—') + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Nível</small>' +
+        '<span>' + (item.nmNivel || '—') + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Problema</small>' +
+        '<span>' + (item.nmProblema || '—') + '</span>' +
+        '</div>' +
+        '</div>' +
+        '<div class="row g-2">' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block">Solicitante</small>' +
+        '<span>' + (item.nmSolicitante || '—') + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4 hide-sm">' +
+        '<small class="text-muted d-block">E-mail</small>' +
+        '<span class="text-lowercase">' + (item.emailSolicitante || '—') + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block"><i class="fa-solid fa-calendar-arrow-up me-1"></i>Abertura</small>' +
+        '<span>' + (item.dtHrAbertura || '—') + '</span>' +
+        '</div>' +
+        '<div class="col-auto me-4">' +
+        '<small class="text-muted d-block"><i class="fa-solid fa-calendar-check me-1"></i>Encerramento</small>' +
+        '<span>' + (item.dtHrEncerramento || '—') + '</span>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="d-flex justify-content-end align-items-center px-3 py-2 border-top">' +
+        '<a href="https://intranet.brsupply.com.br/Intranet/html/chamado.php?id=' + item.protocolo + '" target="_blank" class="btn btn-sm btn-outline-primary me-2"><i class="fa-solid fa-search me-2"></i> Ver Chamado </a>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+        }
+
+        async function loadChamados() {
+        if (chamadosLoaded) return;
+
+        toggleChamadosState(chamadosLoader, true);
+        toggleChamadosState(chamadosError, false);
+        toggleChamadosState(chamadosEmpty, false);
+        toggleChamadosState(chamadosCards, false);
+
+        try {
+        const response = await fetch(chamadosEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleChamadosState(chamadosEmpty, true);
+        chamadosLoaded = true;
+        return;
+        }
+
+        chamadosCards.innerHTML = items.map(buildChamadoCard).join('');
+        toggleChamadosState(chamadosCards, true);
+        chamadosLoaded = true;
+        }
+        catch {
+        toggleChamadosState(chamadosError, true);
+        }
+        finally {
+        toggleChamadosState(chamadosLoader, false);
+        }
+        }
+
+        chamadosCollapse.addEventListener('shown.bs.collapse', loadChamados);
+        }
+
+        // --- Modal Impostos ---
+        const btnImpostos = document.getElementById('BtnVerImpostos');
+        if (btnImpostos) {
+        const impostosEndpoint = '@Url.Action("Impostos", "Pedidos", new { pedido = Model.PedidoId })';
+        const modalEl = document.getElementById('modalImpostos');
+        const modal = new bootstrap.Modal(modalEl);
+        const impostosLoader = document.getElementById('impostosLoader');
+        const impostosError = document.getElementById('impostosError');
+        const impostosEmpty = document.getElementById('impostosEmpty');
+        const divTblImpostos = document.getElementById('divTblImpostos');
+        let impostosLoaded = false;
+        let dtInstance = null;
+
+        function fmt(value) {
+        if (value === null || value === undefined) return '—';
+        return Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function fmtVal(value) {
+        if (value === null || value === undefined) return '—';
+        return 'R$ ' + Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function fmtPer(value) {
+        if (value === null || value === undefined) return '—';
+        return Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+        }
+        function fmtPair(pct, val) {
+        const p = (pct !== null && pct !== undefined) ? Number(pct).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '—';
+        const v = (val !== null && val !== undefined) ? 'R$ ' + Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+        return p + '<br>' + v;
+        }
+        function fmtPairVal(val1, val2) {
+        const v1 = (val1 !== null && val1 !== undefined) ? 'R$ ' + Number(val1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+        const v2 = (val2 !== null && val2 !== undefined) ? 'R$ ' + Number(val2).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+        return v1 + '<br>' + v2;
+        }
+        function toggleImpostosState(element, show) {
+        if (element) {
+        element.classList.toggle('d-none', !show);
+        }
+        }
+
+        btnImpostos.addEventListener('click', async function(e) {
+        e.preventDefault();
+        modal.show();
+
+        if (impostosLoaded) return;
+
+        toggleImpostosState(impostosLoader, true);
+        toggleImpostosState(impostosError, false);
+        toggleImpostosState(impostosEmpty, false);
+        toggleImpostosState(divTblImpostos, false);
+
+        try {
+        const response = await fetch(impostosEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleImpostosState(impostosEmpty, true);
+        impostosLoaded = true;
+        return;
+        }
+
+        const rows = items.map(function(i) {
+        return [
+        i.itemDocumentoSAP || '',
+        i.cdItem || '',
+        //fmt(i.mva),
+        //fmt(i.mkup),
+        fmtPer(i.margemCalculada),
+        fmtPair(i.percentualICMS, i.valorICMS),
+        fmtPair(i.percentualFCP, i.valorFundoCombPobreza),
+        fmtPair(i.percentualIPI, i.valorIPI),
+        fmtPair(i.percentualCOFINS, i.valorCOFINS),
+        fmtPair(i.percentualPIS, i.valorPIS),
+        fmtVal(i.valorICMSPartilhaOrigem),
+        fmtVal(i.valorICMSPartilhaDestino),
+        fmtVal(i.valorST),
+        fmt(i.valorFCPST),
+        fmtPairVal(i.rol, i.lb),
+        fmtPairVal(i.vlrUnitario, i.vlrTotalNF)
+        ];
+        });
+
+        toggleImpostosState(divTblImpostos, true);
+
+        const exportBodyFormat = function(data) {
+        return data.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+        };
+
+        dtInstance = new DataTable('#tblImpostos', {
+        data: rows,
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        order: [[0, 'asc']],
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: { details: false },
+        scrollX: true,
+        layout: {
+        topStart: 'search',
+        topEnd: 'pageLength',
+        bottomStart: 'info',
+        bottomEnd: 'paging'
+        },
+        language: {
+        emptyTable: 'Nenhum registro encontrado',
+        info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+        infoEmpty: 'Nenhum registro',
+        infoFiltered: '(filtrado de _MAX_ registros)',
+        lengthMenu: 'Exibir _MENU_ registros',
+        search: 'Buscar:',
+        zeroRecords: 'Nenhum registro encontrado',
+        paginate: {
+        first: 'Primeiro',
+        last: 'Último',
+        next: 'Próximo',
+        previous: 'Anterior'
+        }
+        },
+        columnDefs: [
+        { className: 'text-end text-nowrap', targets: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] },
+        { className: 'text-nowrap', targets: [0, 1] }
+        ]
+        });
+
+        impostosLoaded = true;
+        }
+        catch {
+        toggleImpostosState(impostosError, true);
+        }
+        finally {
+        toggleImpostosState(impostosLoader, false);
+        }
+        });
+
+        modalEl.addEventListener('shown.bs.modal', function() {
+        if (dtInstance) {
+        dtInstance.columns.adjust();
+        }
+        });
+        }
+
+        // --- Modal Histórico Frete ---
+        const btnHistoricoFrete = document.getElementById('BtnHistoricoFrete');
+        if (btnHistoricoFrete) {
+        const freteEndpoint = '@Url.Action("HistoricoFrete", "Pedidos", new { pedido = Model.PedidoId })';
+        const freteModalEl = document.getElementById('modalHistoricoFrete');
+        const freteModal = new bootstrap.Modal(freteModalEl);
+        const freteLoader = document.getElementById('historicoFreteLoader');
+        const freteError = document.getElementById('historicoFreteError');
+        const freteEmpty = document.getElementById('historicoFreteEmpty');
+        const divTblFrete = document.getElementById('divTblHistoricoFrete');
+        const freteTbody = document.querySelector('#tblHistoricoFrete tbody');
+        let freteLoaded = false;
+
+        function toggleFreteState(element, show) {
+        if (element) {
+        element.classList.toggle('d-none', !show);
+        }
+        }
+
+        function fmtDiasUteis(value) {
+        return value === 1 ? '1 dia útil' : value + ' dias úteis';
+        }
+
+        function fmtSimNao(value) {
+        return value
+        ? '<span class="badge bg-danger">SIM</span>'
+        : '<span class="badge bg-success">NÃO</span>';
+        }
+
+        function fmtBrl(value) {
+        if (value === null || value === undefined) return '—';
+        return 'R$ ' + Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        btnHistoricoFrete.addEventListener('click', async function(e) {
+        e.preventDefault();
+        freteModal.show();
+
+        if (freteLoaded) return;
+
+        toggleFreteState(freteLoader, true);
+        toggleFreteState(freteError, false);
+        toggleFreteState(freteEmpty, false);
+        toggleFreteState(divTblFrete, false);
+
+        try {
+        const response = await fetch(freteEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleFreteState(freteEmpty, true);
+        freteLoaded = true;
+        return;
+        }
+
+        freteTbody.innerHTML = '';
+        items.forEach(function(item) {
+        const row = document.createElement('tr');
+        var vItensRestritos = 0;
+        var vtaxaExtra = 0
+        if (item.qtItensRestritos > 0) {
+        vItensRestritos = '<span class="badge bg-danger fs-6">' + item.qtItensRestritos + '</span>';
+        } else {
+        vItensRestritos = '<span class="">0</span>';
+        }
+        if (item.taxaExtra > 0) {
+        vtaxaExtra = '<span class="text-danger fw-bold">' + fmtBrl(item.taxaExtra) + '</span>';
+        } else {
+        vtaxaExtra = '<span class="">' + fmtBrl(item.taxaExtra) + '</span>';
+        }
+
+        row.innerHTML =
+        '<td class="text-center hide-lg">' + item.transportadoraID + '</td>' +
+        '<td>' + (item.nomeTransportadora || '') + '</td>' +
+        '<td class="text-center hide-sm"">' + fmtDiasUteis(item.prazoLogistico) + '</td>' +
+        '<td class="text-center">' + fmtDiasUteis(item.prazoComercial) + '</td>' +
+        '<td class="text-end">' + fmtBrl(item.valorFrete) + '</td>' +
+        '<td class="text-end">' + vtaxaExtra + '</td>' +
+        '<td class="text-center">' + vItensRestritos + '</td>' +
+        '<td class="text-center hide-md">' + fmtSimNao(item.clienteRestrito) + '</td>' +
+        '<td class="text-center hide-sm">' + fmtSimNao(item.clienteFixo) + '</td>' +
+        '<td class="text-center hide-md">' + fmtSimNao(item.obrigatoriaCanalVenda) + '</td>';
+        freteTbody.appendChild(row);
+        });
+
+        toggleFreteState(divTblFrete, true);
+        freteLoaded = true;
+        }
+        catch {
+        toggleFreteState(freteError, true);
+        }
+        finally {
+        toggleFreteState(freteLoader, false);
+        }
+        });
+        }
+
+        // --- Modal Calculo Frete ---
+        const btnCalculoFrete = document.getElementById('BtnCalculoFrete');
+        if (btnCalculoFrete) {
+        const freteEndpoint = '@Url.Action("CalculoFrete", "Pedidos", new { pedido = Model.PedidoId })';
+        const freteModalEl = document.getElementById('modalCalculoFrete');
+        const freteModal = new bootstrap.Modal(freteModalEl);
+        const freteLoader = document.getElementById('calculoFreteLoader');
+        const freteError = document.getElementById('calculoFreteError');
+        const freteEmpty = document.getElementById('calculoFreteEmpty');
+        const divTblFrete = document.getElementById('divTblCalculoFrete');
+        const freteTbody = document.querySelector('#tblCalculoFrete tbody');
+        let freteLoaded = false;
+
+        function toggleFreteState(element, show) {
+        if (element) {
+        element.classList.toggle('d-none', !show);
+        }
+        }
+
+        function fmtDiasUteis(value) {
+        return value === 1 ? '1 dia útil' : value + ' dias úteis';
+        }
+
+        function fmtSimNao(value) {
+        return value
+        ? '<span class="badge bg-danger">SIM</span>'
+        : '<span class="badge bg-success">NÃO</span>';
+        }
+
+        function fmtBrl(value) {
+        if (value === null || value === undefined) return '—';
+        return 'R$ ' + Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        btnCalculoFrete.addEventListener('click', async function(e) {
+        e.preventDefault();
+        freteModal.show();
+
+        if (freteLoaded) return;
+
+        toggleFreteState(freteLoader, true);
+        toggleFreteState(freteError, false);
+        toggleFreteState(freteEmpty, false);
+        toggleFreteState(divTblFrete, false);
+
+        try {
+        const response = await fetch(freteEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        const items = await response.json();
+
+        if (!items || items.length === 0) {
+        toggleFreteState(freteEmpty, true);
+        freteLoaded = true;
+        return;
+        }
+
+        freteTbody.innerHTML = '';
+        items.forEach(function(item) {
+        const row = document.createElement('tr');
+        var vItensRestritos = 0;
+        var vtaxaExtra = 0
+        if (item.qtItensRestritos > 0) {
+        vItensRestritos = '<span class="badge bg-danger fs-6">' + item.qtItensRestritos + '</span>';
+        } else {
+        vItensRestritos = '<span class="">0</span>';
+        }
+        if (item.taxaExtra > 0) {
+        vtaxaExtra = '<span class="text-danger fw-bold">' + fmtBrl(item.taxaExtra) + '</span>';
+        } else {
+        vtaxaExtra = '<span class="">' + fmtBrl(item.taxaExtra) + '</span>';
+        }
+
+        row.innerHTML =
+        '<td class="text-center hide-lg">' + item.transportadoraID + '</td>' +
+        '<td>' + (item.nomeTransportadora || '') + '</td>' +
+        '<td class="text-center hide-sm"">' + fmtDiasUteis(item.prazoLogistico) + '</td>' +
+        '<td class="text-center">' + fmtDiasUteis(item.prazoComercial) + '</td>' +
+        '<td class="text-end">' + fmtBrl(item.valorFrete) + '</td>' +
+        '<td class="text-end">' + vtaxaExtra + '</td>' +
+        '<td class="text-center">' + vItensRestritos + '</td>' +
+        '<td class="text-center hide-md">' + fmtSimNao(item.clienteRestrito) + '</td>' +
+        '<td class="text-center hide-sm">' + fmtSimNao(item.clienteFixo) + '</td>' +
+        '<td class="text-center hide-md">' + fmtSimNao(item.obrigatoriaCanalVenda) + '</td>';
+        freteTbody.appendChild(row);
+        });
+
+        toggleFreteState(divTblFrete, true);
+        freteLoaded = true;
+        }
+        catch {
+        toggleFreteState(freteError, true);
+        }
+        finally {
+        toggleFreteState(freteLoader, false);
+        }
+        });
+        }
+
+        // --- Registros de Log (lazy load com filtro por Origem) ---
+        const registrosLogsCollapse = document.getElementById('collapseRegistrosLogs');
+
+        if (registrosLogsCollapse) {
+        const registrosLogsLoader = document.getElementById('logsRegistrosLogsLoader');
+        const registrosLogsError = document.getElementById('logsRegistrosLogsError');
+        const registrosLogsEmpty = document.getElementById('logsRegistrosLogsEmpty');
+        const divTblRegistrosLogs = document.getElementById('divTblRegistrosLogs');
+        const registrosLogsTbody = document.querySelector('#tblRegistrosLogs tbody');
+        const filtroOrigem = document.getElementById('filtroOrigemLogs');
+        const registrosLogsEndpoint = '@Url.Action("RegistrosLogs", "Pedidos", new { pedido = Model.PedidoId })';
+        let registrosLogsLoaded = false;
+        let allLogsData = [];
+        let dtInstanceLogs = null;
+
+        function toggleRegistrosLogsState(element, show) {
+        if (element) element.classList.toggle('d-none', !show);
+        }
+
+        function renderFilteredLogs(origem) {
+        const filtered = allLogsData.filter(function(item) { return item.origem === origem; });
+
+        if (dtInstanceLogs) {
+        dtInstanceLogs.destroy();
+        dtInstanceLogs = null;
+        }
+
+        registrosLogsTbody.innerHTML = '';
+
+        if (filtered.length === 0) {
+        toggleRegistrosLogsState(divTblRegistrosLogs, false);
+        toggleRegistrosLogsState(registrosLogsEmpty, true);
+        return;
+        }
+
+        toggleRegistrosLogsState(registrosLogsEmpty, false);
+
+        filtered.forEach(function(item) {
+        const row = document.createElement('tr');
+        row.innerHTML =
+        '<td class="text-center text-nowrap">' + (item.dataHora || '—') + '</td>' +
+        '<td><span class="fw-semibold">' + (item.acao || '') + '</span><br /><span class="text-muted">' + (item.descricao || '') + '</span></td>' +
+        '<td class="text-start text-nowrap">' + (item.nmUsuario || '') + '</td>';
+        registrosLogsTbody.appendChild(row);
+        });
+
+        toggleRegistrosLogsState(divTblRegistrosLogs, true);
+
+        dtInstanceLogs = new DataTable('#tblRegistrosLogs', {
+        pageLength: 25,
+        lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "Todos"]],
+        searching: true,
+        ordering: false,
+        info: true,
+        responsive: { details: false },
+        scrollX: true,
+        layout: {
+        topStart: 'search',
+        topEnd: 'pageLength',
+        bottomStart: 'info',
+        bottomEnd: 'paging'
+        },
+        language: {
+        emptyTable: 'Nenhum registro encontrado',
+        info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+        infoEmpty: 'Nenhum registro',
+        infoFiltered: '(filtrado de _MAX_ registros)',
+        lengthMenu: 'Exibir _MENU_ registros',
+        search: 'Buscar:',
+        zeroRecords: 'Nenhum registro encontrado',
+        paginate: {
+        first: 'Primeiro',
+        last: 'Último',
+        next: 'Próximo',
+        previous: 'Anterior'
+        }
+        },
+        columnDefs: [
+        { className: 'text-center text-nowrap', targets: [0] }
+        ]
+        });
+        }
+
+        async function loadRegistrosLogs() {
+        if (registrosLogsLoaded) return;
+
+        toggleRegistrosLogsState(registrosLogsLoader, true);
+        toggleRegistrosLogsState(registrosLogsError, false);
+        toggleRegistrosLogsState(registrosLogsEmpty, false);
+        toggleRegistrosLogsState(divTblRegistrosLogs, false);
+        toggleRegistrosLogsState(filtroOrigem, false);
+
+        try {
+        const response = await fetch(registrosLogsEndpoint, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) throw new Error();
+
+        allLogsData = await response.json();
+
+        if (!allLogsData || allLogsData.length === 0) {
+        toggleRegistrosLogsState(registrosLogsEmpty, true);
+        registrosLogsLoaded = true;
+        return;
+        }
+
+        toggleRegistrosLogsState(filtroOrigem, true);
+        updateFilterCounts();
+        const activeBtn = filtroOrigem.querySelector('.log-filter-btn.active:not(.d-none)');
+        const targetBtn = activeBtn || filtroOrigem.querySelector('.log-filter-btn:not(.d-none)');
+        if (targetBtn) {
+        renderFilteredLogs(targetBtn.dataset.origem);
+        } else {
+        toggleRegistrosLogsState(registrosLogsEmpty, true);
+        }
+        registrosLogsLoaded = true;
+        }
+        catch {
+        toggleRegistrosLogsState(registrosLogsError, true);
+        }
+        finally {
+        toggleRegistrosLogsState(registrosLogsLoader, false);
+        }
+        }
+
+        function updateFilterCounts() {
+        filtroOrigem.querySelectorAll('.log-filter-btn').forEach(function(btn) {
+        const origem = btn.dataset.origem;
+        const count = allLogsData.filter(function(item) { return item.origem === origem; }).length;
+        const badge = btn.querySelector('[data-count-origem]');
+        if (badge) badge.textContent = count;
+        btn.classList.toggle('d-none', count === 0);
+        });
+
+        // Se o botão ativo ficou oculto, ativa o primeiro visível
+        const activeBtn = filtroOrigem.querySelector('.log-filter-btn.active:not(.d-none)');
+        if (!activeBtn) {
+        const firstVisible = filtroOrigem.querySelector('.log-filter-btn:not(.d-none)');
+        if (firstVisible) firstVisible.classList.add('active');
+        }
+        }
+
+        filtroOrigem.addEventListener('click', function(e) {
+        const btn = e.target.closest('.log-filter-btn');
+        if (!btn || btn.classList.contains('active')) return;
+
+        filtroOrigem.querySelectorAll('.log-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        renderFilteredLogs(btn.dataset.origem);
+        });
+
+        registrosLogsCollapse.addEventListener('shown.bs.collapse', function() {
+        loadRegistrosLogs();
+        if (dtInstanceLogs) {
+        dtInstanceLogs.columns.adjust();
+        }
+        });
+        }
+
+        // --- Validação do Pedido (auto-load após carregamento da página) ---
+        setTimeout(async function() {
+        const container = document.getElementById('msgValidacaoPedido');
+        if (!container) return;
+
+        try {
+        const response = await fetch('@Url.Action("Validacoes", "Pedidos", new { pedido = Model.PedidoId })', {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!response.ok) return;
+
+        const items = await response.json();
+        if (!items || items.length === 0) return;
+
+        container.innerHTML = items.map(function(item) {
+        return '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+        '<i class="fa-solid fa-triangle-exclamation fa-lg me-2"></i>' +
+        '<span class="fw-semibold">' + (item.erro || '') + '</span><br />' +
+        '<span class="fs-7">' + (item.correcao || '') + '</span>' +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+        '</div>';
+        }).join('');
+        }
+        catch { }
+        }, 0);
+
+        });
+    </script>
+}

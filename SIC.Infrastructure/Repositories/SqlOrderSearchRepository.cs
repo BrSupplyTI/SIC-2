@@ -43,6 +43,10 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
             DECLARE @ValorItensBRSupply NUMERIC(18,2) = 0
             DECLARE @ValorItensTerceiros NUMERIC(18,2) = 0
             DECLARE @FlagIntegradoSAP INT = 0
+            DECLARE @QtNotasFiscais INT = 0
+            DECLARE @QtRomaneios INT = 0                        
+            DECLARE @QtChamados INT = 0                        
+            DECLARE @QtAnaliseCredito INT = 0
 
             SELECT @QtItensBRSupply = SUM(QtItensBRSupply),
                    @QtItensTerceiros = SUM(QtItensTerceiros),
@@ -86,9 +90,34 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
             ORDER BY RO.RomaneioID DESC;
 
             SELECT @FlagIntegradoSAP =
-            	ISNULL((SELECT 1
+            	ISNULL((SELECT TOP 1 1
             	         FROM Integracao_Clientes..BR_SAP_Pedidos WITH (NOLOCK)
             	         WHERE CotacaoID = @Pedido),0);
+
+            SELECT @QtNotasFiscais = COUNT(*)
+            FROM tssprod..BR_NotaFiscal N WITH (NOLOCK)
+            WHERE ISNULL(N.CotacaoID,0) = @Pedido
+            
+            SELECT @QtRomaneios = COUNT(*)
+            FROM BR_RomaneioNota N WITH (NOLOCK)
+            WHERE N.CotacaoID = @Pedido
+
+            SELECT @QtAnaliseCredito = COUNT(*)  
+            FROM BR_CotacaoCredito C WITH (NOLOCK)
+            WHERE C.CotacaoID = @Pedido
+
+            SELECT @QtChamados = @QtChamados + COUNT(*) 
+            FROM BrWeb..HelpDesk_Chamado C (NOLOCK) 
+            WHERE C.NmCampo = 'Número do Pedido'
+                AND LTRIM(RTRIM(C.VlrCampo)) = CONVERT(VARCHAR(10), @Pedido)
+            SELECT @QtChamados = @QtChamados + COUNT(*) 
+            FROM BrWeb..HelpDesk_Chamado C (NOLOCK)
+            WHERE C.NmCampo = 'Número da Nota Fiscal'
+                AND CHARINDEX('-',LTRIM(RTRIM(ISNULL(C.VlrCampo,'')))) > 0
+                AND (LTRIM(RTRIM(ISNULL(C.VlrCampo,'')))) IN (
+                    SELECT Z.NrNotaFiscal + '-' + Z.Serie
+                    FROM tssprod..BR_NotaFiscal Z (NOLOCK)                        
+                    WHERE Z.CotacaoID =  CONVERT(VARCHAR(10), @Pedido))
 
             SELECT C.CotacaoID as Pedido,
                    C.CompStatusCotacao,
@@ -185,7 +214,11 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
                    @QtItensRuptura AS QtItensRuptura,
                    @ValorItensBRSupply AS ValorItensBRSupply,
                    @ValorItensTerceiros AS ValorItensTerceiros,
-                   @FlagIntegradoSAP AS FlagIntegradoSAP
+                   @FlagIntegradoSAP AS FlagIntegradoSAP,
+                   @QtNotasFiscais AS QtNotasFiscais,
+                   @QtRomaneios AS QtRomaneios,
+                   @QtChamados AS QtChamados,
+                   @QtAnaliseCredito AS QtAnaliseCredito
             FROM BR_Cotacao C WITH (NOLOCK)
             JOIN BR_Estabelecimento W WITH (NOLOCK) ON W.EstabelecimentoID = C.EstabelecimentoID
             JOIN BR_Cliente I WITH (NOLOCK) ON I.ClienteID = C.ClienteID
@@ -193,8 +226,8 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
             JOIN BR_StatusCotacao S WITH (NOLOCK) ON S.StatusCotacao = C.StatusCotacao
             JOIN BR_ClienteEndereco E WITH (NOLOCK) ON E.ClienteEnderecoID = C.ClienteEnderecoID
             JOIN BR_ClienteLocalEntrega L WITH (NOLOCK) ON L.ClienteLocalEntregaID = C.ClienteLocalEntregaID
-            JOIN BR_Cidade CIDE WITH (NOLOCK) ON CIDE.CidadeID = E.CdCidadeEnderecoID
-            JOIN BR_UF UFE WITH (NOLOCK) ON UFE.UFID = CIDE.UFID
+            LEFT JOIN BR_Cidade CIDE WITH (NOLOCK) ON CIDE.CidadeID = E.CdCidadeEnderecoID
+            LEFT JOIN BR_UF UFE WITH (NOLOCK) ON UFE.UFID = CIDE.UFID
             LEFT JOIN BR_CondPagto P WITH (NOLOCK) ON P.CondPagtoID = C.CondPagtoID
             LEFT JOIN BR_Transportadora T WITH (NOLOCK) ON T.TransportadoraID = C.TransportadoraID
             LEFT JOIN BR_Cidade CIDL WITH (NOLOCK) ON CIDL.CidadeID = L.CdCidadeID
@@ -323,7 +356,11 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
             ValorItensTerceiros = ReadNullableDecimal(reader, "ValorItensTerceiros") ?? 0,
             VlrFrete = ReadNullableDecimal(reader, "VlrFrete") ?? 0,
             VlrTaxaServico = ReadNullableDecimal(reader, "VlrTaxaServico") ?? 0,
-            FlagIntegradoSAP = ReadNullableInt32(reader, "FlagIntegradoSAP") ?? 0
+            FlagIntegradoSAP = ReadNullableInt32(reader, "FlagIntegradoSAP") ?? 0,
+            QtNotasFiscais = ReadNullableInt32(reader, "QtNotasFiscais") ?? 0,
+            QtRomaneios = ReadNullableInt32(reader, "QtRomaneios") ?? 0,
+            QtChamados = ReadNullableInt32(reader, "QtChamados") ??0,
+            QtAnaliseCredito = ReadNullableInt32(reader, "QtAnaliseCredito") ?? 0
         };
     }
 
@@ -416,6 +453,930 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
         };
     }
 
+    public async Task<IReadOnlyList<OrderSapIntegrationItem>> GetOrderSapIntegrationAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT NrPedCli,
+                   OrdemVenda,
+                   MsgRetorno,
+                   DtHrEnvioSAP,
+                   RemessaSAP,
+                   FaturaSAP,
+                   NrNF,
+                   NumeroNFDanfe,
+                   TipoOVSAP,
+                   AcaoContorno
+            FROM dbo.SIC_Consulta_IntegracaoSAP (@Pedido);
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<OrderSapIntegrationItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderSapIntegrationItem
+            {
+                NrPedCli = ReadStringValue(reader, "NrPedCli"),
+                OrdemVenda = ReadStringValue(reader, "OrdemVenda"),
+                MsgRetorno = ReadStringValue(reader, "MsgRetorno"),
+                DtHrEnvioSAP = ReadStringValue(reader, "DtHrEnvioSAP"),
+                RemessaSAP = ReadStringValue(reader, "RemessaSAP"),
+                FaturaSAP = ReadStringValue(reader, "FaturaSAP"),
+                NrNF = ReadStringValue(reader, "NrNF"),
+                TipoOVSAP = ReadStringValue(reader, "TipoOVSAP")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderTaxItem>> GetOrderTaxesAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT CI.MVA,
+                   CI.VlrTotalNF,
+                   CI.itemDocumentoSAP,
+                   I.CdItem,
+                   CI.MKUP,
+                   CI.VlrUnitario,
+                   CI.VlrCustoAquisicao,
+                   CI.MargemEnviada,
+                   CI.PercentualICMS,
+                   CI.PercentualFCP,
+                   CI.PercentualIPI,
+                   CI.PercentualCOFINS,
+                   CI.PercentualPIS,
+                   CI.ValorICMS,
+                   CI.ValorIPI,
+                   CI.ValorST,
+                   CI.ValorISS,
+                   CI.ValorISSRetido,
+                   CI.ValorCOFINS,
+                   CI.ValorPIS,
+                   CI.ValorFCPST,
+                   CI.ValorICMSPartilhaOrigem,
+                   CI.ValorICMSPartilhaDestino,
+                   CI.ValorFundoCombPobreza,
+                   CI.ValorPISRetido,
+                   CI.ValorCOFINSRetido,
+                   CI.ValorCSLRetido,
+                   CI.ValorIRRetido,
+                   CI.MargemCalculada,
+                   CI.LB,
+                   CI.ROL
+            FROM BrSupply.dbo.BR_CotacaoItem CI
+            JOIN BrSupply.dbo.BR_Item I ON I.ItemID = CI.ItemID
+            WHERE CI.CotacaoID = @Pedido
+            ORDER BY CI.ItemDocumentoSAP DESC
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<OrderTaxItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderTaxItem
+            {
+                MVA = ReadNullableDecimal(reader, "MVA"),
+                VlrTotalNF = ReadNullableDecimal(reader, "VlrTotalNF"),
+                ItemDocumentoSAP = ReadStringValue(reader, "itemDocumentoSAP"),
+                CdItem = ReadStringValue(reader, "CdItem"),
+                MKUP = ReadNullableDecimal(reader, "MKUP"),
+                VlrUnitario = ReadNullableDecimal(reader, "VlrUnitario"),
+                VlrCustoAquisicao = ReadNullableDecimal(reader, "VlrCustoAquisicao"),
+                MargemEnviada = ReadNullableDecimal(reader, "MargemEnviada"),
+                PercentualICMS = ReadNullableDecimal(reader, "PercentualICMS"),
+                PercentualFCP = ReadNullableDecimal(reader, "PercentualFCP"),
+                PercentualIPI = ReadNullableDecimal(reader, "PercentualIPI"),
+                PercentualCOFINS = ReadNullableDecimal(reader, "PercentualCOFINS"),
+                PercentualPIS = ReadNullableDecimal(reader, "PercentualPIS"),
+                ValorICMS = ReadNullableDecimal(reader, "ValorICMS"),
+                ValorIPI = ReadNullableDecimal(reader, "ValorIPI"),
+                ValorST = ReadNullableDecimal(reader, "ValorST"),
+                ValorISS = ReadNullableDecimal(reader, "ValorISS"),
+                ValorISSRetido = ReadNullableDecimal(reader, "ValorISSRetido"),
+                ValorCOFINS = ReadNullableDecimal(reader, "ValorCOFINS"),
+                ValorPIS = ReadNullableDecimal(reader, "ValorPIS"),
+                ValorFCPST = ReadNullableDecimal(reader, "ValorFCPST"),
+                ValorICMSPartilhaOrigem = ReadNullableDecimal(reader, "ValorICMSPartilhaOrigem"),
+                ValorICMSPartilhaDestino = ReadNullableDecimal(reader, "ValorICMSPartilhaDestino"),
+                ValorFundoCombPobreza = ReadNullableDecimal(reader, "ValorFundoCombPobreza"),
+                ValorPISRetido = ReadNullableDecimal(reader, "ValorPISRetido"),
+                ValorCOFINSRetido = ReadNullableDecimal(reader, "ValorCOFINSRetido"),
+                ValorCSLRetido = ReadNullableDecimal(reader, "ValorCSLRetido"),
+                ValorIRRetido = ReadNullableDecimal(reader, "ValorIRRetido"),
+                MargemCalculada = ReadNullableDecimal(reader, "MargemCalculada"),
+                LB = ReadNullableDecimal(reader, "LB"),
+                ROL = ReadNullableDecimal(reader, "ROL")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<FreightCalculationItem>> GetFreightCalculationHistoryAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT L.TransportadoraID,
+                   L.NomeTransportadora,
+                   L.PrazoLogistico,
+                   L.PrazoComercial,
+                   L.TaxaExtra,
+                   L.QtItensRestritos,
+                   L.FlagClienteRestrito,
+                   L.FlagClienteFixo,
+                   L.FlagObrigatoriaCanalVenda,
+                   L.ValorFrete
+            FROM BR_LogisticaCalculoFrete L WITH (NOLOCK)
+            WHERE L.CotacaoID = @Pedido
+            ORDER BY L.ValorFrete
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<FreightCalculationItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new FreightCalculationItem
+            {
+                TransportadoraID = ReadNullableInt32(reader, "TransportadoraID") ?? 0,
+                NomeTransportadora = ReadStringValue(reader, "NomeTransportadora"),
+                PrazoLogistico = ReadNullableInt32(reader, "PrazoLogistico") ?? 0,
+                PrazoComercial = ReadNullableInt32(reader, "PrazoComercial") ?? 0,
+                TaxaExtra = ReadNullableDecimal(reader, "TaxaExtra") ?? 0,
+                QtItensRestritos = ReadNullableInt32(reader, "QtItensRestritos") ?? 0,
+                FlagClienteRestrito = ReadNullableInt32(reader, "FlagClienteRestrito") ?? 0,
+                FlagClienteFixo = ReadNullableInt32(reader, "FlagClienteFixo") ?? 0,
+                FlagObrigatoriaCanalVenda = ReadNullableInt32(reader, "FlagObrigatoriaCanalVenda") ?? 0,
+                ValorFrete = ReadNullableDecimal(reader, "ValorFrete") ?? 0
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<FreightCalculationItem>> GetFreightCalculationAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT L.TransportadoraID,
+                   L.Nome AS NomeTransportadora,
+                   L.PrazoLogistico,
+                   L.PrazoComercial,
+                   L.TaxaExtra,      
+                   L.QtItensRestritos,
+                   L.FlagClienteRestrito,
+                   L.FlagClienteFixo,
+                   L.FlagObrigatoriaCanalVenda,
+                   L.ValorFrete
+            FROM Fn_Calcula_Fretes_Pedido(@Pedido) L
+            ORDER BY L.ValorFrete
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<FreightCalculationItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new FreightCalculationItem
+            {
+                TransportadoraID = ReadNullableInt32(reader, "TransportadoraID") ?? 0,
+                NomeTransportadora = ReadStringValue(reader, "NomeTransportadora"),
+                PrazoLogistico = ReadNullableInt32(reader, "PrazoLogistico") ?? 0,
+                PrazoComercial = ReadNullableInt32(reader, "PrazoComercial") ?? 0,
+                TaxaExtra = ReadNullableDecimal(reader, "TaxaExtra") ?? 0,
+                QtItensRestritos = ReadNullableInt32(reader, "QtItensRestritos") ?? 0,
+                FlagClienteRestrito = ReadNullableInt32(reader, "FlagClienteRestrito") ?? 0,
+                FlagClienteFixo = ReadNullableInt32(reader, "FlagClienteFixo") ?? 0,
+                FlagObrigatoriaCanalVenda = ReadNullableInt32(reader, "FlagObrigatoriaCanalVenda") ?? 0,
+                ValorFrete = ReadNullableDecimal(reader, "ValorFrete") ?? 0
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderBrSupplyItem>> GetOrderBrSupplyItemsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT CT.ClienteID,
+                   I.ItemID,
+                   I.CdItem,
+                   I.NmItem,
+                   CONVERT(INT, C.QtItem) AS QtItem,
+                   C.VlrFinal,
+                   C.QtItem * C.VlrFinal AS VlrTotal,
+                   CASE WHEN C.VlrOriginal > C.VlrFinal
+                        THEN VlrOriginal
+                        ELSE 0
+                   END AS VlrOriginal,
+                   ISNULL(C.OrdemCliente, '') + ' / ' + ISNULL(SequenciaCliente,'') AS OrdemCliente,
+                   CASE ISNULL(C.FlagAlocaPedido,0)
+                        WHEN 0 THEN 'Não Alocado'
+                        WHEN 1 THEN 'Alocado'
+                        WHEN 2 THEN 'Atendido'
+                   END AS SituacaoItem,
+                   C.DtAlocacao,
+                   C.MargemCalculada,
+                   CASE ISNULL(C.FlagArmazem,9)
+                        WHEN 1 THEN 'P4'
+                        WHEN 0 THEN 'P1'
+                        ELSE IIF((SELECT COUNT(*)
+                                 FROM BR_ClienteEstoqueTerceiroItem TI WITH (NOLOCK)
+                                 JOIN BR_ClienteEstoqueTerceiro T WITH (NOLOCK) ON T.ClienteEstoqueTerceiroID = TI.ClienteEstoqueTerceiroID
+                                 WHERE TI.ItemID = I.ItemID
+                                   AND T.ClienteID = CT.ClienteID) > 0, 'P4', 'P1')
+                   END AS Versao
+            FROM BR_CotacaoItem C WITH (NOLOCK)
+            JOIN BR_Cotacao CT WITH (NOLOCK) ON CT.CotacaoID = C.CotacaoID
+            JOIN BR_Item I (NOLOCK) ON I.ItemID = C.ItemID
+            AND C.CotacaoID = @Pedido
+            ORDER BY ISNULL(C.FlagAlocaPedido,0),
+                     I.NmItem
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<OrderBrSupplyItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderBrSupplyItem
+            {
+                ClienteID = ReadNullableInt32(reader, "ClienteID") ?? 0,
+                ItemID = ReadNullableInt32(reader, "ItemID") ?? 0,
+                CdItem = ReadStringValue(reader, "CdItem"),
+                NmItem = ReadStringValue(reader, "NmItem"),
+                QtItem = ReadNullableInt32(reader, "QtItem") ?? 0,
+                VlrFinal = ReadNullableDecimal(reader, "VlrFinal") ?? 0,
+                VlrTotal = ReadNullableDecimal(reader, "VlrTotal") ?? 0,
+                VlrOriginal = ReadNullableDecimal(reader, "VlrOriginal") ?? 0,
+                OrdemCliente = ReadStringValue(reader, "OrdemCliente"),
+                SituacaoItem = ReadStringValue(reader, "SituacaoItem"),
+                DtAlocacao = ReadNullableDateTime(reader, "DtAlocacao"),
+                MargemCalculada = ReadNullableDecimal(reader, "MargemCalculada"),
+                Versao = ReadStringValue(reader, "Versao")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderBrSupplyItem>> GetOrderMarketplaceItemsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT CT.ClienteID,
+                   I.ItemFornecedorID AS ItemID,
+                   I.CdItem,
+                   I.NmItem,
+                   CONVERT(INT, C.QtItem) AS QtItem,
+                   C.VlrFinal,
+                   C.QtItem * C.VlrFinal AS VlrTotal,
+                   CASE WHEN C.VlrOriginal > C.VlrFinal
+                        THEN VlrOriginal
+                        ELSE 0
+                   END AS VlrOriginal,
+                   ISNULL(C.OrdemCliente, '') + ' / ' + ISNULL(SequenciaCliente,'') AS OrdemCliente,
+                   I.PathFoto,
+                   F.NmFornecedor
+            FROM BR_CotacaoItem C WITH (NOLOCK)
+            JOIN BR_Cotacao CT WITH (NOLOCK) ON CT.CotacaoID = C.CotacaoID
+            JOIN BR_ItemFornecedor I (NOLOCK) ON I.ItemFornecedorID = C.ItemFornecedorID
+            JOIN BR_Fornecedor F (NOLOCK) ON F.FornecedorID = I.FornecedorID
+            AND C.CotacaoID = @Pedido
+            ORDER BY I.NmItem
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<OrderBrSupplyItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderBrSupplyItem
+            {
+                ClienteID = ReadNullableInt32(reader, "ClienteID") ?? 0,
+                ItemID = ReadNullableInt32(reader, "ItemID") ?? 0,
+                CdItem = ReadStringValue(reader, "CdItem"),
+                NmItem = ReadStringValue(reader, "NmItem"),
+                QtItem = ReadNullableInt32(reader, "QtItem") ?? 0,
+                VlrFinal = ReadNullableDecimal(reader, "VlrFinal") ?? 0,
+                VlrTotal = ReadNullableDecimal(reader, "VlrTotal") ?? 0,
+                VlrOriginal = ReadNullableDecimal(reader, "VlrOriginal") ?? 0,
+                OrdemCliente = ReadStringValue(reader, "OrdemCliente"),
+                PathFoto = ReadStringValue(reader, "PathFoto"),
+                NmFornecedor = ReadStringValue(reader, "NmFornecedor")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderBrSupplyItem>> GetOrderBrSupplyItemsRupturaAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT X.ClienteID,
+                   I.ItemID,
+                   I.CdItem,
+                   I.NmItem,
+                   CONVERT(INT, C.QtItem) AS QtItem,
+                   C.VlrFinal,
+                   C.QtItem * C.VlrFinal AS VlrTotal,
+                   ISNULL(C.PathDocumento, '') AS MensagemRuptura,
+                   CONVERT(INT, ISNULL(P.QtDispEstoque, 0) - ISNULL(P.QtAlocadaSemOV, 0)) AS QtDisponivel,
+                   E.DtPrevEntrega,
+                   E.QtItemCompra AS QtItemPrevEntrega
+            FROM BR_Cotacao X WITH (NOLOCK)
+            JOIN BR_CotacaoItem C WITH (NOLOCK) ON C.CotacaoID = X.CotacaoID
+            JOIN BR_Item I WITH (NOLOCK) ON I.ItemID = C.ItemID
+            JOIN BR_PrecoEstoque P WITH (NOLOCK) ON P.ItemID = I.ItemID AND P.EstabelecimentoID = X.EstabelecimentoID
+            OUTER APPLY
+            (
+                SELECT TOP (1)
+                    IE.DtPrevEntrega,
+                    CONVERT(INT, IE.QtItemCompra) AS QtItemCompra
+                FROM BR_ItemEntrega IE WITH (NOLOCK)
+                WHERE IE.EstabelecimentoID = X.EstabelecimentoID
+                  AND IE.ItemID = I.ItemID
+                ORDER BY IE.DtPrevEntrega ASC
+            ) E
+            WHERE X.StatusCotacao NOT IN (1, 2, 4, 9, 17, 18, 19)
+              AND ISNULL(C.FlagAlocaPedido, 0) = 0
+              AND C.CotacaoID = @Pedido
+            ORDER BY I.NmItem
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<OrderBrSupplyItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderBrSupplyItem
+            {
+                ClienteID = ReadNullableInt32(reader, "ClienteID") ?? 0,
+                ItemID = ReadNullableInt32(reader, "ItemID") ?? 0,
+                CdItem = ReadStringValue(reader, "CdItem"),
+                NmItem = ReadStringValue(reader, "NmItem"),
+                QtItem = ReadNullableInt32(reader, "QtItem") ?? 0,
+                VlrFinal = ReadNullableDecimal(reader, "VlrFinal") ?? 0,
+                VlrTotal = ReadNullableDecimal(reader, "VlrTotal") ?? 0,                
+                MensagemRuptura = ReadStringValue(reader, "MensagemRuptura"),
+                DtPrevEntrega = ReadNullableDateTime(reader, "DtPrevEntrega"),
+                QtDisponivel = ReadNullableInt32(reader, "QtDisponivel") ?? 0,
+                QtItemPrevEntrega = ReadNullableInt32(reader, "QtItemPrevEntrega") ?? 0
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderApprovalItem>> GetOrderApprovalItemsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            IF (SELECT COUNT(*)
+                FROM BR_CotAprovAlcada C (NOLOCK)
+                JOIN BR_Alcada A (NOLOCK) ON A.AlcadaId = C.AlcadaID
+                WHERE C.CotacaoID = @Pedido    
+                  AND A.TpAprovacao = 3
+                  AND ISNULL(C.ClienteUsuarioID,0) = 0) = 0
+            BEGIN
+                SELECT U.NmUsuario,
+                        CASE A.StatusAlcada
+                            WHEN 1 then 'Pendente'
+                            WHEN 2 then 'Aguardando Aprovação'
+                            WHEN 3 then 'Aprovado'
+                            WHEN 4 then 'Reprovado'
+                            WHEN 5 then 'Cancelado'
+                        END AS StatusAlcada,
+                        CASE A.TpAlcada
+                            WHEN 1 then 'Verba'
+                            WHEN 2 then 'Pedido'
+                            ELSE '-'
+                        END AS TipoAlcada,
+                        A.StatusAlcada as StatusAlcadaID,
+                        A.NrSequencia,
+                        A.DtAprovacao
+                FROM BR_CotAprovAlcada A (NOLOCK)
+                JOIN BR_ClienteUsuario U (NOLOCK) ON U.ClienteUsuarioID = A.ClienteUsuarioID
+                WHERE A.CotacaoID = @Pedido
+                ORDER BY A.NrSequencia
+            END ELSE
+            BEGIN
+                SELECT U.NmUsuario,
+                        CASE A.StatusAlcada
+                            WHEN 1 then 'Pendente'
+                            WHEN 2 then 'Aguardando Aprovação'
+                            WHEN 3 then 'Aprovado'
+                            WHEN 4 then 'Reprovado'
+                            WHEN 5 then 'Cancelado'
+                        END AS StatusAlcada,
+                        CASE A.TpAlcada
+                            WHEN 1 then 'Verba / Qqr. Aprov.'
+                            WHEN 2 then 'Pedido / Qqr. Aprov.'
+                            ELSE '-'
+                        END AS TipoAlcada,
+                        A.StatusAlcada as StatusAlcadaID,
+                        A.NrSequencia,
+                        A.DtAprovacao
+                FROM BR_CotAprovAlcada A (NOLOCK)
+                JOIN BR_AlcadaItem I (NOLOCK) ON I.AlcadaId = A.AlcadaID
+                JOIN BR_Cotacao C (NOLOCK) ON C.CotacaoID = A.CotacaoID
+                JOIN BR_ClienteUsuario U (NOLOCK) ON U.ClienteUsuarioID = I.ClienteUsuarioId
+                WHERE ISNULL(A.ClienteUsuarioID,0) = 0        
+                  AND A.CotacaoID = @Pedido      
+            UNION
+                SELECT U.NmUsuario,
+                    CASE A.StatusAlcada
+                        WHEN 1 then 'Pendente'
+                        WHEN 2 then 'Aguardando Aprovação'
+                        WHEN 3 then 'Aprovado'
+                        WHEN 4 then 'Reprovado'
+                        WHEN 5 then 'Cancelado'
+                    END AS StatusAlcada,
+                    CASE A.TpAlcada
+                        WHEN 1 then 'Verba'
+                        WHEN 2 then 'Pedido'
+                        ELSE '-'
+                    END AS TipoAlcada,
+                    A.StatusAlcada as StatusAlcadaID,
+                    A.NrSequencia,
+                    A.DtAprovacao
+                FROM BR_CotAprovAlcada A (NOLOCK)
+                JOIN BR_ClienteUsuario U (NOLOCK) ON U.ClienteUsuarioID = A.ClienteUsuarioID
+                WHERE A.CotacaoID = @Pedido
+                ORDER BY A.NrSequencia
+            END
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<OrderApprovalItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderApprovalItem
+            {
+                NmUsuario = ReadStringValue(reader, "NmUsuario"),                
+                StatusAlcada = ReadStringValue(reader, "StatusAlcada"),
+                TipoAlcada = ReadStringValue(reader, "TipoAlcada"),
+                StatusAlcadaID = ReadNullableInt32(reader, "StatusAlcadaID"),                
+                NrSequencia = ReadNullableInt32(reader, "NrSequencia"),
+                DtAprovacao = ReadNullableDateTime(reader, "DtAprovacao")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderInvoiceItem>> GetOrderInvoiceItemsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT N.NotaFiscalID,
+                   N.NrNotaFiscal,
+                   N.Serie,
+                   N.Chave,
+                   N.Operacao,
+                   N.EmitCNPJ,
+                   N.DtEmissao,
+                   SUBSTRING(N.PedCli,1,2) AS Versao,
+                   CONVERT(INT, N.QtdeVolumes) AS QtdeVolumes,
+                   ISNULL(N.PesoBruto, 0) AS PesoBruto,
+                   N.VlrTotalNF,
+                   CASE WHEN ISNULL(N.DsStatus, '') = 'EXTRAVIO TOTAL'
+                        THEN 9 
+                        ELSE ISNULL(N.Status,'0') 
+                   END AS StatusNF,
+                   ISNULL(N.MotivoCancelamento, ISNULL(N.DsStatus, '')) AS MotivoCancelamento,
+                   ISNULL(N.DsStatus, '') AS DsStatusCancelamento,
+                   REPLACE(CONVERT(VARCHAR(25),ISNULL(CONVERT(DECIMAL(25,5),N.CubagemNF * 0.000001),0)),'.',',') AS CubagemNF,
+                   ISNULL(A.TipoAtestoID, 0) AS TipoAtestoID,
+                   ISNULL(CASE ISNULL(A.TipoAtestoID, 0)
+                         WHEN 0 THEN ''
+                         WHEN 1 THEN 'Recebimento atestado'
+                         WHEN 2 THEN 'Recebimento atestado parcialmente'
+                         ELSE 'Recebimento contestado'
+                    END + ' por ' + ISNULL(U.NmUsuario,'') + 
+                    ' em ' + CONVERT(VARCHAR(16), A.DataHora, 103) + ' ' + CONVERT(VARCHAR(5), A.DataHora, 108),'') AS DsAtestoRecebimento        
+            FROM tssprod..BR_NotaFiscal N WITH (NOLOCK)
+            LEFT JOIN tssprod..BR_NotaFiscalAtesto A WITH (NOLOCK) ON A.NotaFiscalID = N.NotaFiscalID
+            LEFT JOIN BR_ClienteUsuario U WITH (NOLOCK) ON U.ClienteUsuarioID = A.ClienteUsuarioID
+            WHERE ISNULL(N.CotacaoID,0) = @Pedido
+            ORDER BY N.NrNotaFiscal
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<OrderInvoiceItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderInvoiceItem
+            {
+                NotaFiscalID = reader.GetInt32(reader.GetOrdinal("NotaFiscalID")),
+                NrNotaFiscal = ReadStringValue(reader, "NrNotaFiscal"),
+                Serie = ReadStringValue(reader, "Serie"),
+                Chave = ReadStringValue(reader, "Chave"),
+                Operacao = ReadStringValue(reader, "Operacao"),
+                EmitCNPJ = ReadStringValue(reader, "EmitCNPJ"),
+                DtEmissao = ReadNullableDateTime(reader, "DtEmissao"),
+                Versao = ReadStringValue(reader, "Versao"),
+                QtdeVolumes = ReadNullableInt32(reader, "QtdeVolumes") ?? 0,
+                PesoBruto = ReadNullableDecimal(reader, "PesoBruto") ?? 0,
+                VlrTotalNF = ReadNullableDecimal(reader, "VlrTotalNF") ?? 0,
+                StatusNF = ReadStringValue(reader, "StatusNF"),
+                MotivoCancelamento = ReadStringValue(reader, "MotivoCancelamento"),
+                DsStatusCancelamento = ReadStringValue(reader, "DsStatusCancelamento"),
+                CubagemNF = ReadStringValue(reader, "CubagemNF"),
+                TipoAtestoID = ReadNullableInt32(reader, "TipoAtestoID") ?? 0,
+                DsAtestoRecebimento = ReadStringValue(reader, "DsAtestoRecebimento")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderRomaneioItem>> GetOrderRomaneiosAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT N.NrNotaFiscal,
+                   N.Serie,
+                   N.RomaneioID,
+                   T.NmTransportadora AS Transportadora,
+                   N.DtPortaria,
+                   N.DtEntrega,
+                   N.NmRecebedor,
+                   E.CdEstabelecimento,
+                   E.NmCurto,
+                   ISNULL(H.NmHub,'') AS NmHub,
+                   ISNULL(X.NmTipoRomaneio, 'Fracionado') AS NmTipoRomaneio,
+                   CASE ISNULL(N.TemComprovante,'NAO')
+                         WHEN 'SIM' THEN 1 
+                         ELSE 0
+                   END AS FlagTemComprovante,                   
+                   ISNULL(N.NmArquivoComprovante,'') AS NmArquivoComprovante,
+                   IIF(ISNULL(R.FlagPronto,0) = 0, 'Em Embarque',
+                        IIF(ISNULL(N.NmRecebedor,'') = '', 'Em Rota',
+                              IIF((N.NmRecebedor IN ('EXTRAVIO TOTAL', 'Retorno para Reembarque')), 'Com Ocorrência',
+                        'Entregue'))) AS SituacaoRomaneio
+            FROM BR_RomaneioNota N WITH (NOLOCK)
+            JOIN BR_Romaneio R WITH (NOLOCK) ON R.RomaneioID = N.RomaneioID
+            JOIN BR_Transportadora T WITH (NOLOCK) ON T.TransportadoraID = R.TransportadoraID
+            JOIN BR_Estabelecimento E WITH (NOLOCK) ON E.EstabelecimentoID = R.EstabelecimentoID
+            LEFT JOIN BR_RomaneioTipo X WITH (NOLOCK) ON X.TipoRomaneioID = R.TipoRomaneio
+            LEFT JOIN BR_RomaneioHub H WITH (NOLOCK) ON H.RomaneioHubID = R.RomaneioHubID
+            WHERE N.CotacaoID = @Pedido
+            ORDER BY N.RomaneioID
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<OrderRomaneioItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderRomaneioItem
+            {
+                RomaneioID = ReadNullableInt32(reader, "RomaneioID") ?? 0,
+                NrNotaFiscal = ReadStringValue(reader, "NrNotaFiscal"),
+                Serie = ReadStringValue(reader, "Serie"),
+                NmTipoRomaneio = ReadStringValue(reader, "NmTipoRomaneio"),
+                CdEstabelecimento = ReadStringValue(reader, "CdEstabelecimento"),
+                NmCurto = ReadStringValue(reader, "NmCurto"),
+                Transportadora = ReadStringValue(reader, "Transportadora"),
+                DtPortaria = ReadNullableDateTime(reader, "DtPortaria"),
+                NmRecebedor = ReadStringValue(reader, "NmRecebedor"),
+                DtEntrega = ReadNullableDateTime(reader, "DtEntrega"),
+                NmHub = ReadStringValue(reader, "NmHub"),
+                FlagTemComprovante = ReadNullableInt32(reader, "FlagTemComprovante") ?? 0,
+                NmArquivoComprovante = ReadStringValue(reader, "NmArquivoComprovante"),
+                SituacaoRomaneio = ReadStringValue(reader, "SituacaoRomaneio")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderTrackingItem>> GetOrderTrackingAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT T.DtEvento,
+                   E.NmEvento AS Evento,
+                   CASE (ISNULL(T.NrPedcli,''))
+                      WHEN '' THEN CONVERT(VARCHAR(12), CotacaoID) + ' - ' + T.Detalhes
+                      ELSE T.NrPedcli + ' - ' + T.Detalhes
+                   END AS Detalhes,
+                   T.Usuario
+            FROM BR_Tracking T WITH (NOLOCK)
+            JOIN BR_TrackingEvento E WITH (NOLOCK) ON E.TrackingEventoID = T.TrackingEventoID
+            WHERE T.CotacaoID = @Pedido
+            ORDER BY T.DtEvento DESC
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        var items = new List<OrderTrackingItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderTrackingItem
+            {
+                DtEvento = ReadNullableDateTime(reader, "DtEvento"),
+                Evento = ReadStringValue(reader, "Evento"),
+                Detalhes = ReadStringValue(reader, "Detalhes"),
+                Usuario = ReadStringValue(reader, "Usuario")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderVolumeColetaItem>> GetVolumesColetaAsync(string pedCli, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand("SIC_PedidoConsultaVolumesColeta", connection);
+        cmd.CommandType = CommandType.StoredProcedure;
+        cmd.Parameters.Add("@PedCli", SqlDbType.VarChar, 50).Value = pedCli;
+
+        var items = new List<OrderVolumeColetaItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderVolumeColetaItem
+            {
+                CdItem = ReadStringValue(reader, "CdItem"),
+                NmItem = ReadStringValue(reader, "NmItem"),
+                QtSolicitada = ReadNullableInt32(reader, "QtSolicitada") ?? 0,
+                QtColetada = ReadNullableInt32(reader, "QtColetada") ?? 0,
+                Volume = ReadStringValue(reader, "Volume"),
+                NumVol = ReadNullableInt32(reader, "NumVol") ?? 0,
+                DataColeta = ReadStringValue(reader, "DataColeta"),
+                NmOperador = ReadStringValue(reader, "NmOperador"),
+                EnderecoAtual = ReadStringValue(reader, "EnderecoAtual"),
+                ObsCarga = ReadStringValue(reader, "ObsCarga"),
+                DtLeituraRomaneio = ReadStringValue(reader, "DtLeituraRomaneio")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderTicketItem>> GetOrderTicketsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT C.ChamadoID AS Protocolo,
+                'Pedido' AS Origem,
+                LTRIM(RTRIM(C.VlrCampo)) AS OrigemValor,
+                ISNULL(Q.NmUsuario, U.NmUsuario) AS NmSolicitante,
+                ISNULL(Q.email, U.Email) AS EmailSolicitante,
+                A.NmArea,
+                N.NmNivel,
+                P.NmProblema,
+                S.DsStatus AS Situacao,
+                CASE (C.StatusChamadoID)
+                    WHEN 1 THEN (CASE WHEN (C.PrazoResolucao < GETDATE()) THEN 'Atrasado' ELSE '' END)
+                    WHEN 2 THEN (CASE WHEN (C.PrazoResolucao < GETDATE()) THEN 'Atrasado' ELSE '' END)
+                    ELSE ''
+                END AS Atraso,
+                C.DtHrAbertura,
+                C.DtHrEncerramento,
+                C.PrazoResolucao
+            FROM BrWeb..HelpDesk_Chamado C (NOLOCK)
+            JOIN BrWeb..HelpDesk_Problema P (NOLOCK) ON P.ProblemaID = C.ProblemaID
+            JOIN BrWeb..HelpDesk_StatusChamado S (NOLOCK) ON S.StatusChamadoID = C.StatusChamadoID
+            JOIN BrWeb..HelpDesk_Nivel N (NOLOCK) ON N.NivelID = P.NivelID
+            JOIN BrWeb..HelpDesk_Area A (NOLOCK) ON A.AreaID = N.AreaID
+            LEFT JOIN BR_Usuario U (NOLOCK) ON U.UsuarioID = C.UsuarioAberturaID
+            LEFT JOIN BR_ClienteUsuario Q (NOLOCK) ON Q.ClienteUsuarioID = C.ClienteUsuarioID
+            WHERE C.NmCampo = 'Número do Pedido'
+              AND LTRIM(RTRIM(C.VlrCampo)) = @Pedido
+            UNION ALL
+            SELECT C.ChamadoID AS Protocolo,
+                'Nota Fiscal' AS Origem,
+                LTRIM(RTRIM(ISNULL(C.VlrCampo,''))) AS OrigemValor,
+                ISNULL(Q.NmUsuario, U.NmUsuario) AS NmSolicitante,
+                ISNULL(Q.email, U.Email) AS EmailSolicitante,
+                A.NmArea,
+                N.NmNivel,
+                P.NmProblema,
+                S.DsStatus AS Situacao,
+                CASE (C.StatusChamadoID)
+                    WHEN 1 THEN (CASE WHEN (C.PrazoResolucao < GETDATE()) THEN 'Atrasado' ELSE '' END)
+                    WHEN 2 THEN (CASE WHEN (C.PrazoResolucao < GETDATE()) THEN 'Atrasado' ELSE '' END)
+                    ELSE ''
+                END AS Atraso,
+                C.DtHrAbertura,
+                C.DtHrEncerramento,
+                C.PrazoResolucao
+            FROM BrWeb..HelpDesk_Chamado C (NOLOCK)
+            JOIN BrWeb..HelpDesk_Problema P (NOLOCK) ON P.ProblemaID = C.ProblemaID
+            JOIN BrWeb..HelpDesk_StatusChamado S (NOLOCK) ON S.StatusChamadoID = C.StatusChamadoID
+            JOIN BrWeb..HelpDesk_Nivel N (NOLOCK) ON N.NivelID = P.NivelID
+            JOIN BrWeb..HelpDesk_Area A (NOLOCK) ON A.AreaID = N.AreaID
+            LEFT JOIN BR_Usuario U (NOLOCK) ON U.UsuarioID = C.UsuarioAberturaID
+            LEFT JOIN BR_ClienteUsuario Q (NOLOCK) ON Q.ClienteUsuarioID = C.ClienteUsuarioID
+            WHERE C.NmCampo = 'Número da Nota Fiscal'
+              AND CHARINDEX('-',LTRIM(RTRIM(ISNULL(C.VlrCampo,'')))) > 0
+              AND (LTRIM(RTRIM(ISNULL(C.VlrCampo,'')))) IN (
+                    SELECT Z.NrNotaFiscal + '-' + Z.Serie
+                    FROM tssprod..BR_NotaFiscal Z (NOLOCK)
+                    WHERE Z.CotacaoID = @Pedido)
+            ORDER BY PrazoResolucao
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.VarChar, 20).Value = pedido.ToString();
+
+        var items = new List<OrderTicketItem>();
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderTicketItem
+            {
+                Protocolo = ReadNullableInt32(reader, "Protocolo") ?? 0,
+                Origem = ReadStringValue(reader, "Origem"),
+                OrigemValor = ReadStringValue(reader, "OrigemValor"),
+                NmSolicitante = ReadStringValue(reader, "NmSolicitante"),
+                EmailSolicitante = ReadStringValue(reader, "EmailSolicitante"),
+                NmArea = ReadStringValue(reader, "NmArea"),
+                NmNivel = ReadStringValue(reader, "NmNivel"),
+                NmProblema = ReadStringValue(reader, "NmProblema"),
+                Situacao = ReadStringValue(reader, "Situacao"),
+                Atraso = ReadStringValue(reader, "Atraso"),
+                DtHrAbertura = ReadNullableDateTime(reader, "DtHrAbertura"),
+                DtHrEncerramento = ReadNullableDateTime(reader, "DtHrEncerramento"),
+                PrazoResolucao = ReadNullableDateTime(reader, "PrazoResolucao")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<OrderCreditAnalysis?> GetOrderCreditAnalysisAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT TOP 1 
+                   C.MotivoBloqueio,
+                   C.FlagAprovado,
+                   CASE(C.FlagAprovado)
+                        WHEN 0 THEN 'Aguardando Avaliação'
+                        WHEN 1 THEN 'Crédito Aprovado'
+                        ELSE 'Crédito Reprovado'
+                   END AS StatusAprovacao,
+                   C.DataHoraBloqueio,
+                   U.NmUsuario,
+                   C.DataHoraAprovacao,
+                   C.MotivoAprovacao
+            FROM BR_CotacaoCredito C WITH (NOLOCK)
+            LEFT JOIN BR_Usuario U WITH (NOLOCK) ON U.UsuarioID = C.UsuarioAprovador
+            WHERE C.CotacaoID = @Pedido
+            ORDER BY C.DataHoraBloqueio
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return new OrderCreditAnalysis
+        {
+            MotivoBloqueio = ReadStringValue(reader, "MotivoBloqueio"),
+            FlagAprovado = ReadNullableInt32(reader, "FlagAprovado"),
+            StatusAprovacao = ReadStringValue(reader, "StatusAprovacao"),
+            DataHoraBloqueio = ReadNullableDateTime(reader, "DataHoraBloqueio"),
+            NmUsuario = ReadStringValue(reader, "NmUsuario"),
+            DataHoraAprovacao = ReadNullableDateTime(reader, "DataHoraAprovacao"),
+            MotivoAprovacao = ReadStringValue(reader, "MotivoAprovacao")
+        };
+    }
+
+    public async Task<IReadOnlyList<OrderValidationItem>> GetOrderValidationsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand("SIC_ConsultaPedidoValicacao", connection)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        var items = new List<OrderValidationItem>();
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderValidationItem
+            {
+                Erro = ReadStringValue(reader, "Erro"),
+                Correcao = ReadStringValue(reader, "Correcao")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<OrderLogItem>> GetOrderLogsAsync(int pedido, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand("SIC_PedidoConsultaLogs", connection)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.Add("@Pedido", SqlDbType.Int).Value = pedido;
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        var items = new List<OrderLogItem>();
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new OrderLogItem
+            {
+                Origem = ReadStringValue(reader, "Origem"),
+                DataHora = ReadNullableDateTime(reader, "DataHora"),
+                Acao = ReadStringValue(reader, "Acao"),
+                Descricao = ReadStringValue(reader, "Descricao"),
+                NmUsuario = ReadStringValue(reader, "NmUsuario")
+            });
+        }
+
+        return items;
+    }
+
     public async Task<int?> GetOrderIdByInvoiceAsync(string notaFiscal, int serie, CancellationToken cancellationToken = default)
     {
         const string sql = """
@@ -455,6 +1416,24 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
         //return reader.IsDBNull(ordinal) ? null : reader.GetValue(ordinal).ToString();
     }
 
+    public async Task<string?> GetInvoiceXmlAsync(string chaveDanfe, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT CAST(XMLData AS NVARCHAR(MAX))
+            FROM tssprod..BR_NotaFiscalXML WITH (NOLOCK)
+            WHERE ChaveDanfe = @chave
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.AddWithValue("@chave", chaveDanfe);
+
+        var result = await cmd.ExecuteScalarAsync(cancellationToken);
+        return result as string;
+    }
+
     private static int? ReadNullableInt32(SqlDataReader reader, string column)
     {
         var ordinal = reader.GetOrdinal(column);
@@ -465,5 +1444,11 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
     {
         var ordinal = reader.GetOrdinal(column);
         return reader.IsDBNull(ordinal) ? null : reader.GetDecimal(ordinal);
+    }
+
+    private static string ReadStringValue(SqlDataReader reader, string column)
+    {
+        var ordinal = reader.GetOrdinal(column);
+        return reader.IsDBNull(ordinal) ? string.Empty : Convert.ToString(reader.GetValue(ordinal)) ?? string.Empty;
     }
 }

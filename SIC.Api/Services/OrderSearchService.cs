@@ -135,7 +135,8 @@ public sealed class OrderSearchService(IOrderSearchRepository repository) : IOrd
             QtNotasFiscais = data.QtNotasFiscais,
             QtRomaneios = data.QtRomaneios,
             QtChamados = data.QtChamados,
-            QtAnaliseCredito = data.QtAnaliseCredito
+            QtAnaliseCredito = data.QtAnaliseCredito,
+            QtAprovacoes = data.QtAprovacoes
         };
     }
 

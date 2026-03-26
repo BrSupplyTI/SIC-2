@@ -17,8 +17,10 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IAuthRepository, SqlAuthRepository>();
 builder.Services.AddScoped<IUserProfileRepository, SqlUserProfileRepository>();
 builder.Services.AddScoped<IOrderSearchRepository, SqlOrderSearchRepository>();
+builder.Services.AddScoped<IProductCatalogRepository, SqlProductCatalogRepository>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IOrderSearchService, OrderSearchService>();
+builder.Services.AddScoped<IProductCatalogService, ProductCatalogService>();
 
 var app = builder.Build();
 

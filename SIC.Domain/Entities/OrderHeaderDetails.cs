@@ -99,4 +99,5 @@ public sealed class OrderHeaderDetails
     public int QtRomaneios { get; set; } = 0;
     public int QtChamados { get; set; } = 0;
     public int QtAnaliseCredito { get; set; } = 0;
+    public int QtAprovacoes { get; set; } = 0;
 }

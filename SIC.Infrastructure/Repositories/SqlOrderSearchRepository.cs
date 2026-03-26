@@ -47,6 +47,7 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
             DECLARE @QtRomaneios INT = 0                        
             DECLARE @QtChamados INT = 0                        
             DECLARE @QtAnaliseCredito INT = 0
+            DECLARE @QtAprovacoes INT = 0
 
             SELECT @QtItensBRSupply = SUM(QtItensBRSupply),
                    @QtItensTerceiros = SUM(QtItensTerceiros),
@@ -105,6 +106,10 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
             SELECT @QtAnaliseCredito = COUNT(*)  
             FROM BR_CotacaoCredito C WITH (NOLOCK)
             WHERE C.CotacaoID = @Pedido
+
+            SELECT @QtAprovacoes = COUNT(*) 
+            FROM BR_CotAprovAlcada A WITH (NOLOCK)
+            WHERE A.CotacaoID = @Pedido
 
             SELECT @QtChamados = @QtChamados + COUNT(*) 
             FROM BrWeb..HelpDesk_Chamado C (NOLOCK) 
@@ -218,7 +223,8 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
                    @QtNotasFiscais AS QtNotasFiscais,
                    @QtRomaneios AS QtRomaneios,
                    @QtChamados AS QtChamados,
-                   @QtAnaliseCredito AS QtAnaliseCredito
+                   @QtAnaliseCredito AS QtAnaliseCredito,
+                   @QtAprovacoes AS QtAprovacoes
             FROM BR_Cotacao C WITH (NOLOCK)
             JOIN BR_Estabelecimento W WITH (NOLOCK) ON W.EstabelecimentoID = C.EstabelecimentoID
             JOIN BR_Cliente I WITH (NOLOCK) ON I.ClienteID = C.ClienteID
@@ -360,7 +366,8 @@ public sealed class SqlOrderSearchRepository(IConfiguration configuration) : IOr
             QtNotasFiscais = ReadNullableInt32(reader, "QtNotasFiscais") ?? 0,
             QtRomaneios = ReadNullableInt32(reader, "QtRomaneios") ?? 0,
             QtChamados = ReadNullableInt32(reader, "QtChamados") ??0,
-            QtAnaliseCredito = ReadNullableInt32(reader, "QtAnaliseCredito") ?? 0
+            QtAnaliseCredito = ReadNullableInt32(reader, "QtAnaliseCredito") ?? 0,
+            QtAprovacoes = ReadNullableInt32(reader, "QtAprovacoes") ?? 0
         };
     }
 

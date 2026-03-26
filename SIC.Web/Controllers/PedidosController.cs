@@ -55,7 +55,8 @@ public sealed class PedidosController(PedidoApiClient apiClient) : Controller
                 QtNotasFiscais = headerData?.QtNotasFiscais ?? 0,
                 QtRomaneios = headerData?.QtRomaneios ?? 0,
                 QtChamados = headerData?.QtChamados ?? 0,
-                QtAnaliseCredito = headerData?.QtAnaliseCredito ?? 0
+                QtAnaliseCredito = headerData?.QtAnaliseCredito ?? 0,
+                QtAprovacoes = headerData?.QtAprovacoes ?? 0
             },
             Cliente = new PedidoDetalhesViewModel.ClienteSection
             {

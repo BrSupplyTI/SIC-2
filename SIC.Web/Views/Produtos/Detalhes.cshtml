@@ -1,0 +1,1296 @@
+@using SIC.Web.Helpers
+@model SIC.Web.Models.Produtos.ProdutoDetalhesViewModel
+@{
+    ViewData["Title"] = $"{Model.CdItem} - {Model.NmItem}";
+
+    var todasFotos = new List<string> { Model.FotoPrincipal };
+    todasFotos.AddRange(Model.FotosSecundarias);
+
+    var isAtivo = Model.FlagAtivo == 1;
+    var caExpirado = DateTime.TryParseExact(Model.ValidadeCA, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var dtValidade) && dtValidade < DateTime.Now;
+    var tags = (Model.Tags ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    var certifications = new List<(string Label, string? Value, string Icon)>
+    {
+        ("CA", Model.NumCA, "fa-duotone fa-certificate"),
+        ("FSC", Model.FSC, "fa-duotone fa-tree"),
+        ("ABNT", Model.ABNT, "fa-duotone fa-file-certificate"),
+        ("Anatel", Model.Anatel, "fa-duotone fa-tower-broadcast"),
+        ("Anvisa", Model.Anvisa, "fa-duotone fa-flask-vial"),
+        ("Inmetro", Model.Inmetro, "fa-duotone fa-scale-balanced"),
+        ("Normas", Model.Normas, "fa-duotone fa-scroll")
+    };
+    var activeCerts = certifications.Where(c => !string.IsNullOrWhiteSpace(c.Value)).ToList();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/produtos/detalhes.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.1/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.bootstrap5.min.css" />
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin @Model.IconeSegmento me-2 text-br"></i>Detalhes do Produto</h2>
+                </div>
+                <nav class="produto-breadcrumb mt-1">
+                    <span>@Model.NmSegmento</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                    <span>@Model.NmFamilia</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                    <span>@Model.NmSubFamilia</span>
+                </nav>
+            </div>
+            <a asp-controller="Produtos" asp-action="Catalogo" class="btn btn-outline-primary">
+                <i class="fa-solid fa-arrow-left me-2"></i>Voltar ao catálogo
+            </a>
+        </div>
+
+        <!-- Mensagem do produto -->
+        @if (!string.IsNullOrWhiteSpace(Model.Mensagem))
+        {
+            <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+                <i class="fa-solid fa-triangle-exclamation fa-lg"></i>
+                <div class="flex-grow-1">
+                    <strong>Atenção:</strong> @Model.Mensagem
+                    @if (!string.IsNullOrWhiteSpace(Model.DtMensagem))
+                    {
+                        <small class="text-muted ms-2">(@Model.DtMensagem)</small>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="row g-4">
+            <!-- Coluna Galeria -->
+            <div class="col-lg-5">
+                <div class="produto-galeria">
+                    <div class="produto-foto-principal" id="fotoPrincipalWrapper">
+                        <img src="@Model.FotoPrincipal" alt="@Model.NmItem" id="fotoPrincipal"
+                             onerror="this.src='https://www.supplymanager.com.br/fotos/semimagem.jpg'" />
+                        <button class="produto-zoom-btn" type="button" id="btnZoomFoto" title="Ampliar imagem">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i>
+                        </button>
+                    </div>
+
+                    @if (todasFotos.Count > 1)
+                    {
+                        <div class="produto-thumbs">
+                            @for (var i = 0; i < todasFotos.Count; i++)
+                            {
+                                <div class="produto-thumb @(i == 0 ? "active" : "")" data-foto-url="@todasFotos[i]">
+                                    <img src="@todasFotos[i]" alt="Foto @(i + 1)"
+                                         onerror="this.src='https://www.supplymanager.com.br/fotos/semimagem.jpg'" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Coluna Info -->
+            <div class="col-lg-7">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="produto-codigo">@Model.CdItem</span>
+                </div>
+                <h3 class="produto-titulo mb-3">@Model.NmItem</h3>
+
+                <!-- Badges -->
+                <div class="produto-badges mb-4">
+                    @if (Model.FlagMarcaPropria == 1)
+                    {
+                        <span class="badge-status badge-status-success"><i class="fa-solid fa-check-circle me-1"></i>Marca Própria</span>
+                    }
+                    @if (Model.FlagLancamento == 1)
+                    {
+                        <span class="badge-status badge-status-primary"><i class="fa-solid fa-sparkles me-1"></i>Novidade</span>
+                    }
+                    @if (Model.FlagSustentavel == 1)
+                    {
+                        <span class="badge-status badge-status-success"><i class="fa-solid fa-leaf me-1"></i>Sustentável</span>
+                    }
+                    @if (Model.FlagDualSourcing == 1)
+                    {
+                        <span class="badge-status badge-status-info"><i class="fa-solid fa-arrows-split-up-and-left me-1"></i>Dual Sourcing</span>
+                    }
+                    @if (Model.FlagFaltaNoFabricante == 1)
+                    {
+                        <span class="badge-status badge-status-danger"><i class="fa-solid fa-industry me-1"></i>Falta no Fabricante</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.NumCA))
+                    {
+                        if (caExpirado)
+                        {
+                            <span class="badge-status badge-status-danger" title="Certificado vencido em @Model.ValidadeCA"><i class="fa-solid fa-certificate me-1"></i>CA @Model.NumCA — Vencido</span>
+                        }
+                        else
+                        {
+                            <span class="badge-status badge-status-info" title="Validade: @Model.ValidadeCA"><i class="fa-solid fa-certificate me-1"></i>CA @Model.NumCA</span>
+                        }
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.ValidadeCA))
+                    {
+                        <span class="produto-cert-pill @(caExpirado ? "produto-cert-expired" : "")" title="Validade CA: @Model.ValidadeCA">
+                            <i class="fa-solid fa-calendar-check me-1"></i>Validade CA: @Model.ValidadeCA
+                        </span>
+                    }
+                </div>
+
+                <!-- Quick Info Cards -->
+                <div class="row g-2 mb-4">
+                    @if (!isAtivo)
+                    {
+                        <div class="col-6">
+                            <div class="produto-quick-card bg-danger text-white">
+                                <i class="fa-duotone fa-circle-xmark"></i>
+                                <div>
+                                    <small class="text-white">Situação</small>
+                                    <div class="fw-semibold">INATIVO</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-6">
+                            <div class="produto-quick-card bg-success text-white">
+                                <i class="fa-duotone fa-circle-check"></i>
+                                <div>
+                                    <small class="text-white">Situação</small>
+                                    <div class="fw-semibold">ATIVO</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="col-6">
+                        <div class="produto-quick-card">
+                            <i class="fa-duotone fa-calendar-alt text-br"></i>
+                            <div>
+                                <small class="text-muted">Data de Cadastro</small>
+                                <div class="fw-semibold">@Model.DtCadastro</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="produto-quick-card">
+                            <i class="fa-duotone fa-box-open text-br"></i>
+                            <div>
+                                <small class="text-muted">Embalagem</small>
+                                @if (Model.QtdEmbalagem > 0)
+                                {
+                                    <div class="fw-semibold">@Model.NmEmbalagem c/ @Model.QtdEmbalagem @Model.UnidadeMedida</div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted">Não cadastrada</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="produto-quick-card">
+                            <i class="fa-duotone fa-weight-scale text-br"></i>
+                            <div>
+                                <small class="text-muted">Peso</small>
+                                <div class="fw-semibold">@Model.NrPeso.ToString("N2") Kg</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="produto-quick-card">
+                            <i class="fa-duotone fa-earth-americas text-br"></i>
+                            <div>
+                                <small class="text-muted">Origem</small>
+                                @if (!string.IsNullOrWhiteSpace(Model.Origem))
+                                {
+                                    <div class="fw-semibold">@Model.Origem</div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted">Não cadastrada</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="produto-quick-card">
+                            <i class="fa-duotone fa-flag text-br"></i>
+                            <div>
+                                <small class="text-muted">NCM</small>
+                                <div class="fw-semibold">@Model.CdClassificacaoFiscal</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @if (Model.FlagCatalogo == 1)
+                    {
+                        <div class="col-4">
+                            <div class="produto-quick-card bg-success-subtle text-success">
+                                <i class="fa-duotone fa-circle-check"></i>
+                                <div>
+                                    <small>Catálogo</small>
+                                    <div class="fw-semibold">ATIVO</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-4">
+                            <div class="produto-quick-card bg-danger-subtle text-danger">
+                                <i class="fa-duotone fa-circle-xmark"></i>
+                                <div>
+                                    <small>Catálogo</small>
+                                    <div class="fw-semibold">INATIVO</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.FlagAtivoSegmento == 1)
+                    {
+                        <div class="col-4">
+                            <div class="produto-quick-card bg-success-subtle text-success">
+                                <i class="fa-duotone fa-circle-check"></i>
+                                <div>
+                                    <small>Segmento</small>
+                                    <div class="fw-semibold">ATIVO</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-4">
+                            <div class="produto-quick-card bg-danger-subtle text-danger">
+                                <i class="fa-duotone fa-circle-xmark"></i>
+                                <div>
+                                    <small>Segmento</small>
+                                    <div class="fw-semibold">INATIVO</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.FlagOutlet == 2)
+                    {
+                        <div class="col-4">
+                            <div class="produto-quick-card bg-warning-subtle text-warning">
+                                <i class="fa-duotone fa-circle-exclamation"></i>
+                                <div>
+                                    <small>Outlet</small>
+                                    <div class="fw-semibold">Parcial</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (Model.FlagOutlet == 1)
+                        {
+                            <div class="col-4">
+                                <div class="produto-quick-card bg-danger-subtle text-danger">
+                                    <i class="fa-duotone fa-circle-xmark"></i>
+                                    <div>
+                                        <small>Outlet</small>
+                                        <div class="fw-semibold">SIM</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-4">
+                                <div class="produto-quick-card bg-success-subtle text-success">
+                                    <i class="fa-duotone fa-circle-check"></i>
+                                    <div>
+                                        <small>Outlet</small>
+                                        <div class="fw-semibold">NÃO</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Mensagem))
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="fa-duotone fa-message text-br"></i>
+                                <small class="text-muted">Mensagem (visível para os clientes)</small>
+                                <div>
+                                    <span class="fw-semibold ms-4">@Model.Mensagem</span>
+                                    <br />
+                                    <span class="fs-8  ms-4">Visível até:</span> <span class="fw-semibold fs-8">@Model.DtMensagem</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+                <!-- Tags -->
+                @if (tags.Length > 0)
+                {
+                    <div class="produto-tags mb-4">
+                        @foreach (var tag in tags)
+                        {
+                            <span class="produto-tag"><i class="fa-solid fa-tag me-1"></i>@tag</span>
+                        }
+                    </div>
+                }
+
+
+            </div>
+        </div>
+
+        <!-- Accordion -->
+        <div class="accordion mt-4" id="produtoDetalhesAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFicha">
+                    <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFicha" aria-expanded="true" aria-controls="collapseFicha">
+                        <i class="fa-duotone fa-thin fa-clipboard-list me-3 produto-accordion-icon"></i> Ficha Técnica
+                    </button>
+                </h2>
+                <div id="collapseFicha" class="accordion-collapse collapse show" aria-labelledby="headingFicha" data-bs-parent="#produtoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Marca</div>
+                            @if (!string.IsNullOrWhiteSpace(Model.NmMarca))
+                            {
+                                <div class="cad-info">@Model.NmMarca</div>
+                            }
+                            else
+                            {
+                                <div class="cad-info text-muted">Não cadastrada</div>
+                            }
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Segmento</div>
+                            <div class="cad-info">@Model.NmSegmento <span class="text-muted">(@Model.SegmentoID)</span></div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Família</div>
+                            <div class="cad-info">@Model.NmFamilia <span class="text-muted">(@Model.FamiliaID)</span></div>
+                        </div>
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Subfamília</div>
+                            <div class="cad-info">@Model.NmSubFamilia <span class="text-muted">(@Model.SubFamiliaID)</span></div>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Modelo))
+                        {
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Modelo</div>
+                                <div class="cad-info">@Model.Modelo</div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Referencia))
+                        {
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Referência</div>
+                                <div class="cad-info">@Model.Referencia</div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.CodigoBarras))
+                        {
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Cód. Barras</div>
+                                <div class="cad-info">@Model.CodigoBarras</div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.CodDUN))
+                        {
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Cód. DUN</div>
+                                <div class="cad-info">@Model.CodDUN</div>
+                            </div>
+                        }
+                        <div class="cad-row">
+                            <div class="cad-label text-muted">Unidade SAP</div>
+                            <div class="cad-info">@Model.CdUnidade</div>
+                        </div>
+                        @if (Model.QtMultiplicadorLiberado > 0 && Model.QtMultiplicadorLiberado != Model.QtMultiplicador)
+                        {
+                            <div class="cad-row">
+                                <div class="cad-label text-muted">Multiplicador Liberado</div>
+                                <div class="cad-info">@Model.QtMultiplicadorLiberado un.</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Propriedades.Count > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingPropriedades">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePropriedades" aria-expanded="false" aria-controls="collapsePropriedades">
+                            <i class="fa-duotone fa-thin fa-sliders me-3 produto-accordion-icon"></i> Propriedades
+                            <span class="badge rounded-pill bg-secondary ms-2">@Model.Propriedades.Count</span>
+                        </button>
+                    </h2>
+                    <div id="collapsePropriedades" class="accordion-collapse collapse" aria-labelledby="headingPropriedades" data-bs-parent="#produtoDetalhesAccordion">
+                        <div class="accordion-body">
+                            @foreach (var grupo in Model.Propriedades.GroupBy(p => p.Tipo))
+                            {
+                                <div class="produto-prop-group">
+                                    <h6 class="produto-prop-group-title">
+                                        <i class="fa-duotone fa-folder me-2"></i>@grupo.Key
+                                    </h6>
+                                    @foreach (var prop in grupo)
+                                    {
+                                        <div class="cad-row">
+                                            <div class="cad-label text-muted">@prop.Nome</div>
+                                            <div class="cad-info">@prop.Valor</div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.DescricaoLonga))
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingDescricao">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDescricao" aria-expanded="false" aria-controls="collapseDescricao">
+                            <i class="fa-duotone fa-thin fa-align-left me-3 produto-accordion-icon"></i> Descrição Detalhada
+                        </button>
+                    </h2>
+                    <div id="collapseDescricao" class="accordion-collapse collapse" aria-labelledby="headingDescricao" data-bs-parent="#produtoDetalhesAccordion">
+                        <div class="accordion-body">
+                            <div class="produto-html-content">
+                                @Html.Raw(HtmlSanitizer.CloseOpenTags(Model.DescricaoLonga))
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.InformacaoTecnica))
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTecnica">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTecnica" aria-expanded="false" aria-controls="collapseTecnica">
+                            <i class="fa-duotone fa-thin fa-microscope me-3 produto-accordion-icon"></i> @Model.TituloDsInformacaoTecnica
+                        </button>
+                    </h2>
+                    <div id="collapseTecnica" class="accordion-collapse collapse" aria-labelledby="headingTecnica" data-bs-parent="#produtoDetalhesAccordion">
+                        <div class="accordion-body">
+                            <div class="produto-html-content">
+                                @Html.Raw(HtmlSanitizer.CloseOpenTags(Model.InformacaoTecnica))
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Certificações -->
+            @if (activeCerts.Count > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingCerts">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCerts" aria-expanded="false" aria-controls="collapseCerts">
+                            <i class="fa-duotone fa-thin fa-shield-check me-3 produto-accordion-icon"></i> Certificações e Regulamentações
+                        </button>
+                    </h2>
+                    <div id="collapseCerts" class="accordion-collapse collapse" aria-labelledby="headingCerts" data-bs-parent="#produtoDetalhesAccordion">
+                        <div class="accordion-body">
+                            @foreach (var cert in activeCerts)
+                            {
+                                <div class="cad-row">
+                                    <div class="cad-label text-muted"><i class="@cert.Icon me-1"></i> @cert.Label</div>
+                                    <div class="cad-info">@cert.Value</div>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.ValidadeCA))
+                            {
+                                <div class="cad-row @(caExpirado ? "text-danger" : "")">
+                                    <div class="cad-label text-muted"><i class="fa-solid fa-calendar-check me-1"></i> Validade do CA</div>
+                                    <div class="cad-info">@(caExpirado? @Model.ValidadeCA + " (vencido)" : @Model.ValidadeCA) </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Estoques e Custos -->
+            @if (Model.Estoques.Count > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingEstoques">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEstoques" aria-expanded="false" aria-controls="collapseEstoques">
+                            <i class="fa-duotone fa-thin fa-warehouse me-3 produto-accordion-icon"></i> Estoques e Custos
+                            <span class="badge rounded-pill bg-secondary ms-2">@Model.Estoques.Count</span>
+                        </button>
+                    </h2>
+                    <div id="collapseEstoques" class="accordion-collapse collapse" aria-labelledby="headingEstoques" data-bs-parent="#produtoDetalhesAccordion">
+                        <div class="accordion-body">
+                            @foreach (var est in Model.Estoques)
+                            {
+                                var curvaClass = est.Curva switch
+                                {
+                                    "A" => "produto-curva-a",
+                                    "B" => "produto-curva-b",
+                                    "C" => "produto-curva-c",
+                                    _ => ""
+                                };
+                                var criticidadeLabel = est.Criticidade switch
+                                {
+                                    "X" => ("Normal", "badge-status-info", "X"),
+                                    "Y" => ("Outlet", "badge-status-warning", "Y"),
+                                    "Z" => ("Sob Demanda", "badge-status-primary", "Z"),
+                                    "F" => ("Falta Fabricante", "badge-status-danger", "F"),
+                                    _ => (est.Criticidade, "badge-status-info", est.Criticidade)
+                                };
+
+                                <div class="produto-estoque-estabelecimento mb-4">
+                                    <div class="produto-estoque-header">
+                                        <div class="float-end">
+                                            <button type="button" class="btn btn-sm btn-outline-br detalhesEstoque">
+                                                <span class="detalhesEstoque-label">Detalhes</span>
+                                                <i class="fa-solid fa-chevron-down ms-1"></i>
+                                            </button>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <i class="fa-duotone fa-warehouse text-br"></i>
+                                            <h6 class="fw-semibold mb-0">@est.NmCurto</h6>
+                                            <small class="text-muted">(@est.CdEstabelecimento)</small>
+                                            @if (!string.IsNullOrWhiteSpace(est.Curva) && est.Curva != "-")
+                                            {
+                                                <span class="produto-curva @curvaClass" title="Curva @est.Curva">@est.Curva</span>
+                                            }
+                                            <span class="produto-criticidade @criticidadeLabel.Item2" title="@criticidadeLabel.Item1">@criticidadeLabel.Item3</span>
+                                            @if (est.FlagOutlet == 1)
+                                            {
+                                                <span class="badge-status badge-status-warning"><i class="fa-solid fa-tag me-1"></i>Outlet</span>
+                                            }
+                                            @if (est.FlagSobDemanda == 1)
+                                            {
+                                                <span class="badge-status badge-status-primary"><i class="fa-solid fa-clock me-1"></i>Sob Demanda</span>
+                                            }
+                                            @if (est.FlagOcultoEstoqueZero == 1)
+                                            {
+                                                <span class="badge-status badge-status-danger"><i class="fa-solid fa-eye-slash me-1"></i>Oculto s/ Estoque</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <!-- Cards resumo -->
+                                    <div class="row g-2 mt-2 mb-3">
+                                        <div class="col-6 col-md-3">
+                                            <div class="produto-quick-card @(est.QtDisponivelSIC > 0 ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                                <i class="fa-duotone fa-box-check"></i>
+                                                <div>
+                                                    <small>Disponível SIC</small>
+                                                    <div class="fw-bold fs-6">@est.QtDisponivelSIC</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="produto-quick-card">
+                                                <i class="fa-duotone fa-boxes-stacked text-br"></i>
+                                                <div>
+                                                    <small class="text-muted">Disponível SAP</small>
+                                                    <div class="fw-bold fs-6">@est.QtdDisponivelSAP</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="produto-quick-card">
+                                                <i class="fa-duotone fa-money-bill-wave text-br"></i>
+                                                <div>
+                                                    <small class="text-muted">
+                                                        @if (est.VlrCustoAquisicao.HasValue)
+                                                        {
+                                                            <text>Custo Aquisição</text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>Custo Médio</text>
+                                                        }
+                                                    </small>
+                                                    <div class="fw-semibold fs-6">R$ @((est.VlrCustoAquisicao ?? (est.VlrCustoMedio ?? 0)).ToString("N2", new System.Globalization.CultureInfo("pt-BR")))</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="produto-quick-card">
+                                                <i class="fa-duotone fa-truck-clock text-br"></i>
+                                                <div>
+                                                    <small class="text-muted">Lead Time</small>
+                                                    @if (est.MinLeadTime > 0 || est.MaxLeadTime > 0)
+                                                    {
+                                                        if (est.MinLeadTime == est.MaxLeadTime)
+                                                        {
+                                                            <div class="fw-semibold fs-6">@est.MinLeadTime dias</div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="fw-semibold fs-6">@est.MinLeadTime — @est.MaxLeadTime dias</div>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="text-muted fs-6">N/D</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(est.DsFollowCompras))
+                                        {
+                                            <div class="alert alert-warning alert-dismissible fade show mb-0" role="alert">
+                                                <i class="fa-duotone fa-exclamation-triangle me-2"></i> <strong>Follow de Compras</strong>: @est.DsFollowCompras <small class="text-muted">(válido até: @est.DtFollowCompras)</small>
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- Dados detalhados do estoque -->
+                                    <div class="divDetalhesEstoque">
+                                        <div class="row g-2 mt-2 mb-3">
+                                            <div class="col">
+                                                <div class="produto-quick-card produto-quick-card-small text-center">
+                                                    <div class="w-100">
+                                                        <small class="text-muted">Total SAP</small>
+                                                        <div class="fw-semibold">
+                                                            @est.QtdContabilSAP
+                                                            @if (est.EstabelecimentoID == 9)
+                                                            {
+                                                                <small class="text-info" title="Estoque Virtual SP">(@est.QtEstoqueVirtualSP)</small>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="produto-quick-card produto-quick-card-small text-center">
+                                                    <div class="w-100">
+                                                        <small class="text-muted">Remessa SAP</small>
+                                                        <div class="fw-semibold">@est.QtdRemessaSAP</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="produto-quick-card produto-quick-card-small text-center">
+                                                    <div class="w-100">
+                                                        <small class="text-muted">Process. SAP</small>
+                                                        <div class="fw-semibold">@est.QtdProcessamentoSAP</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="produto-quick-card produto-quick-card-small text-center">
+                                                    <div class="w-100">
+                                                        <small class="text-muted">Estoque SAP</small>
+                                                        <div class="fw-semibold">@est.QtdEstoqueSAP</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="produto-quick-card produto-quick-card-small text-center">
+                                                    <div class="w-100">
+                                                        <small class="text-muted">Sem OV SAP</small>
+                                                        <div class="fw-semibold">@est.QtAlocadaSemOVSAP</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="produto-quick-card produto-quick-card-small text-center">
+                                                    <div class="w-100">
+                                                        <small class="text-muted">Com OV SAP</small>
+                                                        <div class="fw-semibold">@est.QtAlocadaComOVSAP</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="produto-quick-card produto-quick-card-small text-center">
+                                                    <div class="w-100">
+                                                        <small class="text-muted">Alocada SIC</small>
+                                                        <div class="fw-semibold">
+                                                            @est.QtAlocadaSIC
+                                                            @if (est.QtAlocadaSIC > 0)
+                                                            {
+                                                                <a href="#" class="btn btn-sm float-end p-0 text-muted btnVerAlocacoesSIC" data-nmcurto="@est.NmCurto" data-estabelecimentoid="@est.EstabelecimentoID" data-itemid="@Model.ItemID"><i class="fa-duotone fa-search"></i></a>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="produto-quick-card produto-quick-card-small text-center">
+                                                    <div class="w-100">
+                                                        <small class="text-muted">Estoque WMS</small>
+                                                        <div class="fw-semibold">
+                                                            @est.QtEstoqueWMS
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                               
+                                        <!-- Custos e Fornecedor -->
+                                        <div class="row g-3 mt-1">
+                                            <div class="col produto-prop-group">
+                                                <h6 class="fw-semibold mb-2 produto-prop-group-title"><i class="fa-duotone fa-coins me-1"></i> Custos</h6>
+                                                <div class="cad-row">
+                                                    <div class="cad-label text-muted">Custo Médio</div>
+                                                    <div class="cad-info">R$ @((est.VlrCustoMedio ?? 0).ToString("N2", new System.Globalization.CultureInfo("pt-BR")))</div>
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(est.DetalhesCustoAquisicao))
+                                                {
+                                                    var partes = est.DetalhesCustoAquisicao.Split('|');
+                                                    if (partes.Length >= 3)
+                                                    {
+                                                        <div class="cad-row">
+                                                            <div class="cad-label text-muted">Fornecedor</div>
+                                                            <div class="cad-info">@partes[2]</div>
+                                                        </div>
+                                                        <div class="cad-row">
+                                                            <div class="cad-label text-muted">Tabela de Preço</div>
+                                                            <div class="cad-info">@partes[1]</div>
+                                                        </div>
+                                                        <div class="cad-row">
+                                                            <div class="cad-label text-muted">Vigência até</div>
+                                                            <div class="cad-info">@partes[0]</div>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <div class="alert alert-secondary">Nenhum fornecedor com tabela de preços ativa, no estebelecimento @est.NmCurto</div>
+                                                }
+                                            </div>
+                                            <div class="col-auto produto-prop-group">
+                                                <h6 class="fw-semibold mb-2 produto-prop-group-title"><i class="fa-duotone fa-user-tie me-1"></i> Responsáveis</h6>
+                                                @if (!string.IsNullOrWhiteSpace(est.NmComprador))
+                                                {
+                                                    <div class="cad-avatar">
+                                                        <p class="m-0 fs-8">Comprador</p>
+                                                        <div class="list-group-item d-flex align-items-center gap-3 py-1">
+                                                            @if (!string.IsNullOrWhiteSpace(est.FotoComprador))
+                                                            {
+                                                                <img class="avatar-user" src="/img/upload/@est.FotoComprador" alt="@est.NmComprador" title="@est.NmComprador" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="avatar-user d-flex align-items-center justify-content-center bg-primary-subtle text-primary fw-bold" style="font-size:.85rem">
+                                                                    @est.NmComprador[0]
+                                                                </div>
+                                                            }
+                                                            <div>
+                                                                @est.NmComprador <br />
+                                                                <small class="text-muted">@est.EmailComprador</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(est.NmGestor))
+                                                {
+                                                    <div class="cad-avatar">
+                                                        <p class="m-0 fs-8">Gestor</p>
+                                                        <div class="list-group-item d-flex align-items-center gap-3 py-1">
+                                                            @if (!string.IsNullOrWhiteSpace(est.FotoGestor))
+                                                            {
+                                                                <img class="avatar-user" src="/img/upload/@est.FotoGestor" alt="@est.NmGestor" title="@est.NmGestor" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="avatar-user d-flex align-items-center justify-content-center bg-success-subtle text-success fw-bold" style="font-size:.85rem">
+                                                                    @est.NmGestor[0]
+                                                                </div>
+                                                            }
+                                                            <div>
+                                                                @est.NmGestor <br />
+                                                                <small class="text-muted">@est.EmailGestor</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(est.NmCompradorInternacional))
+                                                {
+                                                    <div class="cad-avatar">
+                                                        <p class="m-0 fs-8">Comprador Internacional</p>
+                                                        <div class="list-group-item d-flex align-items-center gap-3 py-1">
+                                                            @if (!string.IsNullOrWhiteSpace(est.FotoCompradorInternacional))
+                                                            {
+                                                                <img class="avatar-user" src="/img/upload/@est.FotoCompradorInternacional" alt="@est.NmCompradorInternacional" title="@est.NmCompradorInternacional" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="avatar-user d-flex align-items-center justify-content-center bg-danger-subtle text-danger fw-bold" style="font-size:.85rem">
+                                                                    @est.NmCompradorInternacional[0]
+                                                                </div>
+                                                            }
+                                                            <div>
+                                                                @est.NmCompradorInternacional <br />
+                                                                <small class="text-muted">@est.EmailCompradorInternacional</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOrdensCompra">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrdensCompra" aria-expanded="false" aria-controls="collapseOrdensCompra">
+                        <i class="fa-duotone fa-thin fa-basket-shopping me-3 produto-accordion-icon"></i> Ordens de Compra
+                    </button>
+                </h2>
+                <div id="collapseOrdensCompra" class="accordion-collapse collapse" aria-labelledby="headingOrdensCompra" data-bs-parent="#produtoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="text-center text-muted py-4 d-none" id="ordensCompraLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <div>Carregando dados...</div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="ordensCompraError" role="alert">
+                            Não foi possível carregar dados das Ordens de Compra.
+                        </div>
+                        <div class="alert alert-secondary d-none" id="ordensCompraEmpty">
+                            Nenhuma ordem encontrada.
+                        </div>
+                        <div class="d-none" id="divTblOrdensCompra">
+                            <p class="text-muted mb-2 fs-7">Estabelecimento:</p>
+                            <div class="oc-filter-bar mb-2" id="ocFilterBar"></div>
+                            <div class="table-responsive">
+                                <table class="table table-sm styled-table align-middle mb-0" id="tblOrdensCompra">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center">Qtd. Comprada</th>
+                                            <th>Estabelecimento</th>
+                                            <th class="text-center">Previsão Chegada</th>
+                                            <th class="text-center oc-col-hide">Ordem Compra</th>
+                                            <th class="text-center oc-col-hide">xPed Item</th>
+                                            <th>Fornecedor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tblOrdensCompraBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 mt-3" id="ocPaginationWrap">
+                                <small class="text-muted" id="ocPaginationInfo"></small>
+                                <nav aria-label="Paginação ordens de compra">
+                                    <ul class="pagination pagination-sm mb-0" id="ocPagination"></ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="produto-lightbox" id="produtoLightbox">
+    <button class="produto-lightbox-close" type="button" id="lightboxClose" title="Fechar">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+    <button class="produto-lightbox-nav produto-lightbox-prev" type="button" id="lightboxPrev" title="Anterior">
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    <img src="" alt="Foto ampliada" id="lightboxImg" />
+    <button class="produto-lightbox-nav produto-lightbox-next" type="button" id="lightboxNext" title="Próxima">
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    <div class="produto-lightbox-counter" id="lightboxCounter"></div>
+</div>
+
+
+<div class="modal fade" id="modalVerAlocacoesSIC" tabindex="-1" aria-labelledby="modalVerAlocacoesSICLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVerAlocacoesSICLabel">
+                    <i class="fa-duotone fa-pallet-boxes me-2 text-br"></i>Alocações do item #@Model.CdItem no Estabelecimento #<span id="alocacoesSICEstabelecimento"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center text-muted py-4" id="verAlocacoesLoader">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <div>Carregando alocações do item...</div>
+                </div>
+                <div class="alert alert-danger d-none" id="verAlocacoesError" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Não foi possível carregar os dados de alocação.
+                </div>
+                <div class="text-center text-muted py-4 d-none" id="verAlocacoesEmpty">
+                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
+                    Nenhuma alocação encontrada para este item/estabelecimento.
+                </div>
+                <div class="table-responsive d-none" id="divTblAlocacoes">
+                    <table class="table table-sm table-striped styled-table align-middle w-100" id="tblAlocacoes">
+                        <thead>
+                            <tr>
+                                <th data-priority="1" class="text-center">Pedido</th>
+                                <th data-priority="4" class="text-center">Data Pedido</th>
+                                <th data-priority="3" class="text-center">Prog. Liberação</th>
+                                <th data-priority="5">Cliente / Canal Venda</th>
+                                <th data-priority="2" class="text-center">Qtde. Solicitada</th>
+                                <th data-priority="6" class="text-center">Qtde. Rupturas</th>
+                                <th data-priority="7">Situação</th>
+                                <th data-priority="8" class="text-center">Ordem Venda</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.1/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.1/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.4/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.4/js/responsive.bootstrap5.min.js"></script>
+    <script>
+        (function () {
+        const basePath = '@Url.Content("~/")'.replace(/\/$/, '');
+        const fotos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(todasFotos));
+        let currentIdx = 0;
+
+        // Thumbnails
+        document.querySelectorAll('.produto-thumb').forEach(function (thumb, i) {
+        thumb.addEventListener('click', function () {
+        document.getElementById('fotoPrincipal').src = thumb.dataset.fotoUrl;
+        document.querySelectorAll('.produto-thumb').forEach(function (t) { t.classList.remove('active'); });
+        thumb.classList.add('active');
+        currentIdx = i;
+        });
+        });
+
+        // Lightbox
+        const lightbox = document.getElementById('produtoLightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        const lightboxCounter = document.getElementById('lightboxCounter');
+
+        function openLightbox(idx) {
+        currentIdx = idx;
+        updateLightbox();
+        lightbox.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+        lightbox.classList.remove('open');
+        document.body.style.overflow = '';
+        }
+
+        function updateLightbox() {
+        lightboxImg.src = fotos[currentIdx];
+        lightboxCounter.textContent = (currentIdx + 1) + ' / ' + fotos.length;
+        document.getElementById('lightboxPrev').style.display = fotos.length > 1 ? '' : 'none';
+        document.getElementById('lightboxNext').style.display = fotos.length > 1 ? '' : 'none';
+        }
+
+        document.getElementById('btnZoomFoto').addEventListener('click', function () { openLightbox(currentIdx); });
+        document.getElementById('fotoPrincipal').addEventListener('click', function () { openLightbox(currentIdx); });
+        document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
+
+        document.getElementById('lightboxPrev').addEventListener('click', function (e) {
+        e.stopPropagation();
+        currentIdx = (currentIdx - 1 + fotos.length) % fotos.length;
+        updateLightbox();
+        });
+
+        document.getElementById('lightboxNext').addEventListener('click', function (e) {
+        e.stopPropagation();
+        currentIdx = (currentIdx + 1) % fotos.length;
+        updateLightbox();
+        });
+
+        document.addEventListener('keydown', function (e) {
+        if (!lightbox.classList.contains('open')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') { currentIdx = (currentIdx - 1 + fotos.length) % fotos.length; updateLightbox(); }
+        if (e.key === 'ArrowRight') { currentIdx = (currentIdx + 1) % fotos.length; updateLightbox(); }
+        });
+
+        // Toggle detalhes estoque por estabelecimento
+        document.querySelectorAll('.detalhesEstoque').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var container = btn.closest('.produto-estoque-estabelecimento');
+        var detalhes = container.querySelector('.divDetalhesEstoque');
+        var label = btn.querySelector('.detalhesEstoque-label');
+        var isOpen = detalhes.classList.toggle('open');
+        btn.classList.toggle('active', isOpen);
+        if (label) label.textContent = isOpen ? 'Ocultar' : 'Detalhes';
+        });
+        });
+
+        // Alocações SIC - modal com DataTables
+        var dtAlocacoes = null;
+        var modalAlocacoes = document.getElementById('modalVerAlocacoesSIC');
+
+        document.querySelectorAll('.btnVerAlocacoesSIC').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var itemId = btn.dataset.itemid;
+        var estabId = btn.dataset.estabelecimentoid;
+        var nmEstab = btn.dataset.nmcurto;
+
+        document.getElementById('alocacoesSICEstabelecimento').textContent = nmEstab;
+        document.getElementById('verAlocacoesLoader').classList.remove('d-none');
+        document.getElementById('verAlocacoesError').classList.add('d-none');
+        document.getElementById('verAlocacoesEmpty').classList.add('d-none');
+        document.getElementById('divTblAlocacoes').classList.add('d-none');
+
+        if (dtAlocacoes) {
+        dtAlocacoes.destroy();
+        dtAlocacoes = null;
+        document.querySelector('#tblAlocacoes tbody').innerHTML = '';
+        }
+
+        var bsModal = new bootstrap.Modal(modalAlocacoes);
+        bsModal.show();
+
+        fetch(basePath + '/Produtos/Detalhes/' + itemId + '/Alocacoes/' + estabId)
+        .then(function (resp) {
+        if (!resp.ok) throw new Error(resp.status);
+        return resp.json();
+        })
+        .then(function (data) {
+        document.getElementById('verAlocacoesLoader').classList.add('d-none');
+
+        if (!data || data.length === 0) {
+        document.getElementById('verAlocacoesEmpty').classList.remove('d-none');
+        return;
+        }
+
+        document.getElementById('divTblAlocacoes').classList.remove('d-none');
+
+        dtAlocacoes = new DataTable('#tblAlocacoes', {
+        data: data,
+        responsive: true,
+        paging: data.length > 25,
+        pageLength: 25,
+        order: [[0, 'desc']],
+        language: {
+        emptyTable: 'Nenhuma alocação encontrada',
+        info: 'Exibindo _START_ a _END_ de _TOTAL_ registros',
+        infoEmpty: 'Nenhum registro',
+        infoFiltered: '(filtrado de _MAX_ registros)',
+        lengthMenu: '_MENU_ por página',
+        search: 'Buscar:',
+        zeroRecords: 'Nenhum registro encontrado',
+        paginate: { first: 'Primeira', last: 'Última', next: '›', previous: '‹' }
+        },
+        columns: [
+        {
+        data: 'pedido', className: 'text-center fw-semibold',
+        render: function (v) {
+        return '<a href="' + basePath + '/Pedidos/Detalhes/' + v + '" class="text-decoration-none">' + v + '<div class="btn btn-outline-secondary"> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></div></a>';
+        }
+        },
+        { data: 'dtPedido', className: 'text-center' },
+        {
+        data: 'dtProgLiberacao', className: 'text-center',
+        render: function (v) { return v || '<span class="text-muted">—</span>'; }
+        },
+        {
+        data: null,
+        render: function (row) {
+        return '<div>' + row.nmCliente + '</div><small class="text-muted">' + row.nmCanalVenda + '</small>';
+        }
+        },
+        { data: 'qtSolicitada', className: 'text-center fw-semibold' },
+        {
+        data: 'qtRupturas', className: 'text-center',
+        render: function (v) {
+        return v > 0 ? '<span class="badge bg-danger">' + v + '</span>' : '<span class="text-muted">0</span>';
+        }
+        },
+        { data: 'dsStatusCotacao' },
+        {
+        data: 'ordemVendaSAP', className: 'text-center',
+        render: function (v) {
+        return v === 'Sem OV' ? '<span class="text-muted">Sem OV</span>' : '<span class="fw-semibold">' + v + '</span>';
+        }
+        }
+        ]
+        });
+        })
+        .catch(function () {
+        document.getElementById('verAlocacoesLoader').classList.add('d-none');
+        document.getElementById('verAlocacoesError').classList.remove('d-none');
+        });
+        });
+        });
+
+        modalAlocacoes.addEventListener('hidden.bs.modal', function () {
+        if (dtAlocacoes) {
+        dtAlocacoes.destroy();
+        dtAlocacoes = null;
+        document.querySelector('#tblAlocacoes tbody').innerHTML = '';
+        }
+        });
+
+        // Ordens de Compra - lazy load com filtro por estabelecimento e paginação manual
+        var ordensCompraLoaded = false;
+        var collapseOC = document.getElementById('collapseOrdensCompra');
+        if (collapseOC) {
+            var ocAllData = [];
+            var ocFiltered = [];
+            var ocCurrentFilter = null;
+            var ocPage = 1;
+            var ocPageSize = 10;
+
+            function ocRender() {
+                var total = ocFiltered.length;
+                var totalPages = Math.ceil(total / ocPageSize) || 1;
+                if (ocPage > totalPages) ocPage = totalPages;
+                var start = (ocPage - 1) * ocPageSize;
+                var pageData = ocFiltered.slice(start, start + ocPageSize);
+
+                var tbody = document.getElementById('tblOrdensCompraBody');
+                tbody.innerHTML = '';
+                pageData.forEach(function (r) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td class="text-center fw-semibold">' + r.quantidade + '</td>' +
+                        '<td>' + r.nmEstabelecimento + ' <small class="text-muted">(' + r.cdEstabelecimento + ')</small></td>' +
+                        '<td class="text-center">' + (r.dtPrevisao || '<span class="text-muted">—</span>') + '</td>' +
+                        '<td class="text-center oc-col-hide">' + (r.ordemCompra || '<span class="text-muted">—</span>') + '</td>' +
+                        '<td class="text-center oc-col-hide">' + (r.xPed || '<span class="text-muted">—</span>') + '</td>' +
+                        '<td>' + r.razaoSocial + '</td>';
+                    tbody.appendChild(tr);
+                });
+
+                // Info
+                var info = document.getElementById('ocPaginationInfo');
+                if (total === 0) {
+                    info.textContent = 'Nenhum registro';
+                } else {
+                    info.textContent = (start + 1) + ' – ' + Math.min(start + ocPageSize, total) + ' de ' + total + ' registros';
+                }
+
+                // Pagination
+                var pag = document.getElementById('ocPagination');
+                pag.innerHTML = '';
+                var wrap = document.getElementById('ocPaginationWrap');
+                if (totalPages <= 1) { wrap.classList.add('d-none'); return; }
+                wrap.classList.remove('d-none');
+
+                function addLi(label, page, disabled, active) {
+                    var li = document.createElement('li');
+                    li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+                    var a = document.createElement('a');
+                    a.className = 'page-link';
+                    a.href = '#';
+                    a.innerHTML = label;
+                    if (!disabled && !active) {
+                        a.addEventListener('click', function (e) { e.preventDefault(); ocPage = page; ocRender(); });
+                    }
+                    li.appendChild(a);
+                    pag.appendChild(li);
+                }
+
+                addLi('‹', ocPage - 1, ocPage === 1, false);
+                for (var p = 1; p <= totalPages; p++) {
+                    addLi(p, p, false, p === ocPage);
+                }
+                addLi('›', ocPage + 1, ocPage === totalPages, false);
+            }
+
+            function ocApplyFilter(estab) {
+                ocCurrentFilter = estab;
+                ocFiltered = estab ? ocAllData.filter(function (r) { return r.cdEstabelecimento === estab; }) : ocAllData;
+                ocPage = 1;
+
+                // Update active pill
+                document.querySelectorAll('#ocFilterBar .oc-filter-pill').forEach(function (p) {
+                    p.classList.toggle('active', p.dataset.estab === (estab || ''));
+                });
+
+                ocRender();
+            }
+
+            function ocBuildFilters(data) {
+                var bar = document.getElementById('ocFilterBar');
+                var estabs = {};
+                data.forEach(function (r) {
+                    if (!estabs[r.cdEstabelecimento]) estabs[r.cdEstabelecimento] = { nome: r.nmEstabelecimento, count: 0 };
+                    estabs[r.cdEstabelecimento].count++;
+                });
+
+                var keys = Object.keys(estabs);
+                if (keys.length <= 1) { bar.classList.add('d-none'); return; }
+
+                // "Todos" pill
+                var allBtn = document.createElement('button');
+                allBtn.type = 'button';
+                allBtn.className = 'oc-filter-pill active';
+                allBtn.dataset.estab = '';
+                allBtn.innerHTML = 'Todos <span class="oc-filter-count">' + data.length + '</span>';
+                allBtn.addEventListener('click', function () { ocApplyFilter(null); });
+                bar.appendChild(allBtn);
+
+                keys.forEach(function (cd) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'oc-filter-pill';
+                    btn.dataset.estab = cd;
+                    btn.innerHTML = estabs[cd].nome + ' <span class="oc-filter-count">' + estabs[cd].count + '</span>';
+                    btn.addEventListener('click', function () { ocApplyFilter(cd); });
+                    bar.appendChild(btn);
+                });
+            }
+
+            collapseOC.addEventListener('show.bs.collapse', function () {
+                if (ordensCompraLoaded) return;
+                ordensCompraLoaded = true;
+
+                document.getElementById('ordensCompraLoader').classList.remove('d-none');
+
+                fetch(basePath + '/Produtos/Detalhes/@Model.ItemID/OrdensCompra')
+                    .then(function (resp) {
+                        if (!resp.ok) throw new Error(resp.status);
+                        return resp.json();
+                    })
+                    .then(function (data) {
+                        document.getElementById('ordensCompraLoader').classList.add('d-none');
+
+                        if (!data || data.length === 0) {
+                            document.getElementById('ordensCompraEmpty').classList.remove('d-none');
+                            return;
+                        }
+
+                        ocAllData = data;
+                        ocFiltered = data;
+                        document.getElementById('divTblOrdensCompra').classList.remove('d-none');
+                        ocBuildFilters(data);
+                        ocRender();
+                    })
+                    .catch(function () {
+                        document.getElementById('ordensCompraLoader').classList.add('d-none');
+                        document.getElementById('ordensCompraError').classList.remove('d-none');
+                        ordensCompraLoaded = false;
+                    });
+            });
+        }
+
+        })();
+    </script>
+}

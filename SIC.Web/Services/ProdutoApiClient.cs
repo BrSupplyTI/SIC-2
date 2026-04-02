@@ -50,4 +50,55 @@ public sealed class ProdutoApiClient(HttpClient httpClient)
             return [];
         }
     }
+
+    public async Task<ProdutoDetalhesViewModel?> GetProductDetailAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await httpClient.GetFromJsonAsync<ProdutoDetalhesViewModel>($"api/produtos/{itemId}", cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<ProdutoEstoqueEstabelecimentoVm>> GetProductStockAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<ProdutoEstoqueEstabelecimentoVm>>($"api/produtos/{itemId}/estoques", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<IReadOnlyList<ProdutoAlocacaoEstoqueVm>> GetProductStockAllocationsAsync(int itemId, int estabelecimentoId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<ProdutoAlocacaoEstoqueVm>>($"api/produtos/{itemId}/estoques/{estabelecimentoId}/alocacoes", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<IReadOnlyList<ProdutoOrdemCompraVm>> GetProductPurchaseOrdersAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<ProdutoOrdemCompraVm>>($"api/produtos/{itemId}/ordens-compra", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
 }

@@ -79,7 +79,7 @@
                                                             <td>@item.Situacao</td>
                                                             <td class="text-end">@item.ValorTotalProdutos.ToString("C")</td>
                                                             <td class="text-center">
-                                                                <a href="@item.PedidoDetalheUrl" class="btn btn-sm btn-outline-primary" title="Ver detalhes">
+                                                                <a href="@Url.Content($"~{item.PedidoDetalheUrl}")" class="btn btn-sm btn-outline-primary" title="Ver detalhes">
                                                                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
                                                                 </a>
                                                             </td>

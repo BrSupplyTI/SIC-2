@@ -286,7 +286,7 @@ public sealed class PedidosController(PedidoApiClient apiClient) : Controller
         {
             if (!string.IsNullOrWhiteSpace(result.RedirectUrl))
             {
-                return Redirect(result.RedirectUrl);
+                return Redirect($"{Request.PathBase}{result.RedirectUrl}");
             }
 
             if (int.TryParse(model.InputPedido, out var pedidoId))
@@ -311,7 +311,7 @@ public sealed class PedidosController(PedidoApiClient apiClient) : Controller
         {
             if (!string.IsNullOrWhiteSpace(result.RedirectUrl))
             {
-                return Redirect(result.RedirectUrl);
+                return Redirect($"{Request.PathBase}{result.RedirectUrl}");
             }
 
             if (result.ShowModal && result.Pedidos.Count > 1)
@@ -339,7 +339,7 @@ public sealed class PedidosController(PedidoApiClient apiClient) : Controller
         {
             if (!string.IsNullOrWhiteSpace(result.RedirectUrl))
             {
-                return Redirect(result.RedirectUrl);
+                return Redirect($"{Request.PathBase}{result.RedirectUrl}");
             }
 
             model.ErroNotaFiscal = "Não foi possível concluir a busca da nota fiscal.";

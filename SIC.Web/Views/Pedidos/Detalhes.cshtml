@@ -289,46 +289,49 @@
                             <div class="cad-label text-muted">Observação do Local</div>
                             <div class="cad-info"> @Model.Observacao.ObsLocalEntrega</div>
                         </div>
-                        <div class="row marcador-br">
-                            <h5 class="m-3">Endereço de Faturamento</h5>
-                        </div>
-                        <div class="cad-row">
-                            <div class="cad-label text-muted">Endereço de Faturamento</div>
-                            <div class="cad-info"> @Model.Faturamento.RuaEndereco, @Model.Faturamento.NumeroEndereco, @Model.Faturamento.ComplementoEndereco</div>
-                        </div>
-                        <div class="cad-row">
-                            <div class="cad-label text-muted">Cidade / UF</div>
-                            <div class="cad-info"> @Model.Faturamento.CidadeEndereco / @Model.Faturamento.UFEndereco</div>
-                        </div>
-                        <div class="cad-row">
-                            <div class="cad-label text-muted">CEP</div>
-                            <div class="cad-info"> @Model.Faturamento.CepEndereco</div>
-                        </div>
-                        <div class="row marcador-br">
-                            <h5 class="m-3">Endereço de Entrega</h5>
-                        </div>
-                        @if (Model.Faturamento.FlagEnderecoDirerente == 1)
-                        {
+                        <div class="pedido-prop-group">
+                            <h6 class="pedido-prop-group-title">
+                                <i class="fa-duotone fa-folder me-2"></i>Endereço de Faturamento
+                            </h6>
                             <div class="cad-row">
-                                <div class="cad-label text-muted">Endereço de Entrega</div>
-                                <div class="cad-info"> @Model.Faturamento.RuaLocal, @Model.Faturamento.NumeroLocal, @Model.Faturamento.ComplementoLocal</div>
+                                <div class="cad-label text-muted">Endereço de Faturamento</div>
+                                <div class="cad-info"> @Model.Faturamento.RuaEndereco, @Model.Faturamento.NumeroEndereco, @Model.Faturamento.ComplementoEndereco</div>
                             </div>
                             <div class="cad-row">
                                 <div class="cad-label text-muted">Cidade / UF</div>
-                                <div class="cad-info"> @Model.Faturamento.CidadeLocal / @Model.Faturamento.UFLocal</div>
+                                <div class="cad-info"> @Model.Faturamento.CidadeEndereco / @Model.Faturamento.UFEndereco</div>
                             </div>
                             <div class="cad-row">
                                 <div class="cad-label text-muted">CEP</div>
-                                <div class="cad-info"> @Model.Faturamento.CEPLocal</div>
+                                <div class="cad-info"> @Model.Faturamento.CepEndereco</div>
                             </div>
-                        }
-                        else
-                        {
-                            <div class="row">
-                                <div class="">Mesmo endereço de faturamento</div>
-                            </div>
-                        }
-
+                        </div>
+                        <div class="pedido-prop-group">
+                            <h6 class="pedido-prop-group-title">
+                                <i class="fa-duotone fa-folder me-2"></i>Endereço de Entrega
+                            </h6>
+                            @if (Model.Faturamento.FlagEnderecoDirerente == 1)
+                            {
+                                <div class="cad-row">
+                                    <div class="cad-label text-muted">Endereço de Entrega</div>
+                                    <div class="cad-info"> @Model.Faturamento.RuaLocal, @Model.Faturamento.NumeroLocal, @Model.Faturamento.ComplementoLocal</div>
+                                </div>
+                                <div class="cad-row">
+                                    <div class="cad-label text-muted">Cidade / UF</div>
+                                    <div class="cad-info"> @Model.Faturamento.CidadeLocal / @Model.Faturamento.UFLocal</div>
+                                </div>
+                                <div class="cad-row">
+                                    <div class="cad-label text-muted">CEP</div>
+                                    <div class="cad-info"> @Model.Faturamento.CEPLocal</div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="row">
+                                    <div class="text-muted ms-2 mt-2">Mesmo endereço de faturamento</div>
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1012,7 +1015,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalImpostosLabel">
-                    <i class="fa-duotone fa-chart-pie-simple-circle-dollar me-2 text-br"></i>Impostos �?" Pedido #@Model.PedidoId
+                    <i class="fa-duotone fa-chart-pie-simple-circle-dollar me-2 text-br"></i>Impostos do Pedido #@Model.PedidoId
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>

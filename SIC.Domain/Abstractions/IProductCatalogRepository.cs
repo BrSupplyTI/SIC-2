@@ -23,4 +23,12 @@ public interface IProductCatalogRepository
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<CatalogEstablishment>> GetEstablishmentsAsync(CancellationToken cancellationToken = default);
+
+    Task<ProductDetail?> GetProductDetailAsync(int itemId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ProductStockEstablishment>> GetProductStockAsync(int itemId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ProductStockAllocation>> GetProductStockAllocationsAsync(int itemId, int estabelecimentoId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ProductPurchaseOrder>> GetProductPurchaseOrdersAsync(int itemId, CancellationToken cancellationToken = default);
 }

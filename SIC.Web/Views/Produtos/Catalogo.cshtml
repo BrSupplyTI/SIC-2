@@ -9,22 +9,35 @@
         "Estoque (Crescente)", "Estoque (Decrescente)",
         "Data Cadastro (Recente)", "Data Cadastro (Antigo)"
     };
+
+    var estSelecionado = Model.Estabelecimentos.FirstOrDefault(e => e.EstabelecimentoID == Model.EstabelecimentoID);
+    var totalFiltrosAtivos = (Model.FlagAtivo != 1 ? 1 : 0)
+        + (Model.FlagSustentavel == 1 ? 1 : 0) + (Model.FlagNovidade == 1 ? 1 : 0)
+        + (Model.FlagOutlet == 1 ? 1 : 0) + (!string.IsNullOrWhiteSpace(Model.Curva) ? 1 : 0)
+        + (Model.FlagMarcaPropria == 1 ? 1 : 0) + (Model.FlagComEstoque == 1 ? 1 : 0)
+        + (Model.FlagSobDemanda != 2 ? 1 : 0) + (Model.FlagPadraoBrSupply != 1 ? 1 : 0);
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/produtos/catalogo.css" />
+    <link rel="stylesheet" href="~/css/produtos/catalogo.css" asp-append-version="true" />
 }
 
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4 p-lg-5">
 
+        <!-- Header -->
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
             <div>
-                <h2 class="h4 mb-0"><i class="fa-duotone fa-boxes-stacked text-br me-2"></i>Catálogo de Produtos</h2>
-                <small class="text-muted">@Model.TotalRegistros produto(s) encontrado(s)</small>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin fa-pump-soap me-2 text-br"></i>Catálogo de Produtos</h2>                    
+                </div>
+                <p class="text-muted mt-1 mb-0">
+                    <strong>@Model.TotalRegistros.ToString("N0", new System.Globalization.CultureInfo("pt-BR"))</strong> produto(s) encontrado(s)
+                </p>
             </div>
-        </div>
+        </div>        
 
+        <!-- Busca & Controles -->
         <form method="get" asp-controller="Produtos" asp-action="Catalogo" id="formCatalogo">
             <input type="hidden" name="page" id="inputPage" value="@Model.PageNumber" />
             <input type="hidden" name="flagAtivo" id="inputFlagAtivo" value="@Model.FlagAtivo" />
@@ -38,22 +51,24 @@
             <input type="hidden" name="flagPadraoBrSupply" id="inputFlagPadraoBrSupply" value="@Model.FlagPadraoBrSupply" />
             <input type="hidden" name="flagComEstoque" id="inputFlagComEstoque" value="@Model.FlagComEstoque" />
 
-            <div class="row g-3 mb-4">
-                <div class="col-lg-6">
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-lg-5">
+                    <small class="text-muted">Pesquisar por nome ou código</small>
                     <div class="input-group">
                         <select class="form-select catalogo-tipo-busca" name="tipoBusca" id="selectTipoBusca">
                             <option value="comeca" selected="@(Model.TipoBusca == "comeca")">Começa com</option>
-                            <option value="contem" selected="@(Model.TipoBusca == "contem")">Contém o texto</option>
+                            <option value="contem" selected="@(Model.TipoBusca == "contem")">Contém</option>
                         </select>
                         <input type="text" class="form-control" name="texto" value="@Model.Texto"
-                               placeholder="Buscar por código, nome ou número CA..." id="inputTexto" />
+                               placeholder="Código, nome ou CA..." id="inputTexto" />
                         <button type="submit" class="btn btn-primary">
-                            <i class="fa-solid fa-magnifying-glass me-1"></i>Buscar
+                            <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
                     </div>
                 </div>
-                <div class="col-lg-3">
-                    <select class="form-select" name="orderBy" id="selectOrderBy"
+                <div class="col-6 col-lg-3">
+                    <small class="text-muted">Ordem</small>
+                    <select class="form-select h-45px" name="orderBy" id="selectOrderBy"
                             onchange="document.getElementById('inputPage').value=1;document.getElementById('formCatalogo').submit();">
                         @foreach (var opt in orderByOptions)
                         {
@@ -61,131 +76,172 @@
                         }
                     </select>
                 </div>
-                <div class="col-lg-3 d-flex gap-2">
-                    <select class="form-select catalogo-page-size" name="pageSize" id="selectPageSize"
+                <div class="col-6 col-lg-2">
+                    <small class="text-muted">Por página</small>
+                    <select class="form-select h-45px" name="pageSize" id="selectPageSize"
                             onchange="document.getElementById('inputPage').value=1;document.getElementById('formCatalogo').submit();">
                         @foreach (var size in new[] { 10, 20, 30, 40, 50, 60 })
                         {
                             <option value="@size" selected="@(Model.PageSize == size)">@size itens</option>
                         }
                     </select>
-                    <button type="button" class="btn btn-outline-secondary flex-grow-1" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFiltros">
-                        <i class="fa-solid fa-filter me-1"></i>Filtros
+                </div>
+                <div class="col-12 col-lg-2 d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1 position-relative mt-4" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFiltros">
+                        <i class="fa-solid fa-sliders me-1"></i>Filtros
+                        @if (totalFiltrosAtivos > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@totalFiltrosAtivos</span>
+                        }
                     </button>
-                    <a asp-controller="Produtos" asp-action="Catalogo" class="btn btn-outline-danger" title="Limpar filtros">
-                        <i class="fa-solid fa-times"></i>
+                    <a asp-controller="Produtos" asp-action="Catalogo" class="btn btn-outline-danger mt-4" title="Limpar filtros">
+                        <i class="fa-solid fa-rotate-left"></i>
                     </a>
                 </div>
             </div>
         </form>
 
-        <div class="d-flex flex-wrap gap-2 mb-3" id="activeFilters">
-            @if (!string.IsNullOrWhiteSpace(Model.Texto))
-            {
-                <span class="badge bg-primary"><i class="fa-solid fa-search me-1"></i>@Model.Texto</span>
-            }
-            @{
-                var estSelecionado = Model.Estabelecimentos.FirstOrDefault(e => e.EstabelecimentoID == Model.EstabelecimentoID);
-            }
+        <!-- Filtros ativos -->
+        <div class="d-flex flex-wrap gap-2 mb-4" id="activeFilters">
             @if (estSelecionado is not null)
             {
-                <span class="badge bg-primary"><i class="fa-solid fa-warehouse me-1"></i>@estSelecionado.NmEstabelecimento</span>
+                <span class="badge-status badge-status-primary">
+                    <i class="fa-solid fa-warehouse me-1"></i>@estSelecionado.NmEstabelecimento
+                </span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Texto))
+            {
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('texto','')">
+                    <i class="fa-solid fa-search me-1"></i>"@Model.Texto"<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
             }
             @if (Model.FlagAtivo != 1)
             {
-                <span class="badge bg-secondary">@(Model.FlagAtivo == 0 ? "Inativos" : "Todos")</span>
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('flagAtivo','1')">
+                    @(Model.FlagAtivo == 0 ? "Inativos" : "Todos os status")<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
             }
             @if (Model.FlagSustentavel == 1)
             {
-                <span class="badge bg-success"><i class="fa-solid fa-leaf me-1"></i>Sustentável</span>
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('flagSustentavel','0')">
+                    <i class="fa-solid fa-leaf me-1"></i>Sustentável<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
             }
             @if (Model.FlagNovidade == 1)
             {
-                <span class="badge bg-info"><i class="fa-solid fa-sparkles me-1"></i>Novidade</span>
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('flagNovidade','0')">
+                    <i class="fa-solid fa-sparkles me-1"></i>Novidade<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
             }
             @if (Model.FlagOutlet == 1)
             {
-                <span class="badge bg-warning text-dark"><i class="fa-solid fa-tag me-1"></i>Outlet</span>
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('flagOutlet','2')">
+                    <i class="fa-solid fa-tag me-1"></i>Outlet<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.FlagSobDemanda == 1)
+            {
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('flagSobDemanda','2')">
+                    <i class="fa-solid fa-clock me-1"></i>Sob Demanda<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
             }
             @if (!string.IsNullOrWhiteSpace(Model.Curva))
             {
-                <span class="badge bg-dark">Curva @Model.Curva</span>
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('curva','')">
+                    Curva @Model.Curva<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
             }
             @if (Model.FlagMarcaPropria == 1)
             {
-                <span class="badge bg-secondary"><i class="fa-solid fa-tag me-1"></i>Marca Própria</span>
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('flagMarcaPropria','0')">
+                    <i class="fa-solid fa-tag me-1"></i>Marca Própria<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
             }
             @if (Model.FlagComEstoque == 1)
             {
-                <span class="badge bg-success"><i class="fa-solid fa-boxes-stacked me-1"></i>Com Estoque</span>
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('flagComEstoque','0')">
+                    <i class="fa-solid fa-boxes-stacked me-1"></i>Com Estoque<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.FlagPadraoBrSupply != 1)
+            {
+                <span class="badge-status badge-status-primary catalogo-filter-tag" onclick="removeFilter('flagPadraoBrSupply','1')">
+                    <i class="fa-solid fa-circle-xmark me-1"></i>Todo o Mix<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
             }
         </div>
 
+        <!-- Grid de produtos -->
         @if (Model.Itens.Count == 0)
         {
-            <div class="text-center py-5">
-                <div class="alert alert-secondary">
-                    <h5 class="text-muted"><i class="fa-duotone fa-exclamation-circle me-2"></i> Nenhum produto encontrado.</h5>
-                    <p class="text-muted">Tente ajustar os filtros ou a busca.</p>
-                </div>                
+            <div class="text-center py-5">                
+                <h5 class="text-muted">Nenhum produto encontrado</h5>
+                <p class="text-muted mb-3">Tente ajustar os filtros ou o termo de busca.</p>
+                <a asp-controller="Produtos" asp-action="Catalogo" class="btn btn-outline-primary btn-sm">
+                    <i class="fa-solid fa-rotate-left me-1"></i>Limpar filtros
+                </a>
             </div>
         }
         else
         {
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3" id="catalogGrid">
+            <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6 g-3" id="catalogGrid">
                 @foreach (var item in Model.Itens)
                 {
+                    var temEstoque = item.QtEstoque > 0;
+
                     <div class="col">
-                        <div class="card catalogo-card h-100 border">
+                        <a href="@Url.Action("Detalhes", "Produtos", new { itemId = item.ItemID })" class="text-decoration-none">
+                        <div class="card catalogo-card h-100">
+                            <!-- Badges -->
                             <div class="catalogo-badges">
                                 @if (item.FlagTipoMarca == "Marca Própria")
                                 {
-                                    <span class="badge bg-primary">Marca Própria</span>
+                                    <span class="catalogo-badge-mp" title="Marca Própria">MP</span>
                                 }
                             </div>
 
+                            <!-- Curva indicator -->
+                            @if (!string.IsNullOrWhiteSpace(item.Curva))
+                            {
+                                <span class="catalogo-curva catalogo-curva-@item.Curva.ToLower()" title="Curva">@item.Curva</span>
+                            }
+
+                            <!-- Imagem -->
                             <div class="catalogo-img-wrapper">
                                 <img src="@item.Foto" alt="@item.NmItem" class="catalogo-img" loading="lazy"
                                      onerror="this.src='https://www.supplymanager.com.br/fotos/semimagem.jpg'" />
                             </div>
 
-                            <div class="card-body d-flex flex-column p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="text-muted small">@item.CdItem</span>
-                                    @if (!string.IsNullOrWhiteSpace(item.Curva))
+                            <!-- Conteúdo -->
+                            <div class="card-body d-flex flex-column px-3 pt-2 pb-3">
+                                <span class="catalogo-codigo">@item.CdItem</span>
+                                <h6 class="catalogo-nome">@item.NmItem</h6>
+
+                                <div class="catalogo-meta mt-auto">
+                                    @if (!string.IsNullOrWhiteSpace(item.NmMarca))
                                     {
-                                        <span class="badge rounded-pill @(item.Curva == "A" ? "bg-success" : item.Curva == "B" ? "bg-warning text-dark" : "bg-secondary")">@item.Curva</span>
+                                        <span><i class="fa-solid fa-tag"></i>@item.NmMarca</span>
                                     }
-                                </div>
-
-                                <h6 class="catalogo-nome mb-2">@item.NmItem</h6>
-
-                                @if (!string.IsNullOrWhiteSpace(item.NumCA))
-                                {
-                                    <small class="text-muted mb-1"><i class="fa-solid fa-certificate me-1"></i>CA: @item.NumCA</small>
-                                }
-
-                                @if (!string.IsNullOrWhiteSpace(item.NmMarca))
-                                {
-                                    <small class="text-muted mb-1"><i class="fa-solid fa-tag me-1"></i>@item.NmMarca</small>
-                                }
-
-                                <small class="text-muted mb-2">@item.NmSegmento · @item.NmFamilia</small>
-
-                                <div class="mt-auto">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">Estoque</small>
-                                        <span class="fw-semibold @(item.QtEstoque > 0 ? "text-success" : "text-danger")">
-                                            @(item.QtEstoque > 0 ? item.QtEstoque.ToString("N0", new System.Globalization.CultureInfo("pt-BR")) : "Indisponível")
-                                        </span>
-                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(item.NumCA))
+                                    {
+                                        <span><i class="fa-solid fa-certificate"></i>CA @item.NumCA</span>
+                                    }
+                                    <span><i class="fa-solid fa-layer-group"></i>@item.NmSegmento</span>
                                 </div>
                             </div>
+
+                            <!-- Estoque footer -->
+                            <div class="catalogo-stock @(temEstoque ? "catalogo-stock-ok" : "catalogo-stock-out")">
+                                <i class="fa-solid @(temEstoque ? "fa-check-circle" : "fa-times-circle")"></i>
+                                <span>@(temEstoque ? item.QtEstoque.ToString("N0", new System.Globalization.CultureInfo("pt-BR")) + " un." : "Indisponível")</span>
+                            </div>
                         </div>
+                        </a>
                     </div>
                 }
             </div>
 
+            <!-- Paginação -->
             @if (Model.TotalPaginas > 1)
             {
                 var totalPages = Model.TotalPaginas;
@@ -193,35 +249,32 @@
                 var startPage = Math.Max(1, currentPage - 2);
                 var endPage = Math.Min(totalPages, currentPage + 2);
 
-                <nav aria-label="Paginação do catálogo" class="mt-4">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                        <small class="text-muted">
-                            Página @currentPage de @totalPages — Exibindo @Model.Itens.Count de @Model.TotalRegistros produtos
-                        </small>
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(1)"><i class="fa-solid fa-angles-left"></i></a>
+                <div class="catalogo-pagination mt-4">
+                    <small class="text-muted">
+                        Página <strong>@currentPage</strong> de <strong>@totalPages</strong>
+                        — @Model.Itens.Count de @Model.TotalRegistros.ToString("N0", new System.Globalization.CultureInfo("pt-BR")) produtos
+                    </small>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(1)"><i class="fa-solid fa-angles-left"></i></a>
+                        </li>
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage - 1))"><i class="fa-solid fa-angle-left"></i></a>
+                        </li>
+                        @for (var p = startPage; p <= endPage; p++)
+                        {
+                            <li class="page-item @(p == currentPage ? "active" : "")">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(@p)">@p</a>
                             </li>
-                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage - 1))"><i class="fa-solid fa-angle-left"></i></a>
-                            </li>
-
-                            @for (var p = startPage; p <= endPage; p++)
-                            {
-                                <li class="page-item @(p == currentPage ? "active" : "")">
-                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(@p)">@p</a>
-                                </li>
-                            }
-
-                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage + 1))"><i class="fa-solid fa-angle-right"></i></a>
-                            </li>
-                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(@totalPages)"><i class="fa-solid fa-angles-right"></i></a>
-                            </li>
-                        </ul>
-                    </div>
-                </nav>
+                        }
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage + 1))"><i class="fa-solid fa-angle-right"></i></a>
+                        </li>
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(@totalPages)"><i class="fa-solid fa-angles-right"></i></a>
+                        </li>
+                    </ul>
+                </div>
             }
         }
     </div>
@@ -229,97 +282,104 @@
 
 <!-- Offcanvas de Filtros -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasFiltros" aria-labelledby="offcanvasFiltrosLabel">
-    <div class="offcanvas-header">
-        <h5 id="offcanvasFiltrosLabel"><i class="fa-duotone fa-filter me-2 text-br"></i>Filtros</h5>
+    <div class="offcanvas-header border-bottom">
+        <h5 id="offcanvasFiltrosLabel" class="mb-0"><i class="fa-duotone fa-sliders me-2 text-br"></i>Filtros Avançados</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
     </div>
-    <div class="offcanvas-body">
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Situação</label>
-            <select class="form-select form-select-sm" id="filtroAtivo">
-                <option value="1" selected="@(Model.FlagAtivo == 1)">Ativos</option>
-                <option value="0" selected="@(Model.FlagAtivo == 0)">Inativos</option>
-                <option value="2" selected="@(Model.FlagAtivo == 2)">Todos</option>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Estabelecimento (Estoque)</label>
-            <select class="form-select form-select-sm" id="filtroEstabelecimento">
-                @foreach (var est in Model.Estabelecimentos)
-                {
-                    <option value="@est.EstabelecimentoID" selected="@(Model.EstabelecimentoID == est.EstabelecimentoID)">@est.NmEstabelecimento</option>
-                }
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Curva ABC</label>
-            <select class="form-select form-select-sm" id="filtroCurva">
-                <option value="" selected="@(string.IsNullOrEmpty(Model.Curva))">Todas</option>
-                <option value="A" selected="@(Model.Curva == "A")">Curva A</option>
-                <option value="B" selected="@(Model.Curva == "B")">Curva B</option>
-                <option value="C" selected="@(Model.Curva == "C")">Curva C</option>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Outlet</label>
-            <select class="form-select form-select-sm" id="filtroOutlet">
-                <option value="2" selected="@(Model.FlagOutlet == 2)">Todos</option>
-                <option value="1" selected="@(Model.FlagOutlet == 1)">Apenas Outlet</option>
-                <option value="0" selected="@(Model.FlagOutlet == 0)">Exceto Outlet</option>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Sob Demanda</label>
-            <select class="form-select form-select-sm" id="filtroSobDemanda">
-                <option value="2" selected="@(Model.FlagSobDemanda == 2)">Todos</option>
-                <option value="1" selected="@(Model.FlagSobDemanda == 1)">Apenas Sob Demanda</option>
-                <option value="0" selected="@(Model.FlagSobDemanda == 0)">Exceto Sob Demanda</option>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <div class="form-check form-switch mb-2">
-                <input class="form-check-input" type="checkbox" id="filtroSustentavel" @(Model.FlagSustentavel == 1 ? "checked" : "")>
-                <label class="form-check-label" for="filtroSustentavel">
-                    <i class="fa-solid fa-leaf text-success me-1"></i>Apenas Sustentável
-                </label>
+    <div class="offcanvas-body d-flex flex-column">
+        <div class="flex-grow-1">
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-toggle-on me-1 text-muted"></i>Situação</label>
+                <select class="form-select" id="filtroAtivo">
+                    <option value="1" selected="@(Model.FlagAtivo == 1)">Ativos</option>
+                    <option value="0" selected="@(Model.FlagAtivo == 0)">Inativos</option>
+                    <option value="2" selected="@(Model.FlagAtivo == 2)">Todos</option>
+                </select>
             </div>
-            <div class="form-check form-switch mb-2">
-                <input class="form-check-input" type="checkbox" id="filtroNovidade" @(Model.FlagNovidade == 1 ? "checked" : "")>
-                <label class="form-check-label" for="filtroNovidade">
-                    <i class="fa-solid fa-sparkles text-info me-1"></i>Apenas Novidade
-                </label>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-warehouse me-1 text-muted"></i>Estabelecimento</label>
+                <select class="form-select" id="filtroEstabelecimento">
+                    @foreach (var est in Model.Estabelecimentos)
+                    {
+                        <option value="@est.EstabelecimentoID" selected="@(Model.EstabelecimentoID == est.EstabelecimentoID)">@est.NmEstabelecimento</option>
+                    }
+                </select>
+                <small class="text-danger mt-1" id="AlertaEstoque" style="display:@(Model.EstabelecimentoID == 0 ? "block" : "none")">
+                    <i class="fa-solid fa-exclamation-circle me-2"></i> Soma o estoque de todos os estabelecimentos
+                </small>
             </div>
-            <div class="form-check form-switch mb-2">
-                <input class="form-check-input" type="checkbox" id="filtroPadraoBr" @(Model.FlagPadraoBrSupply == 1 ? "checked" : "")>
-                <label class="form-check-label" for="filtroPadraoBr">
-                    <i class="fa-solid fa-check-circle text-br me-1"></i>Padrão BR Supply
-                </label>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-chart-simple me-1 text-muted"></i>Curva ABC</label>
+                <select class="form-select" id="filtroCurva">
+                    <option value="" selected="@(string.IsNullOrEmpty(Model.Curva))">Todas</option>
+                    <option value="A" selected="@(Model.Curva == "A")">Curva A</option>
+                    <option value="B" selected="@(Model.Curva == "B")">Curva B</option>
+                    <option value="C" selected="@(Model.Curva == "C")">Curva C</option>
+                </select>
             </div>
-            <div class="form-check form-switch mb-2">
-                <input class="form-check-input" type="checkbox" id="filtroMarcaPropria" @(Model.FlagMarcaPropria == 1 ? "checked" : "")>
-                <label class="form-check-label" for="filtroMarcaPropria">
-                    <i class="fa-solid fa-tag text-primary me-1"></i>Apenas Marca Própria
-                </label>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-percent me-1 text-muted"></i>Outlet</label>
+                <select class="form-select" id="filtroOutlet">
+                    <option value="2" selected="@(Model.FlagOutlet == 2)">Todos</option>
+                    <option value="1" selected="@(Model.FlagOutlet == 1)">Apenas Outlet</option>
+                    <option value="0" selected="@(Model.FlagOutlet == 0)">Exceto Outlet</option>
+                </select>
             </div>
-            <div class="form-check form-switch mb-2">
-                <input class="form-check-input" type="checkbox" id="filtroComEstoque" @(Model.FlagComEstoque == 1 ? "checked" : "")>
-                <label class="form-check-label" for="filtroComEstoque">
-                    <i class="fa-solid fa-boxes-stacked text-success me-1"></i>Apenas com Estoque
-                </label>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-clock me-1 text-muted"></i>Sob Demanda</label>
+                <select class="form-select" id="filtroSobDemanda">
+                    <option value="2" selected="@(Model.FlagSobDemanda == 2)">Todos</option>
+                    <option value="1" selected="@(Model.FlagSobDemanda == 1)">Apenas Sob Demanda</option>
+                    <option value="0" selected="@(Model.FlagSobDemanda == 0)">Exceto Sob Demanda</option>
+                </select>
+            </div>
+
+            <hr class="my-3" />
+
+            <div class="mb-3">
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="filtroSustentavel" @(Model.FlagSustentavel == 1 ? "checked" : "")>
+                    <label class="form-check-label" for="filtroSustentavel">
+                        <i class="fa-solid fa-leaf text-success me-1"></i>Apenas Sustentável
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="filtroNovidade" @(Model.FlagNovidade == 1 ? "checked" : "")>
+                    <label class="form-check-label" for="filtroNovidade">
+                        <i class="fa-solid fa-sparkles text-info me-1"></i>Apenas Novidade
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="filtroPadraoBr" @(Model.FlagPadraoBrSupply == 1 ? "checked" : "")>
+                    <label class="form-check-label" for="filtroPadraoBr">
+                        <i class="fa-solid fa-check-circle text-br me-1"></i>Apenas Mix BrSupply
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="filtroMarcaPropria" @(Model.FlagMarcaPropria == 1 ? "checked" : "")>
+                    <label class="form-check-label" for="filtroMarcaPropria">
+                        <i class="fa-solid fa-tag text-primary me-1"></i>Apenas Marca Própria
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="filtroComEstoque" @(Model.FlagComEstoque == 1 ? "checked" : "")>
+                    <label class="form-check-label" for="filtroComEstoque">
+                        <i class="fa-solid fa-boxes-stacked text-success me-1"></i>Apenas com Estoque
+                    </label>
+                </div>
             </div>
         </div>
 
-        <div class="d-grid gap-2">
+        <div class="d-grid gap-2 pt-3 border-top">
             <button type="button" class="btn btn-primary" id="btnAplicarFiltros">
                 <i class="fa-solid fa-check me-1"></i>Aplicar Filtros
             </button>
             <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
-                <i class="fa-solid fa-eraser me-1"></i>Limpar Filtros
+                <i class="fa-solid fa-eraser me-1"></i>Limpar Tudo
             </button>
         </div>
     </div>
@@ -329,6 +389,28 @@
     <script>
         function goToPage(page) {
             document.getElementById('inputPage').value = page;
+            document.getElementById('formCatalogo').submit();
+        }
+
+        var filterInputMap = {
+            texto: 'inputTexto',
+            flagAtivo: 'inputFlagAtivo',
+            flagMarcaPropria: 'inputFlagMarcaPropria',
+            flagOutlet: 'inputFlagOutlet',
+            flagSobDemanda: 'inputFlagSobDemanda',
+            flagSustentavel: 'inputFlagSustentavel',
+            flagNovidade: 'inputFlagNovidade',
+            curva: 'inputCurva',
+            flagPadraoBrSupply: 'inputFlagPadraoBrSupply',
+            flagComEstoque: 'inputFlagComEstoque'
+        };
+
+        function removeFilter(field, defaultValue) {
+            var inputId = filterInputMap[field];
+            if (!inputId) return;
+            var el = document.getElementById(inputId);
+            if (el) el.value = defaultValue;
+            document.getElementById('inputPage').value = '1';
             document.getElementById('formCatalogo').submit();
         }
 
@@ -349,6 +431,10 @@
 
         document.getElementById('btnLimparFiltros')?.addEventListener('click', function () {
             window.location.href = '@Url.Action("Catalogo", "Produtos")';
+        });
+
+        document.getElementById('filtroEstabelecimento')?.addEventListener('change', function () {
+            document.getElementById('AlertaEstoque').style.display = this.value === '0' ? 'block' : 'none';
         });
     </script>
 }

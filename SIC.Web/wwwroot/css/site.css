@@ -51,6 +51,10 @@ a {
     font-size: 0.9rem !important;
 }
 
+.fs-8 {
+    font-size: 0.8rem !important;
+}
+
 [data-bs-theme="dark"] a {
     color: #fff !important;
 }
@@ -464,6 +468,12 @@ a {
     font-size: .875rem;
 }
 
+.cad-avatar {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+}
+
 .avatar {
     width: 44px;
     height: 44px;
@@ -475,6 +485,21 @@ a {
 }
 
     .avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--sic-brand) 20%, transparent);
+    }
+
+.avatar-user {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--sic-border);
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+    .avatar-user:hover {
         transform: scale(1.05);
         box-shadow: 0 0 0 4px color-mix(in srgb, var(--sic-brand) 20%, transparent);
     }
@@ -736,8 +761,11 @@ a {
     }
 }
 
-/* ÍNÍCIO - Elemento Timeline (legado) */
+.h-45px {
+    height: 45px;
+}
 
+/* ÍNÍCIO - Elemento Timeline (legado) */
 .timeline {
     list-style-type: none;
     display: flex;
@@ -948,6 +976,13 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
 }
 /* FIM - DataTables Style */
 /* INÍCIO - Personalização de estilo botões Bootstrap */
+
+.form-check-input[type="checkbox"] {
+    min-height: 20px !important;
+    min-width: 35px !important;
+    margin-right: 10px !important;
+}
+
 .btn {
     padding: 11px 16px;
     cursor: pointer;
@@ -1201,7 +1236,7 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
     }
 
         .btn.btn-outline-danger:hover, .btn.btn-outline-danger:focus {
-            color: #fff;
+            color: #fff !important;
             background: #f0134d !important;
             border-color: #f0134d !important;
         }
@@ -1373,3 +1408,35 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
         padding-top: 3px;
     }
 /* FIM - Tela de Detalhes do pedido */
+
+/* INÍCIO - Tela de Detalhes do produto */
+
+.produto-accordion-icon {
+    transition: transform .2s ease, color .2s ease;
+    transform-origin: center;
+}
+
+.accordion-button:not(.collapsed) .produto-accordion-icon {
+    transform: scale(2);
+}
+
+/* Property groups */
+.pedido-prop-group {
+    margin-top: 1rem;
+}
+
+    .pedido-prop-group:last-child {
+        margin-bottom: 1rem;        
+    }
+
+.pedido-prop-group-title {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--sic-brand);
+    padding: .5rem 0;
+    margin-bottom: 0;
+    border-bottom: 2px solid color-mix(in srgb, var(--sic-brand) 20%, transparent);
+}
+
+/* FIM  - Tela de Detalhes do produto */

@@ -70,4 +70,29 @@ public sealed class ProdutosController(ProdutoApiClient apiClient) : Controller
 
         return View(vm);
     }
+
+    [HttpGet("Detalhes/{itemId:int}")]
+    public async Task<IActionResult> Detalhes(int itemId, CancellationToken cancellationToken)
+    {
+        var vm = await apiClient.GetProductDetailAsync(itemId, cancellationToken);
+        if (vm is null) return NotFound();
+
+        vm.Estoques = await apiClient.GetProductStockAsync(itemId, cancellationToken);
+
+        return View(vm);
+    }
+
+    [HttpGet("Detalhes/{itemId:int}/Alocacoes/{estabelecimentoId:int}")]
+    public async Task<IActionResult> Alocacoes(int itemId, int estabelecimentoId, CancellationToken cancellationToken)
+    {
+        var data = await apiClient.GetProductStockAllocationsAsync(itemId, estabelecimentoId, cancellationToken);
+        return Json(data);
+    }
+
+    [HttpGet("Detalhes/{itemId:int}/OrdensCompra")]
+    public async Task<IActionResult> OrdensCompra(int itemId, CancellationToken cancellationToken)
+    {
+        var data = await apiClient.GetProductPurchaseOrdersAsync(itemId, cancellationToken);
+        return Json(data);
+    }
 }

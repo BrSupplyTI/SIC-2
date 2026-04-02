@@ -892,6 +892,46 @@
                     </div>
                 </div>
             </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingSimilares">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSimilares" aria-expanded="false" aria-controls="collapseSimilares">
+                        <i class="fa-duotone fa-thin fa-basket-shopping me-3 produto-accordion-icon"></i> Produtos Similares
+                    </button>
+                </h2>
+                <div id="collapseSimilares" class="accordion-collapse collapse" aria-labelledby="headingSimilares" data-bs-parent="#produtoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="text-center text-muted py-4 d-none" id="similaresLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <div>Carregando dados...</div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="similaresError" role="alert">
+                            Não foi possível carregar dados das Ordens de Compra.
+                        </div>
+                        <div class="alert alert-secondary d-none" id="similaresEmpty">
+                            Nenhuma ordem encontrada.
+                        </div>
+                        <div class="d-none" id="divTblSimilares">                            
+                            <div class="table-responsive">
+                                <table class="table table-sm styled-table align-middle mb-0" id="tblSimilares">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center">Qtd. Comprada</th>
+                                            <th>Estabelecimento</th>
+                                            <th class="text-center">Previsão Chegada</th>
+                                            <th class="text-center oc-col-hide">Ordem Compra</th>
+                                            <th class="text-center oc-col-hide">xPed Item</th>
+                                            <th>Fornecedor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tblSimilaresBody"></tbody>
+                                </table>
+                            </div>                            
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

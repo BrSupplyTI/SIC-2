@@ -138,8 +138,10 @@ a {
 }
 
     .sidebar-nav .nav-link {
-        white-space: nowrap;
-        text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
         overflow: hidden;
     }
 
@@ -229,8 +231,6 @@ a {
     color: var(--sic-muted);
     border-radius: .3rem;
     margin-bottom: .35rem;
-    display: flex;
-    align-items: center;
 }
 
     .sidebar-nav .nav-link:hover,
@@ -275,7 +275,7 @@ a {
 }
 
     .sidebar-submenu.open {
-        max-height: 220px;
+        max-height: 1000px;
     }
 
     .sidebar-submenu .nav-link {

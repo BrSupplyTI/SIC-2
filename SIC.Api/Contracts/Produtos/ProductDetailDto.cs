@@ -54,4 +54,6 @@ public sealed class ProductDetailDto
     public string FotoPrincipal { get; set; } = string.Empty;
     public IReadOnlyList<string> FotosSecundarias { get; set; } = [];
     public IReadOnlyList<ProductPropertyDto> Propriedades { get; set; } = [];
+    public bool HasFichaTecnica { get; set; }
+    public bool HasFichaSeguranca { get; set; }
 }

@@ -213,4 +213,77 @@ public sealed class ProductCatalogService(IProductCatalogRepository repository) 
             RazaoSocial = e.RazaoSocial
         }).ToList();
     }
+
+    public async Task<IReadOnlyList<ProductSimilarDto>> GetSimilarsAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        var items = await repository.GetProductSimilarsAsync(itemId, cancellationToken);
+
+        string urlSemFoto = "https://www.supplymanager.com.br/fotos/semimagem.jpg";
+        string pastaRede = @"\\192.168.0.10\Fotos";
+        string baseUrlPublica = "https://www.supplymanager.com.br/fotos";
+
+        return items.Select(e =>
+        {
+            string foto = urlSemFoto;
+            if (!string.IsNullOrWhiteSpace(e.CdItem))
+            {
+                string caminhoFisico = Path.Combine(pastaRede, e.CdItem + ".jpg");
+                if (File.Exists(caminhoFisico))
+                    foto = $"{baseUrlPublica}/{e.CdItem}.jpg";
+            }
+
+            return new ProductSimilarDto
+            {
+                ItemID = e.ItemID,
+                CdItem = e.CdItem,
+                NmItem = e.NmItem,
+                Foto = foto,
+                DtCadastro = e.DataHoraCadastro.ToString("dd/MM/yyyy"),
+                NCM = e.NCM
+            };
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<ProductSimilarStockDto>> GetSimilarStockAsync(int itemSimilarId, CancellationToken cancellationToken = default)
+    {
+        var items = await repository.GetProductSimilarStockAsync(itemSimilarId, cancellationToken);
+
+        return items.Select(e => new ProductSimilarStockDto
+        {
+            CdEstabelecimento = e.CdEstabelecimento,
+            NmEstabelecimento = e.NmEstabelecimento,
+            Curva = e.Curva,
+            Criticidade = e.Criticidade,
+            Situacao = e.Situacao,
+            QtDisponivel = e.QtDisponivel
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<RelatedProductDto>> GetRelatedProductsAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        var items = await repository.GetRelatedProductsAsync(itemId, cancellationToken);
+
+        string urlSemFoto = "https://www.supplymanager.com.br/fotos/semimagem.jpg";
+        string pastaRede = @"\\192.168.0.10\Fotos";
+        string baseUrlPublica = "https://www.supplymanager.com.br/fotos";
+
+        return items.Select(e =>
+        {
+            string foto = urlSemFoto;
+            if (!string.IsNullOrWhiteSpace(e.CdItem))
+            {
+                string caminhoFisico = Path.Combine(pastaRede, e.CdItem + ".jpg");
+                if (File.Exists(caminhoFisico))
+                    foto = $"{baseUrlPublica}/{e.CdItem}.jpg";
+            }
+
+            return new RelatedProductDto
+            {
+                ItemID = e.ItemID,
+                CdItem = e.CdItem,
+                NmItem = e.NmItem,
+                Foto = foto
+            };
+        }).ToList();
+    }
 }

@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="~/css/produtos/detalhes.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.datatables.net/2.3.1/css/dataTables.bootstrap5.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 }
 
 <div class="card border-0 shadow-sm mb-4">
@@ -342,8 +343,31 @@
                     </div>
                 }
 
+                <!-- Download de Arquivos -->
+                @if (Model.HasFichaTecnica || Model.HasFichaSeguranca)
+                {
+                    <div class="produto-downloads mb-4">
+                        @if (Model.HasFichaTecnica)
+                        {
+                            <a href="@Url.Action("FichaTecnica", "Produtos", new { itemId = Model.ItemID })" class="btn btn-outline-br" target="_blank">
+                                <i class="fa-duotone fa-file-pdf me-2"></i>Download da Ficha Técnica
+                            </a>
+                        }
+                        @if (Model.HasFichaSeguranca)
+                        {
+                            <a href="@Url.Action("FichaSeguranca", "Produtos", new { itemId = Model.ItemID })" class="btn btn-outline-br" target="_blank">
+                                <i class="fa-duotone fa-file-shield me-2"></i>Download da Ficha de Segurança
+                            </a>
+                        }
+                    </div>
+                }
+
 
             </div>
+        </div>
+        
+        <!-- Carrousel -->
+        <div id="carrouselRelacionados">
         </div>
 
         <!-- Accordion -->
@@ -895,7 +919,7 @@
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingSimilares">
                     <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSimilares" aria-expanded="false" aria-controls="collapseSimilares">
-                        <i class="fa-duotone fa-thin fa-basket-shopping me-3 produto-accordion-icon"></i> Produtos Similares
+                        <i class="fa-duotone fa-thin fa-clone me-3 produto-accordion-icon"></i> Produtos Similares
                     </button>
                 </h2>
                 <div id="collapseSimilares" class="accordion-collapse collapse" aria-labelledby="headingSimilares" data-bs-parent="#produtoDetalhesAccordion">
@@ -907,22 +931,22 @@
                             <div>Carregando dados...</div>
                         </div>
                         <div class="alert alert-danger d-none" id="similaresError" role="alert">
-                            Não foi possível carregar dados das Ordens de Compra.
+                            Não foi possível carregar dados dos Produtos Similares.
                         </div>
                         <div class="alert alert-secondary d-none" id="similaresEmpty">
-                            Nenhuma ordem encontrada.
+                            Nenhum produto similar encontrado.
                         </div>
                         <div class="d-none" id="divTblSimilares">                            
                             <div class="table-responsive">
                                 <table class="table table-sm styled-table align-middle mb-0" id="tblSimilares">
                                     <thead>
                                         <tr>
-                                            <th class="text-center">Qtd. Comprada</th>
-                                            <th>Estabelecimento</th>
-                                            <th class="text-center">Previsão Chegada</th>
-                                            <th class="text-center oc-col-hide">Ordem Compra</th>
-                                            <th class="text-center oc-col-hide">xPed Item</th>
-                                            <th>Fornecedor</th>
+                                            <th class="text-center">Foto</th>                                            
+                                            <th class="text-center">Código</th>
+                                            <th>Nome</th>
+                                            <th class="text-center">NCM</th>
+                                            <th class="text-center">Similar Desde</th>
+                                            <th class="text-center">Estoques</th>                                            
                                         </tr>
                                     </thead>
                                     <tbody id="tblSimilaresBody"></tbody>
@@ -935,6 +959,7 @@
         </div>
     </div>
 </div>
+
 <div class="produto-lightbox" id="produtoLightbox">
     <button class="produto-lightbox-close" type="button" id="lightboxClose" title="Fechar">
         <i class="fa-solid fa-xmark"></i>
@@ -949,6 +974,51 @@
     <div class="produto-lightbox-counter" id="lightboxCounter"></div>
 </div>
 
+<div class="modal fade" id="modalVerEstoquesSubstituto" tabindex="-1" aria-labelledby="modalVerEstoquesSubstitutoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVerEstoquesSubstitutoLabel">
+                    <i class="fa-duotone fa-clone me-2 text-br"></i>Estoques do Item Similar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center text-muted py-4" id="verEstoquesSubstitutoLoader">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <div>Carregando estoques...</div>
+                </div>
+                <div class="alert alert-danger d-none" id="verEstoquesSubstitutoError" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Não foi possível carregar os dados de estoques.
+                </div>
+                <div class="text-center text-muted py-4 d-none" id="verEstoquesSubstitutoEmpty">
+                    <i class="fa-duotone fa-box-open fa-2x mb-2 d-block"></i>
+                    Nenhum registro de estoque encontrado.
+                </div>
+                <div class="table-responsive d-none" id="divTblVerEstoquesSubstituto">
+                    <table class="table table-sm styled-table align-middle w-100" id="tblVerEstoquesSubstituto">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Cód. Estab.</th>
+                                <th>Estabelecimento</th>                                
+                                <th class="text-center">Curva</th>
+                                <th class="text-center">Criticidade</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Qtde. Disponível</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="modalVerAlocacoesSIC" tabindex="-1" aria-labelledby="modalVerAlocacoesSICLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
@@ -974,7 +1044,7 @@
                     Nenhuma alocação encontrada para este item/estabelecimento.
                 </div>
                 <div class="table-responsive d-none" id="divTblAlocacoes">
-                    <table class="table table-sm table-striped styled-table align-middle w-100" id="tblAlocacoes">
+                    <table class="table table-sm styled-table align-middle w-100" id="tblAlocacoes">
                         <thead>
                             <tr>
                                 <th data-priority="1" class="text-center">Pedido</th>
@@ -1003,6 +1073,7 @@
     <script src="https://cdn.datatables.net/2.3.1/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/3.0.4/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/3.0.4/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
         (function () {
         const basePath = '@Url.Content("~/")'.replace(/\/$/, '');
@@ -1141,7 +1212,7 @@
         {
         data: 'pedido', className: 'text-center fw-semibold',
         render: function (v) {
-        return '<a href="' + basePath + '/Pedidos/Detalhes/' + v + '" class="text-decoration-none">' + v + '<div class="btn btn-outline-secondary"> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></div></a>';
+        return '<a href="' + basePath + '/Pedidos/Detalhes/' + v + '" class="text-decoration-none text-br">' + v + '</a>';
         }
         },
         { data: 'dtPedido', className: 'text-center' },
@@ -1330,6 +1401,207 @@
                     });
             });
         }
+
+        // Produtos Similares - lazy load
+        var similaresLoaded = false;
+        var collapseSim = document.getElementById('collapseSimilares');
+        if (collapseSim) {
+            collapseSim.addEventListener('show.bs.collapse', function () {
+                if (similaresLoaded) return;
+                similaresLoaded = true;
+
+                document.getElementById('similaresLoader').classList.remove('d-none');
+
+                fetch(basePath + '/Produtos/Detalhes/@Model.ItemID/Similares')
+                    .then(function (resp) {
+                        if (!resp.ok) throw new Error(resp.status);
+                        return resp.json();
+                    })
+                    .then(function (data) {
+                        document.getElementById('similaresLoader').classList.add('d-none');
+
+                        if (!data || data.length === 0) {
+                            document.getElementById('similaresEmpty').classList.remove('d-none');
+                            return;
+                        }
+
+                        document.getElementById('divTblSimilares').classList.remove('d-none');
+                        var tbody = document.getElementById('tblSimilaresBody');
+                        tbody.innerHTML = '';
+
+                        data.forEach(function (r) {
+                            var tr = document.createElement('tr');
+                            tr.innerHTML =
+                                '<td class="text-center"><img src="' + (r.foto || 'https://www.supplymanager.com.br/fotos/semimagem.jpg') + '" alt="' + r.nmItem + '" style="width:48px;height:48px;object-fit:contain;border-radius:4px" onerror="this.src=\'https://www.supplymanager.com.br/fotos/semimagem.jpg\'" /></td>' +
+                                '<td class="text-center fw-semibold"><a href="' + basePath + '/Produtos/Detalhes/' + r.itemID + '" class="text-decoration-none text-br">' + r.cdItem + '</a></td>' +
+                                '<td>' + r.nmItem + '</td>' +
+                                '<td class="text-center">' + (r.ncm || '<span class="text-muted">—</span>') + '</td>' +
+                                '<td class="text-center">' + (r.dtCadastro || '<span class="text-muted">—</span>') + '</td>' +
+                                '<td class="text-center"><button type="button" class="btn btn-outline-br btnVerEstoquesSimilar" data-itemid="' + r.itemID + '" data-cditem="' + r.cdItem + '"><i class="fa-duotone fa-warehouse me-1"></i></button></td>';
+                            tbody.appendChild(tr);
+                        });
+
+                        // Bind estoques buttons
+                        tbody.querySelectorAll('.btnVerEstoquesSimilar').forEach(function (btn) {
+                            btn.addEventListener('click', function () {
+                                abrirModalEstoquesSimilar(btn.dataset.itemid, btn.dataset.cditem);
+                            });
+                        });
+                    })
+                    .catch(function () {
+                        document.getElementById('similaresLoader').classList.add('d-none');
+                        document.getElementById('similaresError').classList.remove('d-none');
+                        similaresLoaded = false;
+                    });
+            });
+        }
+
+        // Estoques do Similar - modal com DataTables
+        var dtEstoquesSimilar = null;
+        var modalEstoquesSimilar = document.getElementById('modalVerEstoquesSubstituto');
+
+        function abrirModalEstoquesSimilar(itemSimilarId, cdItem) {
+            document.getElementById('modalVerEstoquesSubstitutoLabel').innerHTML =
+                '<i class="fa-duotone fa-clone me-2 text-br"></i>Estoques do Item #' + cdItem;
+
+            document.getElementById('verEstoquesSubstitutoLoader').classList.remove('d-none');
+            document.getElementById('verEstoquesSubstitutoError').classList.add('d-none');
+            document.getElementById('verEstoquesSubstitutoEmpty').classList.add('d-none');
+            document.getElementById('divTblVerEstoquesSubstituto').classList.add('d-none');
+
+            if (dtEstoquesSimilar) {
+                dtEstoquesSimilar.destroy();
+                dtEstoquesSimilar = null;
+                document.querySelector('#tblVerEstoquesSubstituto tbody').innerHTML = '';
+            }
+
+            var bsModal = new bootstrap.Modal(modalEstoquesSimilar);
+            bsModal.show();
+
+            fetch(basePath + '/Produtos/Detalhes/@Model.ItemID/Similares/' + itemSimilarId + '/Estoques')
+                .then(function (resp) {
+                    if (!resp.ok) throw new Error(resp.status);
+                    return resp.json();
+                })
+                .then(function (data) {
+                    document.getElementById('verEstoquesSubstitutoLoader').classList.add('d-none');
+
+                    if (!data || data.length === 0) {
+                        document.getElementById('verEstoquesSubstitutoEmpty').classList.remove('d-none');
+                        return;
+                    }
+
+                    document.getElementById('divTblVerEstoquesSubstituto').classList.remove('d-none');
+
+                    dtEstoquesSimilar = new DataTable('#tblVerEstoquesSubstituto', {
+                        data: data,
+                        responsive: true,
+                        paging: data.length > 25,
+                        pageLength: 25,
+                        order: [[5, 'desc']],
+                        language: {
+                            emptyTable: 'Nenhum estoque encontrado',
+                            info: 'Exibindo _START_ a _END_ de _TOTAL_ registros',
+                            infoEmpty: 'Nenhum registro',
+                            infoFiltered: '(filtrado de _MAX_ registros)',
+                            lengthMenu: '_MENU_ por página',
+                            search: 'Buscar:',
+                            zeroRecords: 'Nenhum registro encontrado',
+                            paginate: { first: 'Primeira', last: 'Última', next: '›', previous: '‹' }
+                        },
+                        columns: [
+                            { data: 'cdEstabelecimento', className: 'text-center' },
+                            { data: 'nmEstabelecimento' },
+                            {
+                                data: 'curva', className: 'text-center',
+                                render: function (v) {
+                                    if (!v || v === '-') return '<span class="text-muted">-</span>';
+                                    var cls = v === 'A' ? 'produto-curva-a' : v === 'B' ? 'produto-curva-b' : v === 'C' ? 'produto-curva-c' : '';
+                                    return '<span class="produto-curva ' + cls + '">' + v + '</span>';
+                                }
+                            },
+                            {
+                                data: 'criticidade', className: 'text-center',
+                                render: function (v) {
+                                    var map = { X: ['Normal', 'badge-status-info'], Y: ['Outlet', 'badge-status-warning'], Z: ['Sob Demanda', 'badge-status-primary'], F: ['Falta Fabricante', 'badge-status-danger'] };
+                                    var m = map[v] || [v, 'badge-status-info'];
+                                    return '<span class="produto-criticidade ' + m[1] + '" title="' + m[0] + '">' + v + '</span>';
+                                }
+                            },
+                            {
+                                data: 'situacao', className: 'text-center',
+                                render: function (v) {
+                                    if (v === 'Inativo') return '<span class="badge bg-danger">Inativo</span>';
+                                    if (v === 'Falta no Fabricante') return '<span class="badge bg-danger">Falta no Fabricante</span>';
+                                    if (v === 'Outlet') return '<span class="badge bg-warning text-dark">Outlet</span>';
+                                    if (v === 'Sob Demanda') return '<span class="badge bg-primary">Sob Demanda</span>';
+                                    return '<span class="badge bg-success">Ativo</span>';
+                                }
+                            },
+                            {
+                                data: 'qtDisponivel', className: 'text-center fw-semibold',
+                                render: function (v) {
+                                    return v > 0 ? '<span class="text-success">' + v + '</span>' : '<span class="text-danger">' + v + '</span>';
+                                }
+                            }
+                        ]
+                    });
+                })
+                .catch(function () {
+                    document.getElementById('verEstoquesSubstitutoLoader').classList.add('d-none');
+                    document.getElementById('verEstoquesSubstitutoError').classList.remove('d-none');
+                });
+        }
+
+        modalEstoquesSimilar.addEventListener('hidden.bs.modal', function () {
+            if (dtEstoquesSimilar) {
+                dtEstoquesSimilar.destroy();
+                dtEstoquesSimilar = null;
+                document.querySelector('#tblVerEstoquesSubstituto tbody').innerHTML = '';
+            }
+        });
+
+        // Produtos Relacionados - carrossel Swiper
+        fetch(basePath + '/Produtos/Detalhes/@Model.ItemID/Relacionados')
+            .then(function (resp) { return resp.ok ? resp.json() : []; })
+            .then(function (data) {
+                if (!data || data.length === 0) return;
+
+                var container = document.getElementById('carrouselRelacionados');
+                var semFoto = 'https://www.supplymanager.com.br/fotos/semimagem.jpg';
+
+                var slides = data.map(function (r) {
+                    return '<div class="swiper-slide">' +
+                        '<a href="' + basePath + '/Produtos/Detalhes/' + r.itemID + '" class="relacionado-card">' +
+                        '<img src="' + (r.foto || semFoto) + '" alt="' + r.nmItem + '" onerror="this.src=\'' + semFoto + '\'" />' +
+                        '<div class="relacionado-info">' +
+                        '<span class="relacionado-codigo text-muted">' + r.cdItem + '</span>' +
+                        '<span class="relacionado-nome">' + r.nmItem + '</span>' +
+                        '</div></a></div>';
+                }).join('');
+
+                container.innerHTML =
+                    '<div class="relacionados-section mt-4">' +
+                    '<div class="d-flex align-items-center gap-2 mb-3"><i class="fa-duotone fa-link text-br fa-lg"></i><h5 class="mb-0 fw-semibold">Produtos Relacionados</h5></div>' +
+                    '<div class="swiper relacionados-swiper">' +
+                    '<div class="swiper-wrapper">' + slides + '</div>' +
+                    '<div class="swiper-button-prev"></div>' +
+                    '<div class="swiper-button-next"></div>' +
+                    '</div></div>';
+
+                new Swiper('.relacionados-swiper', {
+                    slidesPerView: 2,
+                    spaceBetween: 16,
+                    navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+                    breakpoints: {
+                        576: { slidesPerView: 3 },
+                        768: { slidesPerView: 4 },
+                        992: { slidesPerView: 5 },
+                        1200: { slidesPerView: 6 }
+                    }
+                });
+            })
+            .catch(function () { });
 
         })();
     </script>

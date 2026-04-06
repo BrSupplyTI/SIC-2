@@ -10,4 +10,7 @@ public interface IProductCatalogService
     Task<IReadOnlyList<ProductStockEstablishmentDto>> GetStockAsync(int itemId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductStockAllocationDto>> GetStockAllocationsAsync(int itemId, int estabelecimentoId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductPurchaseOrderDto>> GetPurchaseOrdersAsync(int itemId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ProductSimilarDto>> GetSimilarsAsync(int itemId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ProductSimilarStockDto>> GetSimilarStockAsync(int itemSimilarId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<RelatedProductDto>> GetRelatedProductsAsync(int itemId, CancellationToken cancellationToken = default);
 }

@@ -31,4 +31,10 @@ public interface IProductCatalogRepository
     Task<IReadOnlyList<ProductStockAllocation>> GetProductStockAllocationsAsync(int itemId, int estabelecimentoId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ProductPurchaseOrder>> GetProductPurchaseOrdersAsync(int itemId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ProductSimilar>> GetProductSimilarsAsync(int itemId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ProductSimilarStock>> GetProductSimilarStockAsync(int itemSimilarId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<RelatedProduct>> GetRelatedProductsAsync(int itemId, CancellationToken cancellationToken = default);
 }

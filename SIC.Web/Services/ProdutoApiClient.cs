@@ -101,4 +101,81 @@ public sealed class ProdutoApiClient(HttpClient httpClient)
             return [];
         }
     }
+
+    public async Task<IReadOnlyList<ProdutoSimilarVm>> GetProductSimilarsAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<ProdutoSimilarVm>>($"api/produtos/{itemId}/similares", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<IReadOnlyList<ProdutoSimilarEstoqueVm>> GetProductSimilarStockAsync(int itemId, int itemSimilarId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<ProdutoSimilarEstoqueVm>>($"api/produtos/{itemId}/similares/{itemSimilarId}/estoques", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<IReadOnlyList<ProdutoRelacionadoVm>> GetRelatedProductsAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<ProdutoRelacionadoVm>>($"api/produtos/{itemId}/relacionados", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<(byte[]? Content, string? FileName)?> DownloadFichaTecnicaAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"api/produtos/{itemId}/ficha-tecnica", cancellationToken);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                        ?? response.Content.Headers.ContentDisposition?.FileName
+                        ?? "FichaTecnica.pdf";
+            return (bytes, fileName);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<(byte[]? Content, string? FileName)?> DownloadFichaSegurancaAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"api/produtos/{itemId}/ficha-seguranca", cancellationToken);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                        ?? response.Content.Headers.ContentDisposition?.FileName
+                        ?? "FichaSeguranca.pdf";
+            return (bytes, fileName);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

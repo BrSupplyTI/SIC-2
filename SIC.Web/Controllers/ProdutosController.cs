@@ -95,4 +95,43 @@ public sealed class ProdutosController(ProdutoApiClient apiClient) : Controller
         var data = await apiClient.GetProductPurchaseOrdersAsync(itemId, cancellationToken);
         return Json(data);
     }
+
+    [HttpGet("Detalhes/{itemId:int}/Similares")]
+    public async Task<IActionResult> Similares(int itemId, CancellationToken cancellationToken)
+    {
+        var data = await apiClient.GetProductSimilarsAsync(itemId, cancellationToken);
+        return Json(data);
+    }
+
+    [HttpGet("Detalhes/{itemId:int}/Similares/{itemSimilarId:int}/Estoques")]
+    public async Task<IActionResult> SimilaresEstoques(int itemId, int itemSimilarId, CancellationToken cancellationToken)
+    {
+        var data = await apiClient.GetProductSimilarStockAsync(itemId, itemSimilarId, cancellationToken);
+        return Json(data);
+    }
+
+    [HttpGet("Detalhes/{itemId:int}/Relacionados")]
+    public async Task<IActionResult> Relacionados(int itemId, CancellationToken cancellationToken)
+    {
+        var data = await apiClient.GetRelatedProductsAsync(itemId, cancellationToken);
+        return Json(data);
+    }
+
+    [HttpGet("Detalhes/{itemId:int}/FichaTecnica")]
+    public async Task<IActionResult> FichaTecnica(int itemId, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.DownloadFichaTecnicaAsync(itemId, cancellationToken);
+        if (result is null) return NotFound();
+
+        return File(result.Value.Content!, "application/pdf", result.Value.FileName);
+    }
+
+    [HttpGet("Detalhes/{itemId:int}/FichaSeguranca")]
+    public async Task<IActionResult> FichaSeguranca(int itemId, CancellationToken cancellationToken)
+    {
+        var result = await apiClient.DownloadFichaSegurancaAsync(itemId, cancellationToken);
+        if (result is null) return NotFound();
+
+        return File(result.Value.Content!, "application/pdf", result.Value.FileName);
+    }
 }

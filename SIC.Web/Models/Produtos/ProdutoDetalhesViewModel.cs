@@ -55,6 +55,8 @@ public sealed class ProdutoDetalhesViewModel
     public IReadOnlyList<string> FotosSecundarias { get; set; } = [];
     public IReadOnlyList<ProdutoPropriedadeVm> Propriedades { get; set; } = [];
     public IReadOnlyList<ProdutoEstoqueEstabelecimentoVm> Estoques { get; set; } = [];
+    public bool HasFichaTecnica { get; set; }
+    public bool HasFichaSeguranca { get; set; }
 }
 
 public sealed class ProdutoPropriedadeVm
@@ -142,4 +144,32 @@ public sealed class ProdutoOrdemCompraVm
     public string NmEstabelecimento { get; set; } = string.Empty;
     public string CdEstabelecimento { get; set; } = string.Empty;
     public string RazaoSocial { get; set; } = string.Empty;
+}
+
+public sealed class ProdutoSimilarVm
+{
+    public int ItemID { get; set; }
+    public string CdItem { get; set; } = string.Empty;
+    public string NmItem { get; set; } = string.Empty;
+    public string? Foto { get; set; }
+    public string? DtCadastro { get; set; }
+    public string NCM { get; set; } = string.Empty;
+}
+
+public sealed class ProdutoSimilarEstoqueVm
+{
+    public string CdEstabelecimento { get; set; } = string.Empty;
+    public string NmEstabelecimento { get; set; } = string.Empty;
+    public string Curva { get; set; } = string.Empty;
+    public string Criticidade { get; set; } = string.Empty;
+    public string Situacao { get; set; } = string.Empty;
+    public int QtDisponivel { get; set; }
+}
+
+public sealed class ProdutoRelacionadoVm
+{
+    public int ItemID { get; set; }
+    public string CdItem { get; set; } = string.Empty;
+    public string NmItem { get; set; } = string.Empty;
+    public string? Foto { get; set; }
 }

@@ -604,6 +604,141 @@ public sealed class SqlProductCatalogRepository(IConfiguration configuration) : 
         return items;
     }
 
+    public async Task<IReadOnlyList<ProductSimilar>> GetProductSimilarsAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+            SELECT I.ItemID,
+                   I.CdItem,
+                   I.NmItem,
+                   S.DataHora AS DataHoraCadastro,
+                   C.CdClassificacaoFiscal AS NCM
+            FROM BR_ItemSimilarTroca S WITH (NOLOCK)
+            JOIN BR_Item I WITH (NOLOCK) ON I.ItemID = S.ItemSimilarID
+            JOIN BR_ClassificacaoFiscal C (NOLOCK) ON C.ClassificacaoFiscalID = I.ClassificacaoFiscalID
+            WHERE S.ItemID = @ItemID
+              AND S.DataHora >= DATEADD(MONTH, -24, GETDATE())
+            ORDER BY I.NmItem
+            """;
+
+        await using var cmd = new SqlCommand(sql, connection) { CommandTimeout = 30 };
+        cmd.Parameters.Add("@ItemID", SqlDbType.Int).Value = itemId;
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+        var items = new List<ProductSimilar>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new ProductSimilar
+            {
+                ItemID = reader.GetInt32(reader.GetOrdinal("ItemID")),
+                CdItem = ReadString(reader, "CdItem"),
+                NmItem = ReadString(reader, "NmItem"),
+                DataHoraCadastro = reader.GetDateTime(reader.GetOrdinal("DataHoraCadastro")),
+                NCM = ReadString(reader, "NCM")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<ProductSimilarStock>> GetProductSimilarStockAsync(int itemSimilarId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+            SELECT E.CdEstabelecimento,
+                   E.NmEstabelecimento AS NmEstabelecimento,
+                   P.Curva,
+                   IIF(I.FlagFaltaNoFabricante = 0, (
+                        CASE WHEN ISNULL(P.FlagOutlet, 0) = 1 THEN 'Y'
+                             ELSE CASE
+                                    WHEN ISNULL(P.FlagSobDemanda, 0) = 1 THEN 'Z'
+                                    ELSE 'X'
+                                  END
+                        END),
+                   'F') AS Criticidade,
+                   IIF(ISNULL(I.FlagAtivo, 0) = 0, 'Inativo',
+                       IIF(I.FlagFaltaNoFabricante = 0, (
+                            CASE WHEN ISNULL(P.FlagOutlet, 0) = 1 THEN 'Outlet'
+                                 ELSE CASE
+                                        WHEN ISNULL(P.FlagSobDemanda, 0) = 1 THEN 'Sob Demanda'
+                                        ELSE ''
+                                      END
+                            END),
+                       'Falta no Fabricante')) AS Situacao,
+                   CONVERT(INT, (P.QtDispEstoque - P.QtAlocadaSemOV)) AS QtDisponivel
+            FROM BR_PrecoEstoque P WITH (NOLOCK)
+            JOIN BR_Item I WITH (NOLOCK) ON I.ItemID = P.ItemID
+            JOIN BR_Estabelecimento E WITH (NOLOCK) ON E.EstabelecimentoID = P.EstabelecimentoID
+            WHERE P.ItemID = @ItemSimilarID
+              AND ISNULL(E.NmCurto,'') <> ''
+            """;
+
+        await using var cmd = new SqlCommand(sql, connection) { CommandTimeout = 30 };
+        cmd.Parameters.Add("@ItemSimilarID", SqlDbType.Int).Value = itemSimilarId;
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+        var items = new List<ProductSimilarStock>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new ProductSimilarStock
+            {
+                CdEstabelecimento = ReadString(reader, "CdEstabelecimento"),
+                NmEstabelecimento = ReadString(reader, "NmEstabelecimento"),
+                Curva = ReadString(reader, "Curva"),
+                Criticidade = ReadString(reader, "Criticidade"),
+                Situacao = ReadString(reader, "Situacao"),
+                QtDisponivel = ReadNullableInt32(reader, "QtDisponivel") ?? 0
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<RelatedProduct>> GetRelatedProductsAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+            SELECT DISTINCT A.ItemID, A.CdItem, A.NmItem
+            FROM (
+                SELECT R.ItemID1 AS ItemID, I.CdItem, I.NmItem
+                FROM BR_ItemRelacionado R (NOLOCK)
+                JOIN BR_Item I (NOLOCK) ON I.ItemID = R.ItemID1 AND I.FlagAtivo = 1
+                AND ItemID2 = @ItemID
+                UNION
+                SELECT R.ItemID2 AS ItemID, I.CdItem, I.NmItem
+                FROM BR_ItemRelacionado R (NOLOCK)
+                JOIN BR_Item I (NOLOCK) ON I.ItemID = R.ItemID2 AND I.FlagAtivo = 1
+                AND ItemID1 = @ItemID
+            ) A
+            """;
+
+        await using var cmd = new SqlCommand(sql, connection) { CommandTimeout = 30 };
+        cmd.Parameters.Add("@ItemID", SqlDbType.Int).Value = itemId;
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+        var items = new List<RelatedProduct>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new RelatedProduct
+            {
+                ItemID = reader.GetInt32(reader.GetOrdinal("ItemID")),
+                CdItem = ReadString(reader, "CdItem"),
+                NmItem = ReadString(reader, "NmItem")
+            });
+        }
+
+        return items;
+    }
+
     private static string ReadString(SqlDataReader reader, string column)
     {
         var ordinal = reader.GetOrdinal(column);

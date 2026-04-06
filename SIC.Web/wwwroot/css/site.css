@@ -1284,7 +1284,7 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
 /* FIM - Personalização de estilo botões Bootstrap */
 /* Layout Br SUpply*/
 .text-br {
-    color: var(--sic-brand);
+    color: var(--sic-brand) !important;
 }
 
 .bg-br {

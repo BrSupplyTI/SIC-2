@@ -72,7 +72,42 @@ public sealed class ProductCatalogController(IProductCatalogService service) : C
         }
 
         dto.FotosSecundarias = fotos;
+
+        if (!string.IsNullOrWhiteSpace(dto.CdItem))
+        {
+            string pastaFichaTec = @"\\192.168.0.10\brs\fichatec";
+            string pastaFichaSeg = @"\\192.168.0.10\brs\fispq";
+            dto.HasFichaTecnica = System.IO.File.Exists(Path.Combine(pastaFichaTec, dto.CdItem + ".pdf"));
+            dto.HasFichaSeguranca = System.IO.File.Exists(Path.Combine(pastaFichaSeg, dto.CdItem + ".pdf"));
+        }
+
         return Ok(dto);
+    }
+
+    [HttpGet("{itemId:int}/ficha-tecnica")]
+    public async Task<IActionResult> DownloadFichaTecnica(int itemId, CancellationToken cancellationToken)
+    {
+        var dto = await service.GetDetailAsync(itemId, cancellationToken);
+        if (dto is null || string.IsNullOrWhiteSpace(dto.CdItem)) return NotFound();
+
+        string caminho = Path.Combine(@"\\192.168.0.10\brs\fichatec", dto.CdItem + ".pdf");
+        if (!System.IO.File.Exists(caminho)) return NotFound();
+
+        var bytes = await System.IO.File.ReadAllBytesAsync(caminho, cancellationToken);
+        return File(bytes, "application/pdf", $"{dto.CdItem}_FichaTecnica.pdf");
+    }
+
+    [HttpGet("{itemId:int}/ficha-seguranca")]
+    public async Task<IActionResult> DownloadFichaSeguranca(int itemId, CancellationToken cancellationToken)
+    {
+        var dto = await service.GetDetailAsync(itemId, cancellationToken);
+        if (dto is null || string.IsNullOrWhiteSpace(dto.CdItem)) return NotFound();
+
+        string caminho = Path.Combine(@"\\192.168.0.10\brs\fispq", dto.CdItem + ".pdf");
+        if (!System.IO.File.Exists(caminho)) return NotFound();
+
+        var bytes = await System.IO.File.ReadAllBytesAsync(caminho, cancellationToken);
+        return File(bytes, "application/pdf", $"{dto.CdItem}_FichaSeguranca.pdf");
     }
 
     [HttpGet("{itemId:int}/estoques")]
@@ -93,6 +128,27 @@ public sealed class ProductCatalogController(IProductCatalogService service) : C
     public async Task<IActionResult> GetPurchaseOrders(int itemId, CancellationToken cancellationToken)
     {
         var result = await service.GetPurchaseOrdersAsync(itemId, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("{itemId:int}/similares")]
+    public async Task<IActionResult> GetSimilars(int itemId, CancellationToken cancellationToken)
+    {
+        var result = await service.GetSimilarsAsync(itemId, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("{itemId:int}/similares/{itemSimilarId:int}/estoques")]
+    public async Task<IActionResult> GetSimilarStock(int itemId, int itemSimilarId, CancellationToken cancellationToken)
+    {
+        var result = await service.GetSimilarStockAsync(itemSimilarId, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("{itemId:int}/relacionados")]
+    public async Task<IActionResult> GetRelatedProducts(int itemId, CancellationToken cancellationToken)
+    {
+        var result = await service.GetRelatedProductsAsync(itemId, cancellationToken);
         return Ok(result);
     }
 }

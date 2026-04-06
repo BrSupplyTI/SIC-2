@@ -3,6 +3,88 @@
    Alinhado com o design system SIC
    ============================================ */
 
+/* Download de Arquivos */
+.produto-downloads {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+    .produto-downloads .btn {
+        font-size: .85rem;
+    }
+
+/* Produtos Relacionados - Swiper Carousel */
+.relacionados-section {
+    border-top: 1px solid var(--sic-border, #e5e7eb);
+    padding-top: 1.25rem;
+}
+
+.relacionados-swiper {
+    padding: 0 2rem;
+}
+
+.relacionados-swiper .swiper-button-prev,
+.relacionados-swiper .swiper-button-next {
+    color: var(--sic-primary, #0d6efd);
+    width: 28px;
+    height: 28px;
+}
+
+    .relacionados-swiper .swiper-button-prev::after,
+    .relacionados-swiper .swiper-button-next::after {
+        font-size: .9rem;
+        font-weight: 700;
+    }
+
+.relacionado-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid var(--sic-border, #e5e7eb);
+    border-radius: 8px;
+    padding: .75rem .5rem;
+    transition: box-shadow .2s, border-color .2s;
+    height: 100%;
+}
+
+    .relacionado-card:hover {
+        border-color: var(--sic-brand, #0d6efd);
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+    .relacionado-card img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        margin-bottom: .5rem;
+    }
+
+.relacionado-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 2px;
+    min-height: 2.8rem;
+}
+
+.relacionado-codigo {
+    font-size: .70rem;
+    font-weight: 600;    
+}
+
+.relacionado-nome {
+    font-size: .70rem;        
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.2;
+}
+
 /* Breadcrumb */
 .produto-breadcrumb {
     display: flex;

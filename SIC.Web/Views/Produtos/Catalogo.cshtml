@@ -94,9 +94,17 @@
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@totalFiltrosAtivos</span>
                         }
                     </button>
-                    <a asp-controller="Produtos" asp-action="Catalogo" class="btn btn-outline-danger mt-4" title="Limpar filtros">
+                    <a asp-controller="Produtos" asp-action="Catalogo" class="btn btn-outline-danger mt-4 d-none" title="Limpar filtros">
                         <i class="fa-solid fa-rotate-left"></i>
                     </a>
+                    <div class="btn-group mt-4" role="group" aria-label="Alternar visualização">
+                        <button type="button" class="btn btn-outline-secondary catalogo-view-btn active" id="btnViewGrid" title="Catálogo">
+                            <i class="fa-solid fa-grid-2"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary catalogo-view-btn" id="btnViewList" title="Lista">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </form>
@@ -231,13 +239,59 @@
                             </div>
 
                             <!-- Estoque footer -->
-                            <div class="catalogo-stock @(temEstoque ? "catalogo-stock-ok" : "catalogo-stock-out")">
+                            <div class="catalogo-stock @(temEstoque ? "catalogo-stock-ok" : "catalogo-stock-out")" title="Soma do estoque de TODOS os estabelecimentos">
                                 <i class="fa-solid @(temEstoque ? "fa-check-circle" : "fa-times-circle")"></i>
                                 <span>@(temEstoque ? item.QtEstoque.ToString("N0", new System.Globalization.CultureInfo("pt-BR")) + " un." : "Indisponível")</span>
                             </div>
                         </div>
                         </a>
                     </div>
+                }
+            </div>
+
+            <div class="catalogo-list d-none" id="catalogList">
+                @foreach (var item in Model.Itens)
+                {
+                    var temEstoqueLista = item.QtEstoque > 0;
+
+                    <a href="@Url.Action("Detalhes", "Produtos", new { itemId = item.ItemID })" class="text-decoration-none">
+                        <div class="catalogo-list-item">
+                            <div class="catalogo-list-img">
+                                <img src="@item.Foto" alt="@item.NmItem" loading="lazy"
+                                     onerror="this.src='https://www.supplymanager.com.br/fotos/semimagem.jpg'" />
+                            </div>
+                            <div class="catalogo-list-body">
+                                <div class="catalogo-list-header">
+                                    <span class="catalogo-codigo">@item.CdItem</span>
+                                    <h6 class="catalogo-list-nome mb-0">@item.NmItem</h6>
+                                </div>
+                                <div class="catalogo-list-meta">
+                                    @if (!string.IsNullOrWhiteSpace(item.NmMarca))
+                                    {
+                                        <span><i class="fa-solid fa-tag"></i>@item.NmMarca</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(item.NumCA))
+                                    {
+                                        <span><i class="fa-solid fa-certificate"></i>CA @item.NumCA</span>
+                                    }
+                                    <span><i class="fa-solid fa-layer-group"></i>@item.NmSegmento</span>
+                                    <span><i class="fa-solid fa-folder"></i>@item.NmFamilia</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Curva) && item.Curva != "-")
+                                    {
+                                        <span class="catalogo-curva catalogo-curva-@item.Curva.ToLower()" style="position:static" title="Curva @item.Curva">@item.Curva</span>
+                                    }
+                                    @if (item.FlagTipoMarca == "Marca Própria")
+                                    {
+                                        <span class="catalogo-badge-mp" title="Marca Própria" style="width:auto;border-radius:2rem;padding:0 .6rem">MP</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="catalogo-list-stock @(temEstoqueLista ? "catalogo-stock-ok" : "catalogo-stock-out")">
+                                <i class="fa-solid @(temEstoqueLista ? "fa-check-circle" : "fa-times-circle")"></i>
+                                <span>@(temEstoqueLista ? item.QtEstoque.ToString("N0", new System.Globalization.CultureInfo("pt-BR")) + " un." : "Indisponível")</span>
+                            </div>
+                        </div>
+                    </a>
                 }
             </div>
 
@@ -436,5 +490,37 @@
         document.getElementById('filtroEstabelecimento')?.addEventListener('change', function () {
             document.getElementById('AlertaEstoque').style.display = this.value === '0' ? 'block' : 'none';
         });
+
+        // Toggle Grid / Lista
+        (function () {
+            var grid = document.getElementById('catalogGrid');
+            var list = document.getElementById('catalogList');
+            var btnGrid = document.getElementById('btnViewGrid');
+            var btnList = document.getElementById('btnViewList');
+            if (!grid || !list || !btnGrid || !btnList) return;
+
+            function setView(mode) {
+                if (mode === 'list') {
+                    grid.classList.add('d-none');
+                    list.classList.remove('d-none');
+                    btnGrid.classList.remove('active');
+                    btnList.classList.add('active');
+                } else {
+                    list.classList.add('d-none');
+                    grid.classList.remove('d-none');
+                    btnList.classList.remove('active');
+                    btnGrid.classList.add('active');
+                }
+                try { localStorage.setItem('catalogoViewMode', mode); } catch (e) { }
+            }
+
+            btnGrid.addEventListener('click', function () { setView('grid'); });
+            btnList.addEventListener('click', function () { setView('list'); });
+
+            try {
+                var saved = localStorage.getItem('catalogoViewMode');
+                if (saved === 'list') setView('list');
+            } catch (e) { }
+        })();
     </script>
 }

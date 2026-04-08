@@ -1,0 +1,294 @@
+/* ===== Consulta de Clientes — Detalhes ===== */
+
+.cliente-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.cliente-avatar {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--bs-primary-bg-subtle, #e7f1ff);
+    color: var(--bs-primary);
+    font-size: 2rem;
+}
+
+.cliente-avatar-success {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--bs-success-bg-subtle, #d1e7dd);
+    color: var(--bs-success);
+    font-size: 2rem;
+}
+
+.cliente-header-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.cliente-header-nome {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: .15rem;
+}
+
+.cliente-header-razao {
+    font-size: .85rem;
+    color: var(--bs-secondary-color);
+    margin-bottom: .25rem;
+}
+
+.cliente-header-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem .75rem;
+    font-size: .8rem;
+    color: var(--bs-secondary-color);
+}
+
+    .cliente-header-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+    }
+
+    .cliente-header-meta i {
+        font-size: .72rem;
+        opacity: .7;
+    }
+
+/* --- Logo do cliente --- */
+.cliente-logo {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .cliente-logo img {
+        max-width: 300px;
+        max-height: 100px;
+        object-fit: contain;
+    }
+
+/* --- Seções de cards informativos --- */
+.cliente-section-title {
+    font-size: .85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--bs-secondary-color);
+    margin-bottom: .75rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+    .cliente-section-title i {
+        font-size: .9rem;
+    }
+
+.cliente-info-card {
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    border-radius: .5rem;
+    padding: .75rem 1rem;
+    height: 100%;
+}
+
+.cliente-info-label {
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--bs-secondary-color);
+    margin-bottom: .15rem;
+}
+
+.cliente-info-value {
+    font-size: .88rem;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+/* --- Stat cards (totais) --- */
+.cliente-stat-card {
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: .5rem;
+    padding: 1rem;
+    text-align: center;
+    transition: box-shadow .15s;
+}
+
+    .cliente-stat-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+    }
+
+.cliente-stat-icon {
+    font-size: 1.5rem;
+    margin-bottom: .5rem;
+}
+
+.cliente-stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.cliente-stat-text {
+    font-size: .75rem;
+    color: var(--bs-secondary-color);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+/* --- Config switches --- */
+.cliente-config-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .5rem .75rem;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    border-radius: .375rem;
+    font-size: .82rem;
+}
+
+.cliente-config-label {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    color: var(--bs-body-color);
+}
+
+    .cliente-config-label i {
+        font-size: .75rem;
+        opacity: .6;
+    }
+
+/* --- Badge status credito --- */
+.badge-credito {
+    display: inline-block;
+    padding: .3rem .7rem;
+    border-radius: 2rem;
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.badge-credito-normal {
+    background: rgba(25, 135, 84, .12);
+    color: #198754;
+}
+
+.badge-credito-bloqueado {
+    background: rgba(220, 53, 69, .12);
+    color: #dc3545;
+}
+
+.badge-credito-vencida {
+    background: rgba(255, 193, 7, .15);
+    color: #997404;
+}
+
+.badge-credito-liberado {
+    background: rgba(13, 110, 253, .1);
+    color: #0d6efd;
+}
+
+.badge-credito-avista {
+    background: rgba(108, 117, 125, .12);
+    color: #6c757d;
+}
+
+/* --- Responsivo --- */
+@@media (max-width: 767.98px) {
+    .cliente-avatar,
+    .cliente-avatar-success {
+        width: 56px;
+        height: 56px;
+        font-size: 1.5rem;
+    }
+
+    .cliente-logo img {
+        max-width: 200px;
+        max-height: 72px;
+    }
+
+    .cliente-header-nome {
+        font-size: 1rem;
+    }
+
+    .cliente-stat-number {
+        font-size: 1.2rem;
+    }
+}
+
+.cliente-codigo {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--sic-brand);
+    letter-spacing: 0.05em;
+    background: color-mix(in srgb, var(--sic-brand) 12%, transparent);
+    padding: .15em .6em;
+    border-radius: .4rem;
+}
+
+/* --- Filtro de títulos (pills) --- */
+.tit-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+.tit-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .3rem .7rem;
+    border-radius: 2rem;
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    font-size: .8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s ease;
+    white-space: nowrap;
+}
+
+    .tit-filter-pill:hover {
+        border-color: var(--sic-brand, #FF782D);
+        color: var(--sic-brand, #FF782D);
+    }
+
+    .tit-filter-pill.active {
+        background: var(--sic-brand, #FF782D);
+        border-color: var(--sic-brand, #FF782D);
+        color: #fff;
+    }
+
+.tit-filter-count {
+    display: inline-block;
+    min-width: 1.3em;
+    padding: 0 .35em;
+    border-radius: 1rem;
+    font-size: .7rem;
+    line-height: 1.5;
+    text-align: center;
+    background: rgba(0,0,0,.08);
+}
+
+.tit-filter-pill.active .tit-filter-count {
+    background: rgba(255,255,255,.25);
+}

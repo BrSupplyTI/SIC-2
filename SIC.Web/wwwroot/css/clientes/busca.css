@@ -1,0 +1,251 @@
+/* ===== Consulta de Clientes — Busca ===== */
+
+.clientes-tipo-busca {
+    max-width: 140px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.h-45px {
+    height: 45px;
+}
+
+/* --- Lista de clientes --- */
+.clientes-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.clientes-list-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: .75rem 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: .5rem;
+    background: var(--bs-body-bg);
+    transition: box-shadow .15s, border-color .15s;
+    cursor: pointer;
+}
+
+    .clientes-list-item:hover {
+        border-color: var(--bs-primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+    }
+
+.clientes-list-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--bs-primary-bg-subtle, #e7f1ff);
+    color: var(--bs-primary);
+    font-size: 1.25rem;
+}
+
+.clientes-list-icon-success {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--bs-success-bg-subtle, #e7f1ff);
+    color: var(--bs-success);
+    font-size: 1.25rem;
+}
+
+.clientes-list-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.clientes-list-header {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.clientes-list-nome {
+    font-size: .92rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400px;
+}
+
+.clientes-list-codigo {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--bs-secondary-color);
+    background: var(--bs-tertiary-bg);
+    padding: .1rem .5rem;
+    border-radius: .25rem;
+    white-space: nowrap;
+}
+
+.clientes-list-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem .75rem;
+    font-size: .78rem;
+    color: var(--bs-secondary-color);
+    margin-top: .2rem;
+}
+
+    .clientes-list-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+    }
+
+    .clientes-list-meta i {
+        font-size: .7rem;
+        opacity: .7;
+    }
+
+.clientes-list-meta-razao {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem .75rem;
+    font-size: .78rem;
+    margin-top: .2rem;
+}
+
+    .clientes-list-meta-razao span {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+    }
+
+    .clientes-list-meta-razao i {
+        font-size: .7rem;
+        opacity: .7;
+    }
+
+.clientes-list-stats {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.clientes-stat {
+    text-align: center;
+    min-width: 56px;
+}
+
+.clientes-stat-value {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    display: block;
+}
+
+.clientes-stat-label {
+    font-size: .68rem;
+    color: var(--bs-secondary-color);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.clientes-list-situacao {
+    flex-shrink: 0;
+    min-width: 80px;
+    text-align: center;
+}
+
+/* --- Badge situação --- */
+.badge-situacao {
+    display: inline-block;
+    padding: .25rem .6rem;
+    border-radius: 2rem;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.badge-situacao-ativo {
+    background: rgba(25, 135, 84, .12);
+    color: #198754;
+}
+
+.badge-situacao-inativo {
+    background: rgba(220, 53, 69, .12);
+    color: #dc3545;
+}
+
+/* --- Paginação --- */
+.clientes-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+/* --- Filter tags --- */
+.clientes-filter-tag {
+    cursor: pointer;
+    transition: opacity .15s;
+}
+
+    .clientes-filter-tag:hover {
+        opacity: .75;
+    }
+
+/* --- Responsivo --- */
+@@media (max-width: 991.98px) {
+    .clientes-list-stats {
+        display: none;
+    }
+
+    .clientes-list-nome {
+        max-width: 260px;
+    }
+}
+
+@@media (max-width: 767.98px) {
+    .clientes-list-item {
+        flex-wrap: wrap;
+        gap: .5rem;
+        padding: .6rem .75rem;
+    }
+
+    .clientes-list-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    .clientes-list-nome {
+        max-width: 200px;
+        font-size: .85rem;
+    }
+
+    .clientes-list-meta {
+        font-size: .72rem;
+    }
+
+    .clientes-list-situacao {
+        min-width: auto;
+    }
+}
+
+@@media (max-width: 575.98px) {
+    .clientes-list-nome {
+        max-width: 160px;
+    }
+
+    .clientes-list-meta span:nth-child(n+3) {
+        display: none;
+    }
+}

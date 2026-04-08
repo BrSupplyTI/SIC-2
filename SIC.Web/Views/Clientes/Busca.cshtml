@@ -1,0 +1,381 @@
+@model SIC.Web.Models.Clientes.ClienteBuscaViewModel
+@{
+    ViewData["Title"] = "Consulta de Clientes";
+
+    var orderByOptions = new[]
+    {
+        "Nome (A-Z)", "Nome (Z-A)",
+        "Código (Crescente)", "Código (Decrescente)",
+        "Qtde Usuários (Crescente)", "Qtde Usuários (Decrescente)",
+        "Qtde Endereços (Crescente)", "Qtde Endereços (Decrescente)"
+    };
+
+    var estSelecionado = Model.Estabelecimentos.FirstOrDefault(e => e.EstabelecimentoID == Model.EstabelecimentoID);
+    var carteiraSelecionada = Model.Carteiras.FirstOrDefault(c => c.CarteiraID == Model.CarteiraID);
+
+    var totalFiltrosAtivos = (Model.FlagAtivo != 1 ? 1 : 0)
+        + (Model.FlagClienteMae == 1 ? 1 : 0)
+        + (Model.CarteiraID > 0 ? 1 : 0)
+        + (Model.QtDiasUltimoPedido > 0 ? 1 : 0);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/clientes/busca.css" asp-append-version="true" />
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin fa-user-tie me-2 text-br"></i>Consulta de Clientes</h2>
+                </div>
+                <p class="text-muted mt-1 mb-0">
+                    <strong>@Model.TotalRegistros.ToString("N0", new System.Globalization.CultureInfo("pt-BR"))</strong> cliente(s) encontrado(s)
+                </p>
+            </div>
+        </div>
+
+        <!-- Busca & Controles -->
+        <form method="get" asp-controller="Clientes" asp-action="Busca" id="formClientes">
+            <input type="hidden" name="page" id="inputPage" value="@Model.PageNumber" />
+            <input type="hidden" name="flagAtivo" id="inputFlagAtivo" value="@Model.FlagAtivo" />
+            <input type="hidden" name="estabelecimentoId" id="inputEstabelecimentoId" value="@Model.EstabelecimentoID" />
+            <input type="hidden" name="flagClienteMae" id="inputFlagClienteMae" value="@Model.FlagClienteMae" />
+            <input type="hidden" name="carteiraId" id="inputCarteiraId" value="@Model.CarteiraID" />
+            <input type="hidden" name="qtDiasUltimoPedido" id="inputQtDiasUltimoPedido" value="@Model.QtDiasUltimoPedido" />
+
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-lg-5">
+                    <small class="text-muted">Pesquisar por código, nome ou CNPJ/CPF</small>
+                    <div class="input-group">
+                        <select class="form-select clientes-tipo-busca" name="tipoBusca" id="selectTipoBusca">
+                            <option value="comeca" selected="@(Model.TipoBusca == "comeca")">Começa com</option>
+                            <option value="contem" selected="@(Model.TipoBusca == "contem")">Contém</option>
+                        </select>
+                        <input type="text" class="form-control" name="texto" value="@Model.Texto"
+                               placeholder="Código, nome ou CNPJ/CPF..." id="inputTexto" />
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <small class="text-muted">Ordem</small>
+                    <select class="form-select h-45px" name="orderBy" id="selectOrderBy"
+                            onchange="document.getElementById('inputPage').value=1;document.getElementById('formClientes').submit();">
+                        @foreach (var opt in orderByOptions)
+                        {
+                            <option value="@opt" selected="@(Model.OrderBy == opt)">@opt</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <small class="text-muted">Por página</small>
+                    <select class="form-select h-45px" name="pageSize" id="selectPageSize"
+                            onchange="document.getElementById('inputPage').value=1;document.getElementById('formClientes').submit();">
+                        @foreach (var size in new[] { 10, 20, 30, 40, 50, 60 })
+                        {
+                            <option value="@size" selected="@(Model.PageSize == size)">@size itens</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-lg-2 d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1 position-relative mt-4" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFiltros">
+                        <i class="fa-solid fa-sliders me-1"></i>Filtros
+                        @if (totalFiltrosAtivos > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@totalFiltrosAtivos</span>
+                        }
+                    </button>
+                    <a asp-controller="Clientes" asp-action="Busca" class="btn btn-outline-danger mt-4 d-none" title="Limpar filtros">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Filtros ativos -->
+        <div class="d-flex flex-wrap gap-2 mb-4" id="activeFilters">
+            @if (estSelecionado is not null)
+            {
+                <span class="badge-status badge-status-primary">
+                    <i class="fa-solid fa-warehouse me-1"></i>@estSelecionado.NmEstabelecimento
+                </span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Texto))
+            {
+                <span class="badge-status badge-status-primary clientes-filter-tag" onclick="removeFilter('texto','')">
+                    <i class="fa-solid fa-search me-1"></i>"@Model.Texto"<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.FlagAtivo != 1)
+            {
+                <span class="badge-status badge-status-primary clientes-filter-tag" onclick="removeFilter('flagAtivo','1')">
+                    @(Model.FlagAtivo == 0 ? "Inativos" : "Todos os status")<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.FlagClienteMae == 1)
+            {
+                <span class="badge-status badge-status-primary clientes-filter-tag" onclick="removeFilter('flagClienteMae','0')">
+                    <i class="fa-solid fa-building me-1"></i>Cliente Mãe<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.CarteiraID > 0 && carteiraSelecionada is not null)
+            {
+                <span class="badge-status badge-status-primary clientes-filter-tag" onclick="removeFilter('carteiraId','0')">
+                    <i class="fa-solid fa-briefcase me-1"></i>@carteiraSelecionada.NmCarteira<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.QtDiasUltimoPedido > 0)
+            {
+                var labelDias = Model.QtDiasUltimoPedido switch
+                {
+                    1 => "Hoje",
+                    7 => "Últimos 7 dias",
+                    15 => "Últimos 15 dias",
+                    30 => "Últimos 30 dias",
+                    _ => $"{Model.QtDiasUltimoPedido} dias"
+                };
+                <span class="badge-status badge-status-primary clientes-filter-tag" onclick="removeFilter('qtDiasUltimoPedido','0')">
+                    <i class="fa-solid fa-clock me-1"></i>@labelDias<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+        </div>
+
+        <!-- Lista de clientes -->
+        @if (Model.Itens.Count == 0)
+        {
+            <div class="text-center py-5">
+                <h5 class="text-muted">Nenhum cliente encontrado</h5>
+                <p class="text-muted mb-3">Tente ajustar os filtros ou o termo de busca.</p>
+                <a asp-controller="Clientes" asp-action="Busca" class="btn btn-outline-primary btn-sm">
+                    <i class="fa-solid fa-rotate-left me-1"></i>Limpar filtros
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="clientes-list" id="clientesList">
+                @foreach (var item in Model.Itens)
+                {
+                    var isAtivo = string.Equals(item.Situacao, "Ativo", StringComparison.OrdinalIgnoreCase);
+
+                    <a asp-controller="Clientes" asp-action="Detalhes" asp-route-clienteId="@item.ClienteID" class="clientes-list-item text-decoration-none text-reset">                        
+                        @if (item.TipoDocumento == "CPF")
+                        {
+                            <div class="clientes-list-icon">
+                                <i class="fa-duotone fa-user-tie"></i>
+                            </div>
+                        }
+                        else
+                        {
+                            if (item.QtUsuarios > 0)
+                            {
+                                <div class="clientes-list-icon-success">
+                                    <i class="fa-duotone fa-buildings"></i>
+                                </div>                                
+                            }
+                            else
+                            {
+                                <div class="clientes-list-icon">
+                                    <i class="fa-duotone fa-building"></i>
+                                </div>
+                            }
+                        }                                                
+                        <div class="clientes-list-body">
+                            <div class="clientes-list-header">
+                                <span class="clientes-list-codigo">@item.CodigoSAP</span>
+                                <h6 class="clientes-list-nome mb-0" title="@item.Nome">@item.Nome</h6>
+                            </div>
+                            <div class="clientes-list-meta-razao">
+                                @if (!string.IsNullOrWhiteSpace(item.RazaoSocial))
+                                {
+                                    <span title="Razão Social"><i class="fa-solid fa-building"></i>@item.RazaoSocial</span>                                
+                                    <br />
+                                }
+                            </div>
+                            <div class="clientes-list-meta">
+                                <span><i class="fa-solid fa-id-card"></i>@item.TipoDocumento: @item.CPFCNPJ</span>                                
+                                @if (!string.IsNullOrWhiteSpace(item.Carteira))
+                                {
+                                    <span><i class="fa-solid fa-briefcase"></i>@item.Carteira</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(item.Estabelecimento))
+                                {
+                                    <span><i class="fa-solid fa-warehouse"></i>@item.Estabelecimento</span>
+                                }                                
+                            </div>
+                        </div>
+                        <div class="clientes-list-stats d-none d-lg-flex">
+                            <div class="clientes-stat">
+                                <span class="clientes-stat-value text-primary">@item.QtEnderecos</span>
+                                <span class="clientes-stat-label">Endereços</span>
+                            </div>
+                            <div class="clientes-stat">
+                                <span class="clientes-stat-value text-info">@item.QtUsuarios</span>
+                                <span class="clientes-stat-label">Usuários</span>
+                            </div>
+                        </div>
+                        <div class="clientes-list-situacao">
+                            <span class="badge-situacao @(isAtivo ? "badge-situacao-ativo" : "badge-situacao-inativo")">
+                                @item.Situacao
+                            </span>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            <!-- Paginação -->
+            @if (Model.TotalPaginas > 1)
+            {
+                var totalPages = Model.TotalPaginas;
+                var currentPage = Model.PageNumber;
+                var startPage = Math.Max(1, currentPage - 2);
+                var endPage = Math.Min(totalPages, currentPage + 2);
+
+                <div class="clientes-pagination mt-4">
+                    <small class="text-muted">
+                        Página <strong>@currentPage</strong> de <strong>@totalPages</strong>
+                        — @Model.Itens.Count de @Model.TotalRegistros.ToString("N0", new System.Globalization.CultureInfo("pt-BR")) clientes
+                    </small>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(1)"><i class="fa-solid fa-angles-left"></i></a>
+                        </li>
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage - 1))"><i class="fa-solid fa-angle-left"></i></a>
+                        </li>
+                        @for (var p = startPage; p <= endPage; p++)
+                        {
+                            <li class="page-item @(p == currentPage ? "active" : "")">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(@p)">@p</a>
+                            </li>
+                        }
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage + 1))"><i class="fa-solid fa-angle-right"></i></a>
+                        </li>
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(@totalPages)"><i class="fa-solid fa-angles-right"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Offcanvas de Filtros -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasFiltros" aria-labelledby="offcanvasFiltrosLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 id="offcanvasFiltrosLabel" class="mb-0"><i class="fa-duotone fa-sliders me-2 text-br"></i>Filtros Avançados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+        <div class="flex-grow-1">
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-toggle-on me-1 text-muted"></i>Situação</label>
+                <select class="form-select" id="filtroAtivo">
+                    <option value="1" selected="@(Model.FlagAtivo == 1)">Ativos</option>
+                    <option value="0" selected="@(Model.FlagAtivo == 0)">Inativos</option>
+                    <option value="2" selected="@(Model.FlagAtivo == 2)">Todos</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-warehouse me-1 text-muted"></i>Estabelecimento</label>
+                <select class="form-select" id="filtroEstabelecimento">
+                    @foreach (var est in Model.Estabelecimentos)
+                    {
+                        <option value="@est.EstabelecimentoID" selected="@(Model.EstabelecimentoID == est.EstabelecimentoID)">@est.NmEstabelecimento</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-briefcase me-1 text-muted"></i>Carteira</label>
+                <select class="form-select" id="filtroCarteira">
+                    <option value="0" selected="@(Model.CarteiraID == 0)">Todas</option>
+                    @foreach (var c in Model.Carteiras)
+                    {
+                        <option value="@c.CarteiraID" selected="@(Model.CarteiraID == c.CarteiraID)">@c.NmCarteira</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-clock me-1 text-muted"></i>Último Pedido</label>
+                <select class="form-select" id="filtroDiasUltimoPedido">
+                    <option value="0" selected="@(Model.QtDiasUltimoPedido == 0)">Desconsiderar</option>
+                    <option value="1" selected="@(Model.QtDiasUltimoPedido == 1)">Hoje</option>
+                    <option value="3" selected="@(Model.QtDiasUltimoPedido == 3)">Últimos 3 dias</option>
+                    <option value="7" selected="@(Model.QtDiasUltimoPedido == 7)">Últimos 7 dias</option>
+                    <option value="15" selected="@(Model.QtDiasUltimoPedido == 15)">Últimos 15 dias</option>
+                    <option value="30" selected="@(Model.QtDiasUltimoPedido == 30)">Últimos 30 dias</option>
+                </select>
+            </div>
+
+            <hr class="my-3" />
+
+            <div class="mb-3">
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="filtroClienteMae" @(Model.FlagClienteMae == 1 ? "checked" : "")>
+                    <label class="form-check-label" for="filtroClienteMae">
+                        <i class="fa-solid fa-buildings text-success me-1"></i>Apenas Clientes Mãe
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 pt-3 border-top">
+            <button type="button" class="btn btn-primary" id="btnAplicarFiltros">
+                <i class="fa-solid fa-check me-1"></i>Aplicar Filtros
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
+                <i class="fa-solid fa-eraser me-1"></i>Limpar Tudo
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function goToPage(page) {
+            document.getElementById('inputPage').value = page;
+            document.getElementById('formClientes').submit();
+        }
+
+        var filterInputMap = {
+            texto: 'inputTexto',
+            flagAtivo: 'inputFlagAtivo',
+            flagClienteMae: 'inputFlagClienteMae',
+            carteiraId: 'inputCarteiraId',
+            qtDiasUltimoPedido: 'inputQtDiasUltimoPedido'
+        };
+
+        function removeFilter(field, defaultValue) {
+            var inputId = filterInputMap[field];
+            if (!inputId) return;
+            var el = document.getElementById(inputId);
+            if (el) el.value = defaultValue;
+            document.getElementById('inputPage').value = '1';
+            document.getElementById('formClientes').submit();
+        }
+
+        document.getElementById('btnAplicarFiltros')?.addEventListener('click', function () {
+            document.getElementById('inputFlagAtivo').value = document.getElementById('filtroAtivo').value;
+            document.getElementById('inputEstabelecimentoId').value = document.getElementById('filtroEstabelecimento').value;
+            document.getElementById('inputCarteiraId').value = document.getElementById('filtroCarteira').value;
+            document.getElementById('inputQtDiasUltimoPedido').value = document.getElementById('filtroDiasUltimoPedido').value;
+            document.getElementById('inputFlagClienteMae').value = document.getElementById('filtroClienteMae').checked ? '1' : '0';
+            document.getElementById('inputPage').value = '1';
+            document.getElementById('formClientes').submit();
+        });
+
+        document.getElementById('btnLimparFiltros')?.addEventListener('click', function () {
+            window.location.href = '@Url.Action("Busca", "Clientes")';
+        });
+    </script>
+}

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using SIC.Web.Services;
+using SIC.Web.Services.PrePedidosPDF;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,14 @@ builder.Services.AddHttpClient<PedidoApiClient>(client =>
 });
 
 builder.Services.AddHttpClient<ProdutoApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddHttpClient<PrePedidoPDFApiClient>(client =>
 {
     var baseUrl = builder.Configuration["Api:BaseUrl"]
         ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");

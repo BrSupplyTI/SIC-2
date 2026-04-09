@@ -43,6 +43,14 @@ builder.Services.AddHttpClient<ClienteApiClient>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+builder.Services.AddHttpClient<PrePedidoPDFApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 builder.Services
     .AddAuthentication(options =>
     {

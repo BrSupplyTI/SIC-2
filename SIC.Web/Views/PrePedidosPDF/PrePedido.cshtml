@@ -1,0 +1,705 @@
+@model SIC.Web.Models.PrePedidosPDF.PrePedidoPDFDetalhesViewModel
+@using System
+@using System.Globalization
+@{
+    var culturaPtBr = new CultureInfo("pt-BR");
+    ViewData["Title"] = $"Pedido ERP - {Model.OrdemCompra}";
+    var totalPedido = Model.Itens.Count > 0 ? Model.Itens[0].VlrTotalPedido : 0m.ToString("C", culturaPtBr);
+    var permiteEditarQuantidade = Model.StatusPrePedidoPDFID == 1;
+    var statusPermiteAcoes = new[] { 1, 2, 3, 7 }.Contains(Model.StatusPrePedidoPDFID);
+    var statusAceito = Model.StatusPrePedidoPDFID == 4;
+    var statusRecusado = Model.StatusPrePedidoPDFID == 5;
+    var statusSomenteLeitura = statusAceito || statusRecusado;
+    var totalPedidoValor = 0m;
+    decimal.TryParse(totalPedido, NumberStyles.Currency, culturaPtBr, out totalPedidoValor);
+    var todosItensComPreco = Model.Itens.Count > 0 && Model.Itens.All(i =>
+        !string.IsNullOrWhiteSpace(i.VlrTblPrecoFormat) &&
+        !i.VlrTblPrecoFormat.Equals("N\u00e3o mapeado", StringComparison.OrdinalIgnoreCase));
+
+    var (badgeClass, badgeIcon) = Model.StatusPrePedidoPDFID switch
+    {
+        4 => ("badge-status-success", "fa-solid fa-check"),
+        5 => ("badge-status-danger", "fa-solid fa-times"),
+        6 => ("badge-status-warning", "fa-solid fa-triangle-exclamation"),
+        _ => ("badge-status-primary", "fa-solid fa-chevron-right")
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" />
+    <link rel="stylesheet" href="~/css/prepedidospdf/prepedido.css" asp-append-version="true" />
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        @* ══════════ HEADER ══════════ *@
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0">
+                        <i class="fa-duotone fa-thin fa-file-lines me-2 text-br"></i>Pedido ERP
+                    </h2>
+                    <span class="badge-status @badgeClass fs-6">
+                        <i class="@badgeIcon me-1"></i>@Model.StatusDescricao
+                    </span>
+                </div>
+                <nav class="prepedido-breadcrumb mt-1">
+                    <span>Ordem de Compra: <strong>@Model.OrdemCompra</strong></span>
+                    @if (Model.CotacaoID > 0)
+                    {
+                        <i class="fa-solid fa-chevron-right"></i>
+                        <span>Cotação: <strong>@Model.CotacaoID</strong></span>
+                    }
+                </nav>
+            </div>
+            <a asp-controller="PrePedidosPDF" asp-action="List" class="btn btn-outline-primary">
+                <i class="fa-solid fa-arrow-left me-2"></i>Voltar para lista
+            </a>
+        </div>
+
+        <div id="prePedidoFeedback" class="mb-3"></div>
+
+        @* ══════════ INFORMAÇÕES GERAIS ══════════ *@
+        <div class="prepedido-section-title">
+            <i class="fa-duotone fa-circle-info me-1 text-br"></i>Informações Gerais
+        </div>
+
+        <div class="row g-2 mb-4">
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-building text-br"></i>
+                    <div>
+                        <small class="text-muted">Cliente</small>
+                        <div class="fw-semibold">@Model.Cliente</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-warehouse text-br"></i>
+                    <div>
+                        <small class="text-muted">Estabelecimento</small>
+                        <div class="fw-semibold">@Model.Estabelecimento</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-file-invoice text-br"></i>
+                    <div>
+                        <small class="text-muted">Tipo OV SAP</small>
+                        <div class="fw-semibold">@Model.TipoOVSAP</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-tags text-br"></i>
+                    <div>
+                        <small class="text-muted">Tabela de Preço</small>
+                        <div class="fw-semibold">@Model.TabelaPreco</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-calendar-check text-br"></i>
+                    <div>
+                        <small class="text-muted">Cond. Pagto</small>
+                        <div class="fw-semibold">@Model.CondPagto</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-store text-br"></i>
+                    <div>
+                        <small class="text-muted">Canal de Venda</small>
+                        <div class="fw-semibold">@Model.CanalVenda</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-note-sticky text-br"></i>
+                    <div>
+                        <small class="text-muted">Obs. Nota</small>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.ObsNota) ? "—" : Model.ObsNota)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-comment-lines text-br"></i>
+                    <div>
+                        <small class="text-muted">Obs. Comprador</small>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.ObsComprador) ? "—" : Model.ObsComprador)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-layer-group text-br"></i>
+                    <div>
+                        <small class="text-muted">Categoria Pedido</small>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.NmCategoriaPedido) ? "—" : Model.NmCategoriaPedido)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100 bg-info-subtle text-info">
+                    <i class="fa-duotone fa-coins"></i>
+                    <div>
+                        <small>Valor Mín. Pedido</small>
+                        <div class="fw-semibold">@Model.VlrMinimoBloqueioPedido.ToString("C", culturaPtBr)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100 @(totalPedidoValor >= Model.VlrMinimoBloqueioPedido ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                    <i class="fa-duotone fa-sack-dollar"></i>
+                    <div>
+                        <small>Valor Total do Pedido</small>
+                        <div class="fw-semibold">@totalPedido</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ══════════ MAPEAMENTO ══════════ *@
+        <div class="prepedido-section-title">
+            <i class="fa-duotone fa-map-location-dot me-1 text-br"></i>Mapeamento
+        </div>
+
+        <div class="prepedido-mapping-panel mb-4">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <label class="form-label">
+                        <i class="fa-duotone fa-id-card me-1 text-br"></i>CNPJ Faturamento
+                    </label>
+                    <select id="prePedidoCnpj" class="form-select js-prepedido-searchable-select" data-last-value="@Model.CNPJ" data-placeholder="Digite para selecionar" @(statusSomenteLeitura ? "disabled" : "")>
+                        <option value="">-- Não mapeado --</option>
+                        @foreach (var cnpj in Model.Cnpjs)
+                        {
+                            if (cnpj.CPFCNPJ == Model.CNPJ)
+                            {
+                                <option value="@cnpj.CPFCNPJ" selected>@cnpj.CPFCNPJ</option>
+                            }
+                            else
+                            {
+                                <option value="@cnpj.CPFCNPJ">@cnpj.CPFCNPJ</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-lg-4">
+                    <label class="form-label">
+                        <i class="fa-duotone fa-location-dot me-1 text-br"></i>Endereço
+                    </label>
+                    <select id="prePedidoEndereco" class="form-select js-prepedido-searchable-select" data-last-value="@Model.ClienteEnderecoID" data-placeholder="Digite para selecionar" @(statusSomenteLeitura ? "disabled" : "")>
+                        <option value="">-- Não mapeado --</option>
+                        @foreach (var endereco in Model.Enderecos)
+                        {
+                            if (endereco.ClienteEnderecoID == Model.ClienteEnderecoID)
+                            {
+                                <option value="@endereco.ClienteEnderecoID" data-logradouro="@endereco.Logradouro" selected>@endereco.Logradouro</option>
+                            }
+                            else
+                            {
+                                <option value="@endereco.ClienteEnderecoID" data-logradouro="@endereco.Logradouro">@endereco.Logradouro</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-lg-4">
+                    <label class="form-label">
+                        <i class="fa-duotone fa-truck me-1 text-br"></i>Local de Entrega
+                    </label>
+                    <select id="prePedidoLocalEntrega" class="form-select js-prepedido-searchable-select" data-last-value="@Model.ClienteLocalEntregaID" data-placeholder="Digite para selecionar" @(statusSomenteLeitura ? "disabled" : "")>
+                        <option value="">-- Não mapeado --</option>
+                        @foreach (var local in Model.LocaisEntrega)
+                        {
+                            var textoLocal = $"{local.CdControle} - {local.NmLocalEntrega}";
+                            if (local.ClienteLocalEntregaID == Model.ClienteLocalEntregaID)
+                            {
+                                <option value="@local.ClienteLocalEntregaID" data-local="@textoLocal" selected>@textoLocal</option>
+                            }
+                            else
+                            {
+                                <option value="@local.ClienteLocalEntregaID" data-local="@textoLocal">@textoLocal</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        @* ══════════ AÇÕES ══════════ *@
+        <div class="prepedido-section-title">
+            <i class="fa-duotone fa-bolt me-1 text-br"></i>Ações
+        </div>
+
+        <div class="prepedido-actions-bar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <div class="d-flex flex-wrap gap-2">
+                @if (Model.StatusPrePedidoPDFID != 4)
+                {
+                    <button type="button" class="prepedido-btn prepedido-btn-reprocessar js-prepedido-reprocessar" title="Reprocessar">
+                        <i class="fa-solid fa-rotate-right"></i>Reprocessar
+                    </button>
+                }
+                <button type="button" class="prepedido-btn prepedido-btn-arquivo" data-bs-toggle="modal" data-bs-target="#conteudoArquivoModal" title="Conteúdo do Arquivo">
+                    <i class="fa-solid fa-brackets-curly"></i>Conteúdo do Arquivo
+                </button>
+            </div>
+            @if (statusPermiteAcoes)
+            {
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="prepedido-btn prepedido-btn-aceitar js-prepedido-aceitar" title="Aceitar Pedido" style="display:none;">
+                        <i class="fa-solid fa-check"></i>Aceitar Pedido
+                    </button>
+                    <button type="button" class="prepedido-btn prepedido-btn-adicionar" data-bs-toggle="modal" data-bs-target="#adicionarItemModal" title="Adicionar Item">
+                        <i class="fa-solid fa-plus"></i>Adicionar Item
+                    </button>
+                    <button type="button" class="prepedido-btn prepedido-btn-cancelar js-prepedido-cancelar" title="Cancelar Pedido ERP">
+                        <i class="fa-solid fa-ban"></i>Cancelar Pedido ERP
+                    </button>
+                </div>
+            }
+        </div>
+
+        @* ══════════ ITENS DO PRÉ-PEDIDO ══════════ *@
+        <div class="prepedido-section-title d-flex align-items-center justify-content-between">
+            <span>
+                <i class="fa-duotone fa-boxes-stacked me-1 text-br"></i>Itens do Pedido ERP
+            </span>
+            <span class="badge bg-secondary prepedido-badge-count">@Model.Itens.Count item(ns)</span>
+        </div>
+
+        <div class="table-prepedido-wrap mb-4">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle table-prepedido mb-0">
+                <thead>
+                    <tr>
+                        <th>Item Cliente</th>
+                        <th>Item BrSupply</th>
+                        <th class="text-end">Vlr. Unit. (PDF)</th>
+                        <th class="text-center">Qtde</th>
+                        <th class="text-end">Vlr. Unit. (Tabela)</th>
+                        <th class="text-end">Vlr. Total</th>
+                        <th class="text-center prepedido-col-acoes">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Itens.Count > 0)
+                    {
+                        @foreach (var item in Model.Itens)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="fw-medium">@item.ItemCliente</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Descricao))
+                                    {
+                                        <div class="prepedido-item-desc">@item.Descricao</div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.ItemBrSupply))
+                                    {
+                                        <span class="fw-medium">@item.ItemBrSupply</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning prepedido-badge-count">Não mapeado</span>
+                                    }
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    @if (string.IsNullOrWhiteSpace(item.VlrTblPrecoFormat))
+                                    {
+                                        @("R$ 0,00")
+                                    }
+                                    else
+                                    {
+                                        @item.VlrTblPrecoFormat
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (permiteEditarQuantidade)
+                                    {
+                                        <input type="number"
+                                               class="form-control form-control-sm js-prepedido-quantidade text-center mx-auto prepedido-qty-input"
+                                               min="1"
+                                               value="@item.PDFQtde"
+                                               data-item-id="@item.PDFPrePedidoPDFItemID"
+                                               data-descricao="@item.Descricao"
+                                               data-last-value="@item.PDFQtde" />
+                                    }
+                                    else
+                                    {
+                                        <span class="fw-semibold">@item.PDFQtde</span>
+                                    }
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    @if (!string.IsNullOrWhiteSpace(item.VlrTblPrecoFormat))
+                                    {
+                                        @($"R$ {item.PDFVlrUnit}")
+                                    }
+                                </td>
+                                <td class="text-end fw-semibold text-nowrap">@item.VlrTotal</td>
+                                <td class="text-center text-nowrap">
+                                    @if (!statusSomenteLeitura)
+                                    {
+                                    <div class="d-inline-flex gap-1">
+                                        @if (!string.IsNullOrWhiteSpace(item.ItemBrSupply))
+                                        {
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary js-prepedido-trocar-item"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#trocarItemModal"
+                                                data-item-id="@item.PDFPrePedidoPDFItemID"
+                                                data-cd-item="@item.ItemID"
+                                                data-item-interno-id="@item.ItemInternoID"
+                                                data-item-cliente="@item.ItemCliente"
+                                                data-item-brsupply="@item.ItemBrSupply"
+                                                data-descricao="@item.Descricao"
+                                                data-pdf-qtde="@item.PDFQtde"
+                                                data-vlr-tbl-preco-format="@item.VlrTblPrecoFormat"
+                                                data-segmento-id="@item.SegmentoID"
+                                                data-familia-id="@item.FamiliaID"
+                                                title="Trocar Item"
+                                                aria-label="Trocar Item">
+                                             <i class="fa-solid fa-right-left"></i>
+                                        </button>
+                                        }
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger js-prepedido-excluir-item"
+                                                data-item-id="@item.PDFPrePedidoPDFItemID"
+                                                data-descricao="@item.Descricao"
+                                                title="Deletar Item"
+                                                aria-label="Deletar Item">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fa-duotone fa-box-open fa-2x mb-2 d-block prepedido-empty-icon"></i>
+                                <span class="text-muted">Nenhum item encontrado.</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+          </div>
+        </div>
+
+        @* ══════════ LOGS ══════════ *@
+        <div class="prepedido-logs-container mb-4">
+            <div class="accordion" id="prePedidoLogsAccordion">
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header" id="headingLogs">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLogs" aria-expanded="false" aria-controls="collapseLogs">
+                            <i class="fa-duotone fa-thin fa-clipboard-list me-2 prepedido-accordion-icon text-br"></i>
+                            Logs do Pedido ERP
+                            <span class="badge bg-secondary prepedido-badge-count ms-2">@Model.Logs.Count log(s)</span>
+                        </button>
+                    </h2>
+                    <div id="collapseLogs" class="accordion-collapse collapse" aria-labelledby="headingLogs" data-bs-parent="#prePedidoLogsAccordion">
+                        <div class="accordion-body">
+                            <div class="table-responsive prepedido-logs-scroll">
+                                <table class="table table-sm table-hover align-middle mb-0">
+                                    <thead class="sticky-top">
+                                        <tr>
+                                            <th style="width: 15%;">Tipo</th>
+                                            <th style="width: 63%;">Mensagem</th>
+                                            <th style="width: 22%;">Data / Hora</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.Logs.Count > 0)
+                                        {
+                                            @foreach (var log in Model.Logs)
+                                            {
+                                                <tr>
+                                                    <td class="small">
+                                                        <span class="badge bg-secondary">@(string.IsNullOrWhiteSpace(log.Tipo) ? "Info" : log.Tipo)</span>
+                                                    </td>
+                                                    <td class="small">@log.Mensagem</td>
+                                                    <td class="prepedido-log-date">@log.CriadoEmFormatado</td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="3" class="text-center py-3">
+                                                    <i class="fa-duotone fa-clipboard-list-check me-1 prepedido-empty-icon"></i>
+                                                    <span class="text-muted">Nenhum log encontrado.</span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    @* ══════════ MODAL: CONTEÚDO DO ARQUIVO ══════════ *@
+    <div class="modal fade prepedido-modal" id="conteudoArquivoModal" tabindex="-1" aria-labelledby="conteudoArquivoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="conteudoArquivoModalLabel">
+                        <i class="fa-solid fa-brackets-curly me-2 text-br"></i>Conteúdo do Arquivo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    @if (string.IsNullOrWhiteSpace(Model.ConteudoArquivoJson))
+                    {
+                        <div id="conteudoArquivoStatus" class="text-muted mb-3">
+                            <i class="fa-solid fa-spinner fa-spin me-1"></i>Carregando conteúdo do arquivo...
+                        </div>
+                    }
+                    <pre id="conteudoArquivoPre" class="bg-dark rounded-3 p-3 mb-0 json-hl">@(string.IsNullOrWhiteSpace(Model.ConteudoArquivoJson) ? "Aguardando carregamento..." : "")</pre>
+                    @if (!string.IsNullOrWhiteSpace(Model.ConteudoArquivoJson))
+                    {
+                        <script>
+                            window.__conteudoArquivoRaw = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ConteudoArquivoJson));
+                        </script>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ══════════ MODAL: TROCAR ITEM ══════════ *@
+    <div class="modal fade prepedido-modal" id="trocarItemModal" tabindex="-1" aria-labelledby="trocarItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <input type="hidden" id="trocarItemPDFItemID" />
+                <input type="hidden" id="ItemIDAntigo" />
+                <input type="hidden" id="DescricaoAntiga" />
+                <input type="hidden" id="ValorAntigo" />
+                <input type="hidden" id="CdItemAntigo" />
+                <input type="hidden" id="itemIDNovo" />
+                <input type="hidden" id="nmItemNovo" />
+                <input type="hidden" id="tblPrecoNovo" />
+                <input type="hidden" id="cdItemNovo" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="trocarItemModalLabel">
+                        <i class="fa-solid fa-right-left me-2 text-br"></i>Trocar Item
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-12">
+                            <div class="prepedido-modal-info">
+                                <i class="fa-duotone fa-barcode text-br"></i>
+                                <div>
+                                    <div class="text-muted">Código</div>
+                                    <span class="fw-semibold" id="codigoTrocaItem"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="prepedido-modal-info">
+                                <i class="fa-duotone fa-hashtag text-br"></i>
+                                <div>
+                                    <div class="text-muted">Quantidade</div>
+                                    <span class="fw-semibold" id="quantidadeTrocaItem"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="prepedido-modal-info">
+                                <i class="fa-duotone fa-tag text-br"></i>
+                                <div>
+                                    <div class="text-muted">Valor Tabela</div>
+                                    <span class="fw-semibold" id="valorTrocaItem"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemSubstituto" class="form-label">
+                            <i class="fa-duotone fa-right-left me-1 text-br"></i>Item Substituto
+                        </label>
+                        <select class="form-select" id="itemSubstituto">
+                            <option value="">Selecione</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="motivoTrocaItem" class="form-label">
+                            <i class="fa-duotone fa-comment me-1 text-br"></i>Motivo da Alteração
+                        </label>
+                        <input type="text" class="form-control" id="motivoTrocaItem" placeholder="Informe o motivo..." />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-xmark me-1"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" id="gravarTrocaItem">
+                        <i class="fa-solid fa-check me-1"></i>Gravar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ══════════ MODAL: ADICIONAR ITEM ══════════ *@
+    <div class="modal fade prepedido-modal" id="adicionarItemModal" tabindex="-1" aria-labelledby="adicionarItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adicionarItemModalLabel">
+                        <i class="fa-solid fa-plus me-2 text-br"></i>Adicionar Novo Item
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formSearchProds" class="mb-3">
+                        <label class="form-label">
+                            <i class="fa-duotone fa-magnifying-glass me-1 text-br"></i>Pesquisar Produto
+                        </label>
+                        <div class="input-group">
+                            <input type="text" id="inputSearchProds" class="form-control" autocomplete="off" placeholder="Descrição ou código do produto..." />
+                            <button class="btn btn-outline-secondary" type="submit" id="search-product-calcs">
+                                <i class="fa-solid fa-magnifying-glass me-1"></i>Pesquisar
+                            </button>
+                        </div>
+                    </form>
+                    <div class="table-prepedido-wrap">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle table-prepedido mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:5%;">&nbsp;</th>
+                                        <th style="width:10%;">Cód. Item</th>
+                                        <th>Produto</th>
+                                        <th class="text-end" style="width:10%;">Tbl. Preço</th>
+                                        <th class="text-end" style="width:10%;">Qtd. Aquisição</th>
+                                        <th class="text-end" style="width:10%;">Qtd. Disp</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyItens">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-3">
+                                            <i class="fa-duotone fa-magnifying-glass me-1 prepedido-empty-icon"></i>
+                                            <span class="text-muted">Pesquise um produto acima.</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot id="tfootAdicionarItens" class="d-none">
+                                    <tr>
+                                        <td colspan="6" class="text-start">
+                                            <button type="button" class="btn btn-primary btn-sm" id="addItensMarcados">
+                                                <i class="fa-solid fa-plus me-1"></i>Adicionar Itens
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="catalogoPagination" class="catalogo-pagination d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ══════════ MODAL: QUANTIDADE (adicionar item) ══════════ *@
+    <div class="modal fade prepedido-modal" id="modalQuantidade" tabindex="-1" aria-labelledby="modalQuantidadeLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalQuantidadeLabel">
+                        <i class="fa-duotone fa-input-numeric me-2 text-br"></i>Definir Quantidade
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="table-prepedido-wrap">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle table-prepedido mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Produto</th>
+                                        <th class="text-end">Preço Tabela</th>
+                                        <th class="text-center" style="width: 130px;">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyQuantidadeItens">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-xmark me-1"></i>Cancelar
+                    </button>
+                    <button type="button" class="prepedido-btn prepedido-btn-adicionar" id="btnGravarQuantidade">
+                        <i class="fa-solid fa-check me-1"></i><span id="btnGravarQuantidadeTexto">Adicionar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        window.prePedidoConfig = {
+            prePedidoId: @Model.PDFPrePedidoPDFID,
+            clienteId: @Model.ClienteID,
+            tblPrecoId: @Model.TblPrecoID,
+            estabelecimentoId: @Model.EstabelecimentoID,
+            ordemCompra: '@Html.Raw(Model.OrdemCompra)',
+            cdExtCliente: '@Html.Raw(Model.CdExtCliente)',
+            conteudoPreCarregado: @(string.IsNullOrWhiteSpace(Model.ConteudoArquivoJson) ? "false" : "true"),
+            endpoints: {
+                aceitar: '@Url.Action("AceitarPedido", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                atualizarCnpj: '@Url.Action("AtualizarCnpj", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                atualizarEndereco: '@Url.Action("AtualizarEndereco", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                atualizarLocalEntrega: '@Url.Action("AtualizarLocalEntrega", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                atualizarQuantidadeBase: '@Url.Action("PrePedido", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                cancelar: '@Url.Action("Cancelar", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                reprocessar: '@Url.Action("Reprocessar", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                trocaItens: '@Url.Action("GetTrocaItens", "PrePedidoPDFDetalhes")',
+                buscarCatalogo: '@Url.Action("BuscarCatalogo", "PrePedidoPDFDetalhes")',
+                conteudoArquivo: '@Url.Action("GetConteudoArquivo", "PrePedidoPDFDetalhes")'
+            },
+            cotacaoId: @Model.CotacaoID,
+            todosItensComPreco: @(todosItensComPreco ? "true" : "false"),
+            totalPedidoValor: @totalPedidoValor.ToString(CultureInfo.InvariantCulture),
+            vlrMinimo: @Model.VlrMinimoBloqueioPedido.ToString(CultureInfo.InvariantCulture)
+        };
+    </script>
+    <script src="~/js/prepedidospdf/prepedido.js" asp-append-version="true"></script>
+}

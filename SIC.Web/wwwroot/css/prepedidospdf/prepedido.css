@@ -1,0 +1,525 @@
+/* ============================================
+   Pré-Pedido PDF — Detalhes
+   Alinhado com o design system SIC
+   ============================================ */
+
+/* ── Tom Select dark-mode fix ── */
+.ts-wrapper.form-select.js-prepedido-searchable-select .ts-control,
+.ts-wrapper.form-select.js-prepedido-searchable-select.single .ts-control,
+.ts-wrapper.form-select.js-prepedido-searchable-select.single .ts-control .item,
+.ts-wrapper.form-select.js-prepedido-searchable-select .ts-control input {
+    color: var(--sic-text);
+}
+
+.ts-wrapper.form-select.js-prepedido-searchable-select.disabled .ts-control,
+.ts-wrapper.form-select.js-prepedido-searchable-select.disabled .ts-control .item {
+    color: var(--sic-text);
+    opacity: .85;
+}
+
+.ts-wrapper.form-select.js-prepedido-searchable-select .ts-control input::placeholder {
+    color: var(--sic-muted);
+    opacity: 1;
+}
+
+/* ── Tom Select dropdown options fix ── */
+.ts-wrapper.form-select.js-prepedido-searchable-select .ts-dropdown {
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    border-color: var(--sic-border, var(--bs-border-color));
+}
+
+.ts-wrapper.form-select.js-prepedido-searchable-select .ts-dropdown .option {
+    color: var(--sic-text);
+}
+
+.ts-wrapper.form-select.js-prepedido-searchable-select .ts-dropdown .option.active {
+    background: rgba(var(--bs-primary-rgb), .25);
+    color: var(--sic-text);
+}
+
+.ts-wrapper.form-select.js-prepedido-searchable-select .ts-dropdown .option:hover {
+    background: rgba(var(--bs-primary-rgb), .15);
+    color: var(--sic-text);
+}
+
+.ts-wrapper.form-select.js-prepedido-searchable-select .ts-dropdown .no-results {
+    color: var(--sic-muted);
+}
+
+/* ── Section title ── */
+.prepedido-section-title {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--sic-muted);
+    border-bottom: 1px solid var(--sic-border);
+    padding-bottom: .5rem;
+    margin-bottom: 1rem;
+}
+
+/* ── Quick info cards ── */
+.prepedido-quick-card {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .65rem .85rem;
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: .65rem;
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+    .prepedido-quick-card:hover {
+        border-color: color-mix(in srgb, var(--sic-brand) 30%, transparent);
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+    .prepedido-quick-card > i {
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+
+    .prepedido-quick-card small {
+        font-size: .7rem;
+        line-height: 1.2;
+    }
+
+    /* ── Mapping panel ── */
+.prepedido-mapping-panel {
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: .65rem;
+    padding: 1.25rem;
+}
+
+    .prepedido-mapping-panel .form-label {
+        font-size: .7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--sic-muted);
+        margin-bottom: .35rem;
+    }
+
+    .prepedido-mapping-panel .form-label i {
+        font-size: .8rem;
+    }
+
+/* ── Table ── */
+.table-prepedido-wrap {
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: .65rem;
+    overflow: hidden;
+}
+
+.table-prepedido {
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: var(--sic-surface-2);
+}
+
+    .table-prepedido thead th {
+        font-size: .7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--sic-muted);
+        background: var(--sic-surface-2);
+        border-bottom: 2px solid var(--sic-border);
+        padding: .55rem .75rem;
+        white-space: nowrap;
+    }
+
+    .table-prepedido tbody td {
+        color: var(--sic-text);
+        border-bottom: 1px solid var(--sic-border);
+        padding: .5rem .75rem;
+        font-size: .85rem;
+        vertical-align: middle;
+    }
+
+    .table-prepedido tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+.prepedido-item-desc {
+    font-size: .73rem;
+    color: var(--sic-muted);
+    line-height: 1.3;
+    margin-top: .1rem;
+}
+
+.prepedido-badge-count {
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+/* ── Logs container (accordion) ── */
+.prepedido-logs-container {
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: .65rem;
+    overflow: hidden;
+}
+
+    .prepedido-logs-container .accordion-button {
+        background: var(--sic-surface-2, var(--bs-body-bg));
+        color: var(--sic-text);
+        font-weight: 600;
+        font-size: .85rem;
+        padding: .75rem 1.25rem;
+        box-shadow: none;
+    }
+
+    .prepedido-logs-container .accordion-button:not(.collapsed) {
+        background: var(--sic-surface-2, var(--bs-body-bg));
+        color: var(--sic-text);
+        border-bottom: 1px solid var(--sic-border, var(--bs-border-color));
+    }
+
+    .prepedido-logs-container .accordion-button::after {
+        filter: var(--sic-accordion-arrow-filter, none);
+    }
+
+    .prepedido-logs-container .accordion-body {
+        padding: 0;
+    }
+
+    .prepedido-logs-container .table {
+        --bs-table-bg: transparent;
+        --bs-table-hover-bg: var(--sic-surface);
+        margin-bottom: 0;
+    }
+
+    .prepedido-logs-container .table thead th {
+        font-size: .7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--sic-muted);
+        background: var(--sic-surface);
+        border-bottom: 1px solid var(--sic-border);
+        padding: .5rem .75rem;
+        white-space: nowrap;
+    }
+
+    .prepedido-logs-container .table tbody td {
+        color: var(--sic-text);
+        border-bottom: 1px solid var(--sic-border);
+        padding: .45rem .75rem;
+        font-size: .82rem;
+    }
+
+    .prepedido-logs-container .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+.prepedido-log-date {
+    font-size: .75rem;
+    color: var(--sic-muted);
+    white-space: nowrap;
+}
+
+.prepedido-accordion-icon {
+    transition: transform .2s ease, color .2s ease;
+    transform-origin: center;
+}
+
+.accordion-button:not(.collapsed) .prepedido-accordion-icon {
+    color: var(--sic-brand);
+}
+
+/* ── Action buttons bar ── */
+.prepedido-actions-bar {
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: .65rem;
+    padding: .75rem 1.25rem;
+}
+
+/* ── Action buttons ── */
+.prepedido-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .42rem .9rem;
+    border-radius: .5rem;
+    border: 1px solid transparent;
+    transition: all .2s ease;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+    .prepedido-btn i {
+        font-size: .82rem;
+    }
+
+.prepedido-btn-reprocessar {
+    background: rgba(var(--bs-warning-rgb), .12);
+    color: var(--sic-text);
+    border-color: rgba(var(--bs-warning-rgb), .3);
+}
+
+    .prepedido-btn-reprocessar:hover {
+        background: rgba(var(--bs-warning-rgb), .25);
+        border-color: rgba(var(--bs-warning-rgb), .5);
+    }
+
+.prepedido-btn-arquivo {
+    background: rgba(var(--bs-info-rgb), .12);
+    color: var(--sic-text);
+    border-color: rgba(var(--bs-info-rgb), .3);
+}
+
+    .prepedido-btn-arquivo:hover {
+        background: rgba(var(--bs-info-rgb), .25);
+        border-color: rgba(var(--bs-info-rgb), .5);
+    }
+
+.prepedido-btn-cancelar {
+    background: rgba(var(--bs-danger-rgb), .12);
+    color: var(--sic-text);
+    border-color: rgba(var(--bs-danger-rgb), .3);
+}
+
+    .prepedido-btn-cancelar:hover {
+        background: rgba(var(--bs-danger-rgb), .25);
+        border-color: rgba(var(--bs-danger-rgb), .5);
+    }
+
+.prepedido-btn-adicionar {
+    background: rgba(var(--bs-success-rgb), .12);
+    color: var(--sic-text);
+    border-color: rgba(var(--bs-success-rgb), .3);
+}
+
+    .prepedido-btn-adicionar:hover {
+        background: rgba(var(--bs-success-rgb), .25);
+        border-color: rgba(var(--bs-success-rgb), .5);
+    }
+
+.prepedido-btn-aceitar {
+    background: rgba(var(--bs-success-rgb), .15);
+    color: var(--sic-text);
+    border-color: rgba(var(--bs-success-rgb), .35);
+}
+
+    .prepedido-btn-aceitar:hover {
+        background: rgba(var(--bs-success-rgb), .3);
+        border-color: rgba(var(--bs-success-rgb), .55);
+    }
+
+/* ── Breadcrumb ── */
+.prepedido-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .82rem;
+    color: var(--sic-muted, #6b7280);
+    flex-wrap: wrap;
+}
+
+    .prepedido-breadcrumb i {
+        font-size: .55rem;
+        opacity: .5;
+    }
+
+/* ── Quantity input ── */
+.prepedido-qty-input {
+    background: var(--sic-surface);
+    border: 1px solid var(--sic-border);
+    color: var(--sic-text);
+    width: 80px;
+}
+
+    .prepedido-qty-input:focus {
+        border-color: var(--sic-brand);
+        box-shadow: 0 0 0 2px rgba(255, 120, 45, .15);
+    }
+
+/* ── JSON Syntax Highlight ── */
+.json-hl {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 320px;
+    max-height: 70vh;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+
+    .json-hl .json-key { color: #9cdcfe; }
+    .json-hl .json-string { color: #ce9178; }
+    .json-hl .json-number { color: #b5cea8; }
+    .json-hl .json-boolean { color: #569cd6; font-weight: 600; }
+    .json-hl .json-null { color: #569cd6; font-style: italic; }
+    .json-hl .json-brace { color: #d4d4d4; }
+
+/* ── Modals ── */
+.prepedido-modal .modal-header {
+    border-bottom: 1px solid var(--sic-border, var(--bs-border-color));
+    padding: .85rem 1.25rem;
+}
+
+.prepedido-modal .modal-title {
+    font-size: .95rem;
+    font-weight: 600;
+}
+
+.prepedido-modal .modal-title i {
+    font-size: 1rem;
+}
+
+.prepedido-modal .modal-body {
+    padding: 1.25rem;
+}
+
+.prepedido-modal .modal-footer {
+    border-top: 1px solid var(--sic-border, var(--bs-border-color));
+    padding: .75rem 1.25rem;
+}
+
+.prepedido-modal-info {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .45rem .75rem;
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: .5rem;
+    font-size: .82rem;
+}
+
+    .prepedido-modal-info .text-muted {
+        font-size: .7rem;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        font-weight: 600;
+    }
+
+.prepedido-modal .form-label {
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--sic-muted);
+    margin-bottom: .35rem;
+}
+
+/* ── Catalog pagination ── */
+.catalogo-pagination { 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    padding: .65rem .75rem;
+    border-top: 1px solid var(--sic-border);
+}
+
+    .catalogo-pagination .page-btn {
+        min-width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .78rem;
+        font-weight: 600;
+        border-radius: .375rem;
+        border: 1px solid var(--sic-border);
+        background: var(--sic-surface);
+        color: var(--sic-text);
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+
+    .catalogo-pagination .page-btn:hover:not(:disabled):not(.active) {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-brand);
+    }
+
+    .catalogo-pagination .page-btn.active {
+        background: var(--sic-brand);
+        border-color: var(--sic-brand);
+        color: #fff;
+    }
+
+    .catalogo-pagination .page-btn:disabled {
+        opacity: .4;
+        cursor: default;
+    }
+
+    .catalogo-pagination .page-info {
+        font-size: .75rem;
+        color: var(--sic-muted);
+        margin: 0 .5rem;
+    }
+
+/* ── Empty state icon ── */
+.prepedido-empty-icon {
+    color: var(--sic-muted);
+    opacity: .4;
+}
+
+/* ── Logs scrollable area ── */
+.prepedido-logs-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+/* ── Quick card value overflow ── */
+.prepedido-quick-card .fw-semibold {
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Table minimum width ── */
+.table-prepedido {
+    min-width: 720px;
+}
+
+/* ── Table actions column ── */
+.prepedido-col-acoes {
+    width: 100px;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 991.98px) {
+    .prepedido-mapping-panel {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .prepedido-quick-card {
+        padding: .55rem .7rem;
+    }
+
+    .prepedido-quick-card > i {
+        font-size: 1rem;
+    }
+
+    .prepedido-actions-bar {
+        justify-content: center !important;
+        padding: .65rem 1rem;
+    }
+
+    .prepedido-modal-info {
+        padding: .4rem .65rem;
+        font-size: .78rem;
+    }
+
+    .prepedido-modal-info .text-muted {
+        font-size: .65rem;
+    }
+
+    .prepedido-btn {
+        font-size: .74rem;
+        padding: .38rem .75rem;
+    }
+}

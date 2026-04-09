@@ -3,6 +3,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-bs-theme="light">
 <head>
+    <script>
+        (function () {
+            var t = localStorage.getItem('sic-theme');
+            if (t) document.documentElement.setAttribute('data-bs-theme', t);
+        })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="pathbase" content="@Context.Request.PathBase" />
@@ -94,6 +100,7 @@
                             <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
                         </button>
                         <div class="sidebar-submenu" id="sidebarMenuComercial">
+                            <a class="nav-link" asp-controller="PrePedidosPDF" asp-action="List" data-sic-nav><i class="fa-duotone fa-file-lines me-2"></i>Pedidos ERP</a>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-box me-2"></i>Adm. de Pedidos<span class="badge-soon">Em breve</span></span>
                             <a class="nav-link" href="https://intranet.brsupply.com.br/intranet/html/valida_login.php?u=@User.FindFirst("sic_login")?.Value&h=@base64&redirect=comercial/gestao_adm_cad_clientes.php"><i class="fa-duotone fa-user-tie me-2"></i>Adm. de Clientes</a>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-plug me-2"></i>Integrações<span class="badge-soon">Em breve</span></span>

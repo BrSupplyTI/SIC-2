@@ -14,7 +14,6 @@ public sealed class PrePedidosPDFController(PrePedidoPDFApiClient apiClient) : C
         new() { StatusPrePedidoPDFId = 1, Descricao = "Aguardando" },
         new() { StatusPrePedidoPDFId = 4, Descricao = "Aceito" },
         new() { StatusPrePedidoPDFId = 5, Descricao = "Recusado" },
-        new() { StatusPrePedidoPDFId = 6, Descricao = "Erro" },
     ];
 
     [HttpGet("List")]

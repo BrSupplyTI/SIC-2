@@ -198,20 +198,79 @@ stages:
           function Copy-PackageContent {
             param(
               [string]$SourcePath,
-              [string]$TargetPath
+              [string]$TargetPath,
+              [string[]]$PreserveFiles = @(),
+              [string[]]$PreserveDirectories = @()
             )
 
             New-Item -ItemType Directory -Force -Path $TargetPath | Out-Null
-            Copy-Item -Path (Join-Path $SourcePath '*') -Destination $TargetPath -Recurse -Force
+
+            $sourceItems = Get-ChildItem -Path $SourcePath -Recurse -Force
+            foreach ($item in $sourceItems) {
+              $relativePath = $item.FullName.Substring($SourcePath.Length).TrimStart('\')
+
+              if (Test-IsPreservedRelativePath -RelativePath $relativePath -PreserveFiles $PreserveFiles -PreserveDirectories $PreserveDirectories) {
+                continue
+              }
+
+              $destination = Join-Path $TargetPath $relativePath
+
+              if ($item.PSIsContainer) {
+                New-Item -ItemType Directory -Force -Path $destination | Out-Null
+              }
+              else {
+                $destinationDir = Split-Path $destination -Parent
+                New-Item -ItemType Directory -Force -Path $destinationDir | Out-Null
+                Copy-Item -LiteralPath $item.FullName -Destination $destination -Force
+              }
+            }
           }
 
-          function Restart-AppPoolIfExists {
+          function Stop-AppPoolIfExists {
             param(
               [string]$AppPoolName
             )
 
             if (Test-Path "IIS:\AppPools\$AppPoolName") {
-              Restart-WebAppPool -Name $AppPoolName
+              Write-Host "Parando App Pool $AppPoolName..."
+              Stop-WebAppPool -Name $AppPoolName
+
+              $maxAttempts = 12
+              for ($i = 1; $i -le $maxAttempts; $i++) {
+                $state = (Get-Item "IIS:\AppPools\$AppPoolName").state
+                if ($state -eq 'Stopped') {
+                  Write-Host "App Pool $AppPoolName parado com sucesso."
+                  return
+                }
+
+                Start-Sleep -Seconds 2
+              }
+
+              throw "O App Pool $AppPoolName não parou no tempo esperado."
+            }
+          }
+
+          function Start-AppPoolIfExists {
+            param(
+              [string]$AppPoolName
+            )
+
+            if (Test-Path "IIS:\AppPools\$AppPoolName") {
+              Write-Host "Iniciando App Pool $AppPoolName..."
+              Start-WebAppPool -Name $AppPoolName
+
+              $maxAttempts = 12
+              for ($i = 1; $i -le $maxAttempts; $i++) {
+                $state = (Get-Item "IIS:\AppPools\$AppPoolName").state
+                if ($state -eq 'Started') {
+                  Write-Host "App Pool $AppPoolName iniciado com sucesso."
+                  return
+                }
+
+                Start-Sleep -Seconds 2
+              }
+
+              throw "O App Pool $AppPoolName não iniciou no tempo esperado."
             }
           }
 
@@ -267,19 +326,24 @@ stages:
 
             try {
               New-Item -ItemType Directory -Force -Path $TargetPath | Out-Null
+
+              Stop-AppPoolIfExists -AppPoolName $AppPoolName
+              Start-Sleep -Seconds 5
+
               Set-Content -Path $appOfflineFile -Value '<html><body><h1>Aplicacao em manutencao</h1></body></html>' -Encoding ASCII
+              Start-Sleep -Seconds 2
 
               Write-Host "Limpando pasta de deploy de $Name..."
               Clear-TargetDirectory -TargetPath $TargetPath -PreserveFiles $effectivePreserveFiles -PreserveDirectories $PreserveDirectories
 
               Write-Host "Copiando nova versao de $Name..."
-              Copy-PackageContent -SourcePath $SourcePath -TargetPath $TargetPath
+              Copy-PackageContent -SourcePath $SourcePath -TargetPath $TargetPath -PreserveFiles $PreserveFiles -PreserveDirectories $PreserveDirectories
 
               if (Test-Path $appOfflineFile) {
                 Remove-Item -LiteralPath $appOfflineFile -Force
               }
 
-              Restart-AppPoolIfExists -AppPoolName $AppPoolName
+              Start-AppPoolIfExists -AppPoolName $AppPoolName
               Invoke-AppHealthCheck -Url $HealthUrl -Name $Name
 
               Write-Host "Deploy de $Name concluido com sucesso."
@@ -289,7 +353,12 @@ stages:
 
               try {
                 New-Item -ItemType Directory -Force -Path $TargetPath | Out-Null
+
+                Stop-AppPoolIfExists -AppPoolName $AppPoolName
+                Start-Sleep -Seconds 5
+
                 Set-Content -Path $appOfflineFile -Value '<html><body><h1>Rollback em andamento</h1></body></html>' -Encoding ASCII
+                Start-Sleep -Seconds 2
 
                 Clear-TargetDirectory -TargetPath $TargetPath -PreserveFiles @('app_offline.htm') -PreserveDirectories @()
 
@@ -301,7 +370,7 @@ stages:
                   Remove-Item -LiteralPath $appOfflineFile -Force
                 }
 
-                Restart-AppPoolIfExists -AppPoolName $AppPoolName
+                Start-AppPoolIfExists -AppPoolName $AppPoolName
               }
               catch {
                 Write-Error "Rollback de $Name também falhou: $($_.Exception.Message)"

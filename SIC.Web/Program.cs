@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using SIC.Web.Services;
+using SIC.Web.Services.PrePedidosPDF;
 
 var builder = WebApplication.CreateBuilder(args);
 

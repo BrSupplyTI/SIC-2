@@ -1,0 +1,405 @@
+@model SIC.Web.Models.PrePedidosPDF.PrePedidoPDFListViewModel
+@{
+    ViewData["Title"] = "Lista de Pedidos ERP (Status: " + Model.StatusFormatado + ")";
+
+    var totalFiltrosAtivos = (Model.FiltroStatus.HasValue && Model.FiltroStatus != 1 ? 1 : 0)
+        + (!string.IsNullOrWhiteSpace(Model.FiltroCdExtCliente) ? 1 : 0)
+        + (Model.FiltroDataInicial.HasValue ? 1 : 0)
+        + (Model.FiltroDataFinal.HasValue ? 1 : 0);
+
+    var orderByOptions = new[]
+    {
+        "Arquivo (Recente)", "Arquivo (Antigo)",
+        "Cliente (A-Z)", "Cliente (Z-A)",
+        "Status (A-Z)", "Status (Z-A)",
+        "Criado Em (Recente)", "Criado Em (Antigo)"
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.min.css" />
+    <style>
+        /* ── Section title ── */
+        .prepedido-section-title {
+            font-size: .8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--sic-muted);
+            border-bottom: 1px solid var(--sic-border);
+            padding-bottom: .5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* ── Table ── */
+        .table-prepedido-wrap {
+            border: 1px solid var(--sic-border);
+            border-radius: .5rem;
+            overflow: hidden;
+        }
+        .table-prepedido {
+            --bs-table-bg: transparent;
+            --bs-table-hover-bg: var(--sic-surface-2);
+        }
+        .table-prepedido thead th {
+            font-size: .7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--sic-muted);
+            background: var(--sic-surface-2);
+            border-bottom: 2px solid var(--sic-border);
+            padding: .55rem .75rem;
+            white-space: nowrap;
+        }
+        .table-prepedido tbody td {
+            color: var(--sic-text);
+            border-bottom: 1px solid var(--sic-border);
+            padding: .5rem .75rem;
+            font-size: .85rem;
+            vertical-align: middle;
+        }
+        .table-prepedido tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ── Action buttons ── */
+        .prepedido-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            font-size: .8rem;
+            font-weight: 600;
+            padding: .45rem 1rem;
+            border-radius: .375rem;
+            border: 1px solid transparent;
+            transition: all .2s ease;
+            cursor: pointer;
+        }
+        .prepedido-btn i {
+            font-size: .85rem;
+        }
+        .prepedido-btn-abrir {
+            background: rgba(var(--bs-primary-rgb), .12);
+            color: var(--sic-text);
+            border-color: rgba(var(--bs-primary-rgb), .3);
+            text-decoration: none !important;
+        }
+        .prepedido-btn-abrir:hover {
+            background: rgba(var(--bs-primary-rgb), .25);
+            border-color: rgba(var(--bs-primary-rgb), .5);
+        }
+    </style>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin fa-file-lines me-2 text-br"></i>Pedidos ERP</h2>
+                </div>
+                <p class="text-muted mt-1 mb-0">
+                    <strong>@Model.Dados.Count.ToString("N0", new System.Globalization.CultureInfo("pt-BR"))</strong> pedido(s) ERP encontrado(s)
+                </p>
+            </div>
+        </div>
+
+        <!-- Busca & Controles -->
+        <form method="get" asp-controller="PrePedidosPDF" asp-action="List" id="formPrePedidosPDF">
+            <input type="hidden" name="status" id="inputStatus" value="@Model.FiltroStatus" />
+            <input type="hidden" name="cdExtCliente" id="inputCdExtCliente" value="@Model.FiltroCdExtCliente" />
+            <input type="hidden" name="dataInicial" id="inputDataInicial" value="@(Model.FiltroDataInicial?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="dataFinal" id="inputDataFinal" value="@(Model.FiltroDataFinal?.ToString("yyyy-MM-dd"))" />
+
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-lg-5">
+                    <small class="text-muted">Pesquisar por cliente, CNPJ ou ordem de compra</small>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="inputBuscaTabela"
+                               placeholder="Cliente, CNPJ, ordem de compra..." />
+                        <button type="button" class="btn btn-primary" id="btnBuscaTabela">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <small class="text-muted">Ordem</small>
+                    <select class="form-select h-45px" id="selectOrderBy">
+                        @foreach (var opt in orderByOptions)
+                        {
+                            <option value="@opt">@opt</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <small class="text-muted">Por página</small>
+                    <select class="form-select h-45px" id="selectPageSize">
+                        @foreach (var size in new[] { 10, 25, 50, 100 })
+                        {
+                            <option value="@size" selected="@(size == 25)">@size itens</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-lg-2 d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1 position-relative mt-4" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFiltros">
+                        <i class="fa-solid fa-sliders me-1"></i>Filtros
+                        @if (totalFiltrosAtivos > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@totalFiltrosAtivos</span>
+                        }
+                    </button>
+                    <a asp-controller="PrePedidosPDF" asp-action="List" class="btn btn-outline-danger mt-4" title="Limpar filtros">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Filtros ativos -->
+        <div class="d-flex flex-wrap gap-2 mb-4" id="activeFilters">
+            <span class="badge-status badge-status-primary">
+                <i class="fa-solid fa-circle-dot me-1"></i>@Model.StatusFormatado
+            </span>
+            @if (!string.IsNullOrWhiteSpace(Model.FiltroCdExtCliente))
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('cdExtCliente','')">
+                    <i class="fa-solid fa-user me-1"></i>Cliente: @Model.FiltroCdExtCliente<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.FiltroDataInicial.HasValue)
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('dataInicial','')">
+                    <i class="fa-solid fa-calendar me-1"></i>De: @Model.FiltroDataInicial.Value.ToString("dd/MM/yyyy")<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.FiltroDataFinal.HasValue)
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('dataFinal','')">
+                    <i class="fa-solid fa-calendar me-1"></i>Até: @Model.FiltroDataFinal.Value.ToString("dd/MM/yyyy")<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+        </div>
+
+        @* ══════════ TABELA DE PEDIDOS ══════════ *@
+        <div class="prepedido-section-title">
+            <i class="fa-duotone fa-list me-1 text-br"></i>Pedidos
+        </div>
+
+        <div class="table-prepedido-wrap">
+            <div class="table-responsive">
+                <table class="table table-hover table-prepedido mb-0" id="prePedidosPDFTable">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Arquivo</th>
+                            <th>Cliente</th>
+                            <th>Ordem de Compra</th>
+                            <th>CNPJ</th>
+                            <th>Pedido BRS</th>
+                            <th>Status</th>
+                            <th class="text-center">Criado Em</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Dados.Count > 0)
+                        {
+                            @foreach (var row in Model.Dados)
+                            {
+                                <tr>
+                                    <td class="text-center">@row.PDFPrePedidoPDFID</td>
+                                    <td>@row.NmCliente</td>
+                                    <td>@row.OrdemCompra</td>
+                                    <td>@row.CNPJ</td>
+                                    <td>
+                                        @if (row.CotacaoID > 0)
+                                        {
+                                            <a asp-controller="Pedidos" asp-action="Detalhes" asp-route-pedido="@row.CotacaoID"
+                                               class="prepedido-btn prepedido-btn-abrir" title="Ver Pedido">
+                                                <i class="fa-solid fa-file"></i>@row.CotacaoID
+                                            </a>
+                                        }
+                                    </td>
+                                    <td>@row.StatusDescricao</td>
+                                    <td class="text-center">@row.CriadoEm</td>
+                                    <td class="text-center">
+                                        <a asp-controller="PrePedidoPDFDetalhes"
+                                           asp-action="PrePedido"
+                                           asp-route-id="@row.PDFPrePedidoPDFID"
+                                           class="prepedido-btn prepedido-btn-abrir"
+                                           title="Abrir Pedido ERP">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">Nenhum registro encontrado.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas de Filtros -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasFiltros" aria-labelledby="offcanvasFiltrosLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 id="offcanvasFiltrosLabel" class="mb-0"><i class="fa-duotone fa-sliders me-2 text-br"></i>Filtros Avançados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+        <div class="flex-grow-1">
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-circle-dot me-1 text-muted"></i>Status</label>
+                <select class="form-select" id="filtroStatus">
+                    <option value="0" selected="@(Model.FiltroStatus == 0)">Todos</option>
+                    @foreach (var s in Model.StatusOptions)
+                    {
+                        <option value="@s.StatusPrePedidoPDFId"
+                                selected="@(Model.FiltroStatus == s.StatusPrePedidoPDFId)">
+                            @s.Descricao
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-user me-1 text-muted"></i>Código do cliente</label>
+                <input type="text" class="form-control" id="filtroCdExtCliente"
+                       value="@Model.FiltroCdExtCliente" placeholder="Código do cliente" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-calendar me-1 text-muted"></i>Data Inicial</label>
+                <input type="date" class="form-control" id="filtroDataInicial"
+                       value="@(Model.FiltroDataInicial?.ToString("yyyy-MM-dd"))" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-calendar me-1 text-muted"></i>Data Final</label>
+                <input type="date" class="form-control" id="filtroDataFinal"
+                       value="@(Model.FiltroDataFinal?.ToString("yyyy-MM-dd"))" />
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 pt-3 border-top">
+            <button type="button" class="btn btn-primary" id="btnAplicarFiltros">
+                <i class="fa-solid fa-check me-1"></i>Aplicar Filtros
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
+                <i class="fa-solid fa-eraser me-1"></i>Limpar Tudo
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.min.js"></script>
+    <script>
+        (() => {
+            if (typeof DataTable === 'undefined') return;
+
+            var orderMap = {
+                'Arquivo (Recente)':    [[0, 'desc']],
+                'Arquivo (Antigo)':     [[0, 'asc']],
+                'Cliente (A-Z)':        [[1, 'asc']],
+                'Cliente (Z-A)':        [[1, 'desc']],
+                'Status (A-Z)':         [[5, 'asc']],
+                'Status (Z-A)':         [[5, 'desc']],
+                'Criado Em (Recente)':  [[6, 'desc']],
+                'Criado Em (Antigo)':   [[6, 'asc']]
+            };
+
+            var dt = new DataTable('#prePedidosPDFTable', {
+                pageLength: 25,
+                responsive: true,
+                lengthChange: false,
+                searching: true,
+                info: false,
+                paging: true,
+                order: [[0, 'desc']],
+                pagingType: 'full_numbers',
+                language: {
+                    emptyTable: 'Nenhum pré-pedido encontrado.',
+                    info: 'Mostrando _START_ até _END_ de _TOTAL_ pré-pedidos',
+                    infoEmpty: 'Mostrando 0 até 0 de 0 pré-pedidos',
+                    zeroRecords: 'Nenhum pré-pedido corresponde ao filtro',
+                    paginate: {
+                        first: 'Primeiro',
+                        previous: 'Anterior',
+                        next: 'Próximo',
+                        last: 'Último'
+                    }
+                }
+            });
+
+            // Esconde a busca nativa do DataTables
+            var dtSearch = document.querySelector('#prePedidosPDFTable_wrapper .dt-search');
+            if (dtSearch) dtSearch.style.display = 'none';
+
+            // Busca personalizada
+            var inputBusca = document.getElementById('inputBuscaTabela');
+            var btnBusca = document.getElementById('btnBuscaTabela');
+
+            function aplicarBusca() {
+                dt.search(inputBusca.value || '').draw();
+            }
+
+            btnBusca?.addEventListener('click', aplicarBusca);
+            inputBusca?.addEventListener('keyup', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); aplicarBusca(); }
+            });
+
+            // Ordem
+            document.getElementById('selectOrderBy')?.addEventListener('change', function () {
+                var order = orderMap[this.value];
+                if (order) dt.order(order).draw();
+            });
+
+            // Por página
+            document.getElementById('selectPageSize')?.addEventListener('change', function () {
+                dt.page.len(parseInt(this.value, 10)).draw();
+            });
+        })();
+
+        var filterInputMap = {
+            status: 'inputStatus',
+            cdExtCliente: 'inputCdExtCliente',
+            dataInicial: 'inputDataInicial',
+            dataFinal: 'inputDataFinal'
+        };
+
+        function removeFilter(field, defaultValue) {
+            var inputId = filterInputMap[field];
+            if (!inputId) return;
+            var el = document.getElementById(inputId);
+            if (el) el.value = defaultValue;
+            document.getElementById('formPrePedidosPDF').submit();
+        }
+
+        document.getElementById('btnAplicarFiltros')?.addEventListener('click', function () {
+            document.getElementById('inputStatus').value = document.getElementById('filtroStatus').value;
+            document.getElementById('inputCdExtCliente').value = document.getElementById('filtroCdExtCliente').value;
+            document.getElementById('inputDataInicial').value = document.getElementById('filtroDataInicial').value;
+            document.getElementById('inputDataFinal').value = document.getElementById('filtroDataFinal').value;
+            document.getElementById('formPrePedidosPDF').submit();
+        });
+
+        document.getElementById('btnLimparFiltros')?.addEventListener('click', function () {
+            window.location.href = '@Url.Action("List", "PrePedidosPDF")';
+        });
+    </script>
+}

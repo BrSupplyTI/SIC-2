@@ -8,12 +8,12 @@
 .ts-wrapper.form-select.js-prepedido-searchable-select.single .ts-control,
 .ts-wrapper.form-select.js-prepedido-searchable-select.single .ts-control .item,
 .ts-wrapper.form-select.js-prepedido-searchable-select .ts-control input {
-    color: #fff;
+    color: var(--sic-text);
 }
 
 .ts-wrapper.form-select.js-prepedido-searchable-select.disabled .ts-control,
 .ts-wrapper.form-select.js-prepedido-searchable-select.disabled .ts-control .item {
-    color: #fff;
+    color: var(--sic-text);
     opacity: .85;
 }
 
@@ -29,17 +29,17 @@
 }
 
 .ts-wrapper.form-select.js-prepedido-searchable-select .ts-dropdown .option {
-    color: #fff;
+    color: var(--sic-text);
 }
 
 .ts-wrapper.form-select.js-prepedido-searchable-select .ts-dropdown .option.active {
     background: rgba(var(--bs-primary-rgb), .25);
-    color: #fff;
+    color: var(--sic-text);
 }
 
 .ts-wrapper.form-select.js-prepedido-searchable-select .ts-dropdown .option:hover {
     background: rgba(var(--bs-primary-rgb), .15);
-    color: #fff;
+    color: var(--sic-text);
 }
 
 .ts-wrapper.form-select.js-prepedido-searchable-select .ts-dropdown .no-results {

@@ -661,8 +661,7 @@
     border-radius: 2rem;
     border: 1px solid var(--sic-border, var(--bs-border-color));
     background: var(--bs-body-bg);
-    color: var(--bs-body-color);
-    font-size: .8rem;
+    color: var(--bs-body-color);    
     font-weight: 500;
     cursor: pointer;
     transition: all .2s ease;

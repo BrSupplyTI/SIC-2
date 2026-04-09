@@ -70,4 +70,32 @@ public sealed class ClientController(IClientService service) : ControllerBase
         var items = await service.GetTitulosAsync(clienteId, cancellationToken);
         return Ok(items);
     }
+
+    [HttpGet("{clienteId:int}/saldo-credito")]
+    public async Task<IActionResult> GetCreditBalance(int clienteId, CancellationToken cancellationToken)
+    {
+        var dto = await service.GetCreditBalanceAsync(clienteId, cancellationToken);
+        return Ok(dto);
+    }
+
+    [HttpGet("{clienteId:int}/enderecos")]
+    public async Task<IActionResult> GetAddresses(int clienteId, CancellationToken cancellationToken)
+    {
+        var items = await service.GetAddressesAsync(clienteId, cancellationToken);
+        return Ok(items);
+    }
+
+    [HttpGet("{clienteId:int}/locais-entrega")]
+    public async Task<IActionResult> GetDeliveryLocations(int clienteId, CancellationToken cancellationToken)
+    {
+        var items = await service.GetDeliveryLocationsAsync(clienteId, cancellationToken);
+        return Ok(items);
+    }
+
+    [HttpGet("{clienteId:int}/usuarios")]
+    public async Task<IActionResult> GetUsers(int clienteId, CancellationToken cancellationToken)
+    {
+        var items = await service.GetUsersAsync(clienteId, cancellationToken);
+        return Ok(items);
+    }
 }

@@ -494,7 +494,7 @@
                                             <th class="text-center">Ordem de Venda</th>
                                             <th class="text-center hide-lg">Remessa</th>
                                             <th>Mensagem de Retorno</th>
-                                            <th class="text-center  hide-lg">�slt. Atualização</th>
+                                            <th class="text-center  hide-lg">Últ. Atualização</th>
                                             <th class="text-center hide-md">Tipo OV SAP</th>
                                             <th class="text-center hide-lg">Fatura SAP</th>
                                             <th class="text-center">Nr. Nota</th>
@@ -789,8 +789,8 @@
                             var setor = Model.Header.Setor?.ToUpperInvariant() ?? "";
                             var isCancelado = setor is "CANCELADO" or "ERRO";
                             var etapa1 = isCancelado ? "incomplete"
-                                       : setor is "CLIENTE" or "COMERCIAL" or "DISTRIBUI�?�fO" or "FATURAMENTO" or "OPERA�?�fO" or "TRANSPORTE" or "ENTREGUE" ? "complete" : "";
-                            var etapa2 = setor is "DISTRIBUI�?�fO" or "FATURAMENTO" or "OPERA�?�fO" or "TRANSPORTE" or "ENTREGUE" ? "complete" : "";
+                                       : setor is "CLIENTE" or "COMERCIAL" or "DISTRIBUIÇÃO" or "FATURAMENTO" or "OPERAÇÃO" or "TRANSPORTE" or "ENTREGUE" ? "complete" : "";
+                            var etapa2 = setor is "DISTRIBUIÇÃO" or "FATURAMENTO" or "OPERAÇÃO" or "TRANSPORTE" or "ENTREGUE" ? "complete" : "";
                             var etapa3 = setor is "TRANSPORTE" or "ENTREGUE" ? "complete" : "";
                             var etapa4 = setor == "ENTREGUE" ? "complete" : "";
                         }
@@ -1071,7 +1071,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalVolumesColetaLabel">
-                    <i class="fa-duotone fa-chart-pie-simple-circle-dollar me-2 text-br"></i>Volumes Coletados �?" Nota Fiscal 000000 - 0
+                    <i class="fa-duotone fa-chart-pie-simple-circle-dollar me-2 text-br"></i>Volumes Coletados:" Nota Fiscal 000000 - 0
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
@@ -1121,7 +1121,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalHistoricoFreteLabel">
-                    <i class="fa-duotone fa-truck-fast me-2 text-br"></i>Histórico do Cálculo de Frete �?" Pedido #@Model.PedidoId
+                    <i class="fa-duotone fa-truck-fast me-2 text-br"></i>Histórico do Cálculo de Frete:" Pedido #@Model.PedidoId
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
@@ -1175,7 +1175,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalCalculoFreteLabel">
-                    <i class="fa-duotone fa-truck-fast me-2 text-br"></i>Simulação de Frete �?" Pedido #@Model.PedidoId
+                    <i class="fa-duotone fa-truck-fast me-2 text-br"></i>Simulação de Frete:" Pedido #@Model.PedidoId
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>

@@ -99,4 +99,55 @@ public sealed class ClienteApiClient(HttpClient httpClient)
             return [];
         }
     }
+
+    public async Task<ClientCreditBalanceVm?> GetCreditBalanceAsync(int clienteId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await httpClient.GetFromJsonAsync<ClientCreditBalanceVm>($"api/clientes/{clienteId}/saldo-credito", cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<ClientAddressVm>> GetAddressesAsync(int clienteId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<ClientAddressVm>>($"api/clientes/{clienteId}/enderecos", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<IReadOnlyList<ClientDeliveryLocationVm>> GetDeliveryLocationsAsync(int clienteId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<ClientDeliveryLocationVm>>($"api/clientes/{clienteId}/locais-entrega", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<IReadOnlyList<ClientUserVm>> GetUsersAsync(int clienteId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await httpClient.GetFromJsonAsync<List<ClientUserVm>>($"api/clientes/{clienteId}/usuarios", cancellationToken);
+            return data ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
 }

@@ -16,21 +16,78 @@
 
     var ptBR = new System.Globalization.CultureInfo("pt-BR");
 
-    var configs = new (string Label, string Icon, bool Ativo)[]
+    (string Label, string Icon, string BadgeText, string BadgeIcon, string BadgeClass)
+        BoolCfg(string label, string icon, bool ativo) => ativo
+            ? (label, icon, "Sim", "fa-check", "bg-success-subtle text-success-emphasis")
+            : (label, icon, "Não", "fa-xmark", "bg-secondary-subtle text-secondary-emphasis");
+
+    var (trocaItemTexto, trocaItemBadge) = Model.FlagTrocaItemAutomatica switch
     {
-        ("Validação Fiscal", "fa-solid fa-file-invoice", Model.FlagValidacaoFiscal == 1),
-        ("Valida Impostos Troca Item", "fa-solid fa-receipt", Model.FlagValidaImpostosTrocaItem == 1),
-        ("Programação Automática", "fa-solid fa-calendar-check", Model.FlagProgramacaoAutomatica == 1),
-        ("Integração Automática SAP", "fa-solid fa-sync", Model.FlagIntegracaoAutomaticaSAP == 1),
-        ("Liberação Automática", "fa-solid fa-circle-check", Model.FlagUtilizaLiberacaoAutomatica == 1),
-        ("Utiliza Janela de Corte", "fa-solid fa-clock", Model.FlagUtilizaJanelaCorte == 1),
-        ("Lib. Marketplace Automático", "fa-solid fa-handshake", Model.FlagLibCatTercAutomatico == 1),
-        ("Não Valida NCM Troca Item", "fa-solid fa-ban", Model.FlagNaoValidaNCMTrocaItem == 1)
+        1 => ("Apenas homologados", "bg-warning-subtle text-warning-emphasis"),
+        2 => ("Qualquer troca", "bg-success-subtle text-success-emphasis"),
+        _ => ("Não permite", "bg-secondary-subtle text-secondary-emphasis")
+    };
+
+    var (tipoConcatTexto, tipoConcatBadge) = Model.FlagTipoConcat switch
+    {
+        1 => ("Por CNPJs / endereços", "bg-info-subtle text-info-emphasis"),
+        2 => ("Por cód. controle do local", "bg-primary-subtle text-primary-emphasis"),
+        _ => ("Por ID do local", "bg-secondary-subtle text-secondary-emphasis")
+    };
+
+    var configSections = new (string Title, string TitleIcon,
+        (string Label, string Icon, string BadgeText, string BadgeIcon, string BadgeClass)[] Items)[]
+    {
+        ("Integrações Automáticas", "fa-solid fa-rocket", new[]
+        {
+            BoolCfg("Integração automática SAP",   "fa-solid fa-rotate",         Model.FlagIntegracaoAutomaticaSAP == 1),
+            BoolCfg("Liberação automática",         "fa-solid fa-circle-check",   Model.FlagUtilizaLiberacaoAutomatica == 1),
+            BoolCfg("Programação automática",       "fa-solid fa-calendar-check", Model.FlagProgramacaoAutomatica == 1)
+        }),
+
+        ("Configurações Gerais", "fa-solid fa-sliders", new[]
+        {
+            BoolCfg("Janela de corte",              "fa-solid fa-scissors",       Model.FlagUtilizaJanelaCorte == 1),
+            BoolCfg("Agrupar frete por CNPJ",       "fa-solid fa-truck",          Model.FlagFreteAgrupCNPJ == 1),
+            BoolCfg("Validação fiscal",              "fa-solid fa-file-invoice",   Model.FlagValidacaoFiscal == 1),
+            BoolCfg("Valida impostos troca item",    "fa-solid fa-receipt",        Model.FlagValidaImpostosTrocaItem == 1),
+            BoolCfg("OC obrigatória nos pedidos",    "fa-solid fa-file-contract",  Model.FlagNaoLiberarPedidoSemOC == 1),
+            BoolCfg("Bloquear edição com OC",        "fa-solid fa-lock",           Model.FlagNaoEditarPedidoComOC == 1),
+            BoolCfg("Política de entregas",          "fa-solid fa-dolly",          Model.FlagPoliticaEntrega == 1)
+        }),
+
+        ("Multi-CD", "fa-solid fa-warehouse", new[]
+        {
+            BoolCfg("Faturamento de qualquer CD",    "fa-solid fa-building",       Model.FlagMultiCD == 1),
+            BoolCfg("Endereços p/ CD mais próximo",  "fa-solid fa-map-pin",        Model.FlagMultiCDEnderecos == 1),
+            BoolCfg("Pedidos p/ CD com estoque",     "fa-solid fa-boxes-stacked",  Model.FlagMultiCDPedidos == 1)
+        }),
+
+        ("Troca de Itens", "fa-solid fa-arrow-right-arrow-left", new[]
+        {
+            ("Troca automática",                     "fa-solid fa-shuffle",           trocaItemTexto, "", trocaItemBadge),
+            BoolCfg("Não valida DE/PARA",            "fa-solid fa-ban",               Model.FlagNaoValidaTrocaItem == 1),
+            BoolCfg("Não valida NCM diferente",      "fa-solid fa-file-circle-xmark", Model.FlagNaoValidaNCMTrocaItem == 1)
+        }),
+
+        ("Concatenação de Pedidos", "fa-solid fa-object-group", new[]
+        {
+            BoolCfg("Concatenação automática",       "fa-solid fa-link",                  Model.FlagAutoConcat == 1),
+            BoolCfg("Apenas com Ordem de Compra",    "fa-solid fa-file-circle-check",     Model.FlagOrdemCompra == 1),
+            ("Tipo de concatenação",                  "fa-solid fa-sitemap",               tipoConcatTexto, "", tipoConcatBadge),
+            BoolCfg("Concatenar pedidos ruptura",    "fa-solid fa-triangle-exclamation",  Model.FlagConcatPedidoRuptura == 1),
+            BoolCfg("Isentar frete ao concatenar",   "fa-solid fa-truck-fast",            Model.FlagAutoIsentaFrete == 1),
+            BoolCfg("Priorizar perfil solicitante",  "fa-solid fa-user-check",            Model.FlagPrioConcatPerfilSolicitante == 1),
+            BoolCfg("Itens marketplace juntos",      "fa-solid fa-handshake",             Model.FlagConcatItemFornecedor == 1),
+            BoolCfg("Isolar categorias",             "fa-solid fa-layer-group",           Model.FlagConcatIsolarCategorias == 1)
+        })
     };
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/clientes/detalhes.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.1/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.bootstrap5.min.css" />
 }
 
 <div class="card border-0 shadow-sm mb-4">
@@ -126,7 +183,7 @@
         </div>
         <div class="row g-4">
             <!-- Coluna esquerda: Informações do Cliente -->
-            <div class="col-lg-7">
+            <div class="col-lg-6">
                 <div class="cliente-section-title">
                     <i class="fa-duotone fa-user-tie text-br"></i>Informações do Cliente
                 </div>
@@ -139,12 +196,27 @@
                     <div class="cad-info">@Model.NmCarteira <span class="text-muted">(@Model.CarteiraID)</span></div>
                 </div>
                 <div class="cad-row">
+                    <div class="cad-label text-muted">Canal de Venda</div>
+                    <div class="cad-info">@Model.NmCanalVenda <span class="text-muted">(@Model.CanalVendaID)</span></div>
+                </div>
+                <div class="cad-row">
                     <div class="cad-label text-muted">@Model.TipoDocumento</div>
                     <div class="cad-info">@Model.CPFCNPJ</div>
                 </div>
+                @if (@Model.TipoDocumento != "CPF")
+                {
+                    <div class="cad-row">
+                        <div class="cad-label text-muted">Inscrição Estadual</div>
+                        <div class="cad-info">@Model.InscrEstadual</div>
+                    </div>
+                }
                 <div class="cad-row">
-                    <div class="cad-label text-muted">Inscrição Estadual</div>
-                    <div class="cad-info">@Model.InscrEstadual</div>
+                    <div class="cad-label text-muted">Telefone</div>
+                    <div class="cad-info">@Model.TelefoneCliente</div>
+                </div>
+                <div class="cad-row">
+                    <div class="cad-label text-muted">Cond. Pagamento</div>
+                    <div class="cad-info">@Model.NmCondPagto</div>
                 </div>
                 <div class="cad-row">
                     <div class="cad-label text-muted">Canal de Distribuição SAP</div>
@@ -158,31 +230,50 @@
                     <div class="cad-label text-muted">Forma de Pagamento SAP</div>
                     <div class="cad-info">@Model.CodFormaPagamentoSAP - @Model.DsFormaPagamentoSAP</div>
                 </div>
-
             </div>
             <!-- Coluna direita: Configurações -->
-            <div class="col-lg-5">
+            <div class="col-lg-6">
                 <div class="cliente-section-title">
-                    <i class="fa-duotone fa-gear text-br"></i>Configurações
+                    <i class="fa-duotone fa-file-signature text-br"></i>Informações de Contrato
                 </div>
-                <div class="d-flex flex-column gap-2">
-                    @foreach (var cfg in configs)
-                    {
-                        <div class="cliente-config-item">
-                            <span class="cliente-config-label">
-                                <i class="@cfg.Icon"></i>@cfg.Label
-                            </span>
-                            @if (cfg.Ativo)
-                            {
-                                <span class="badge bg-success-subtle text-success-emphasis"><i class="fa-solid fa-check me-1"></i>Sim</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis"><i class="fa-solid fa-xmark me-1"></i>Não</span>
-                            }
-                        </div>
-                    }
+                <div class="cad-row">
+                    <div class="cad-label text-muted">Canal de Venda</div>
+                    <div class="cad-info">@Model.NmTblPreco <span class="text-muted">(@Model.TblPrecoID)</span></div>
                 </div>
+                <div class="cad-row">
+                    <div class="cad-label text-muted">Segmento</div>
+                    <div class="cad-info">@Model.SegmentoCliente</div>
+                </div>
+                <div class="cad-row">
+                    <div class="cad-label text-muted">Perfil</div>
+                    <div class="cad-info">@Model.NmClientePerfil</div>
+                </div>
+                @if (Model.TipoDocumento != "CPF")
+                {
+                    <div class="cliente-section-title mt-4">
+                        <i class="fa-duotone fa-landmark-dome text-br"></i>Informações Legais
+                    </div>
+                    <div class="cad-row">
+                        <div class="cad-label text-muted">Cód. Nat. Jurídica</div>
+                        <div class="cad-info">@Model.CdNatJuridica</div>
+                    </div>
+                    <div class="cad-row">
+                        <div class="cad-label text-muted">Desc. Nat. Jurídica</div>
+                        <div class="cad-info">@Model.DsNatJuridica</div>
+                    </div>
+                    <div class="cad-row">
+                        <div class="cad-label text-muted">CNAE</div>
+                        <div class="cad-info">@Model.Cnae</div>
+                    </div>
+                    <div class="cad-row">
+                        <div class="cad-label text-muted">CNAE Setor</div>
+                        <div class="cad-info">@Model.CodCnaeSetor</div>
+                    </div>
+                    <div class="cad-row">
+                        <div class="cad-label text-muted">Descrição CNAE</div>
+                        <div class="cad-info">@Model.DsCnaeSetor</div>
+                    </div>
+                }
             </div>
         </div>
 
@@ -212,7 +303,7 @@
                                     else
                                     {
                                         <div class="avatar-user d-flex align-items-center justify-content-center bg-primary-subtle text-primary fw-bold" style="font-size:.85rem">
-                                            @consultor.NmUsuario[0]
+                                            @(consultor.NmUsuario.Length > 0 ? consultor.NmUsuario[0] : '?')
                                         </div>
                                     }
                                     <div>
@@ -229,12 +320,54 @@
 
         <div class="accordion mt-4" id="clienteDetalhesAccordion">
             <div class="accordion-item">
+                <h2 class="accordion-header" id="headingConfig">
+                    <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseConfig" aria-expanded="true" aria-controls="collapseConfig">
+                        <i class="fa-duotone fa-thin fa-cog me-3 produto-accordion-icon"></i> Configurações
+                    </button>
+                </h2>
+                <div id="collapseConfig" class="accordion-collapse collapse show" aria-labelledby="headingConfig" data-bs-parent="#clienteDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="d-flex flex-column gap-2">
+                            @{
+                                var isFirstGroup = true;
+                            }
+                            @foreach (var grp in configSections)
+                            {
+                                <p class="fw-semibold cliente-section-title @(isFirstGroup ? "" : "mt-2") mb-0">
+                                    <i class="text-br text-uppercase @grp.TitleIcon me-1"></i>@grp.Title
+                                </p>
+                                <div class="row">
+                                    @{
+                                        isFirstGroup = false;
+                                        foreach (var cfg in grp.Items)
+                                        {
+                                            <div class="cliente-config-item col-md-5 mx-2 mb-1">
+                                                <span class="cliente-config-label">
+                                                    <i class="@cfg.Icon"></i>@cfg.Label
+                                                </span>
+                                                <span class="badge @cfg.BadgeClass">
+                                                    @if (!string.IsNullOrEmpty(cfg.BadgeIcon))
+                                                    {
+                                                        <i class="fa-solid @cfg.BadgeIcon me-1"></i>
+                                                    }
+                                                    @cfg.BadgeText
+                                                </span>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
                 <h2 class="accordion-header" id="headingCredito">
-                    <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCredito" aria-expanded="true" aria-controls="collapseCredito">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCredito" aria-expanded="false" aria-controls="collapseCredito">
                         <i class="fa-duotone fa-thin fa-money-bill-trend-up me-3 produto-accordion-icon"></i> Informações de Crédito
                     </button>
                 </h2>
-                <div id="collapseCredito" class="accordion-collapse collapse show" aria-labelledby="headingCredito" data-bs-parent="#clienteDetalhesAccordion">
+                <div id="collapseCredito" class="accordion-collapse collapse" aria-labelledby="headingCredito" data-bs-parent="#clienteDetalhesAccordion">
                     <div class="accordion-body">
                         <div class="row g-4">
                             <!-- Coluna esquerda: Crédito -->
@@ -244,47 +377,52 @@
                                 </div>
                                 <div class="row g-2 mb-3">
                                     <div class="col-12">
-                                        <div class="cliente-info-card">
-                                            <div class="cliente-info-label">Status do Crédito</div>
-                                            <div class="cliente-info-value">
-                                                <span class="badge-credito @badgeCreditoClass">@Model.StatusCredito</span>
+                                        <div class="cliente-info-card d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <div>
+                                                <div class="cliente-info-label">Status do Crédito</div>
+                                                <div class="cliente-info-value">
+                                                    <span class="badge-credito @badgeCreditoClass">@Model.StatusCredito</span>
+                                                </div>
                                             </div>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalSaldoCredito">
+                                                <i class="fa-solid fa-calculator me-1"></i>Saldo Disponível
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <div class="cliente-info-card">
-                                            <div class="cliente-info-label">Perfil de Crédito</div>
-                                            <div class="cliente-info-value">@(string.IsNullOrWhiteSpace(Model.NmPerfilCredito) ? "—" : Model.NmPerfilCredito)</div>
+                                    <div class="col-xl-6">
+                                        <div class="cad-row">
+                                            <div class="cad-label text-muted">Perfil de Crédito</div>
+                                            <div class="cad-info">@(string.IsNullOrWhiteSpace(Model.NmPerfilCredito) ? "—" : Model.NmPerfilCredito)</div>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <div class="cliente-info-card">
-                                            <div class="cliente-info-label">Tipo de Controle</div>
-                                            <div class="cliente-info-value">@(string.IsNullOrWhiteSpace(Model.TipoControle) ? "—" : Model.TipoControle)</div>
+                                    <div class="col-xl-6">
+                                        <div class="cad-row">
+                                            <div class="cad-label text-muted">Tipo de Controle</div>
+                                            <div class="cad-info">@(string.IsNullOrWhiteSpace(Model.TipoControle) ? "—" : Model.TipoControle)</div>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <div class="cliente-info-card">
-                                            <div class="cliente-info-label">Limite de Crédito</div>
-                                            <div class="cliente-info-value">@Model.VlrLimiteCredito.ToString("C2", ptBR)</div>
+                                    <div class="col-xl-6">
+                                        <div class="cad-row">
+                                            <div class="cad-label text-muted">Limite de Crédito</div>
+                                            <div class="cad-info">@Model.VlrLimiteCredito.ToString("C2", ptBR)</div>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <div class="cliente-info-card">
-                                            <div class="cliente-info-label">Dias Atraso Permitido</div>
-                                            <div class="cliente-info-value">@Model.DiasAtrasoPermitido dia(s)</div>
+                                    <div class="col-xl-6">
+                                        <div class="cad-row">
+                                            <div class="cad-label text-muted">Atraso Permitido</div>
+                                            <div class="cad-info">@Model.DiasAtrasoPermitido dia(s)</div>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <div class="cliente-info-card">
-                                            <div class="cliente-info-label">Data Análise</div>
-                                            <div class="cliente-info-value">@(Model.DtAnaliseCredito ?? "—")</div>
+                                    <div class="col-xl-6">
+                                        <div class="cad-row">
+                                            <div class="cad-label text-muted">Data da Análise</div>
+                                            <div class="cad-info">@(Model.DtAnaliseCredito ?? "—")</div>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <div class="cliente-info-card">
-                                            <div class="cliente-info-label">Vencimento Análise</div>
-                                            <div class="cliente-info-value">
+                                    <div class="col-xl-6">
+                                        <div class="cad-row">
+                                            <div class="cad-label text-muted">Vencimento da Análise</div>
+                                            <div class="cad-info">
                                                 @(Model.DtVencAnaliseCredito ?? "—")
                                                 @if (Model.DiasRestantes < 0)
                                                 {
@@ -297,17 +435,42 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <div class="cliente-info-card">
-                                            <div class="cliente-info-label">Meses Duração Análise</div>
-                                            <div class="cliente-info-value">@Model.MesesDuracaoAnalise</div>
+                                    <div class="col-xl-6">
+                                        <div class="cad-row">
+                                            <div class="cad-label text-muted">Duração da Análise</div>
+                                            <div class="cad-info">@Model.MesesDuracaoAnalise meses</div>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <div class="cliente-info-card">
-                                            <div class="cliente-info-label">Responsável Análise</div>
-                                            <div class="cliente-info-value">@(string.IsNullOrWhiteSpace(Model.ResponsavelAnaliseCredito) ? "—" : Model.ResponsavelAnaliseCredito)</div>
-                                        </div>
+                                    <div class="col-xl-6">
+                                        @if (!string.IsNullOrEmpty(Model.ResponsavelAnaliseCredito))
+                                        {
+                                            <div class="cad-avatar ms-2">
+                                                <p class="m-0 fs-8 text-muted">Responsável pela Análise de Credito</p>
+                                                <div class="list-group-item d-flex align-items-center gap-3 py-1">
+                                                    @if (!string.IsNullOrWhiteSpace(Model.FotoResponsavelAnaliseCredito))
+                                                    {
+                                                        <img class="avatar-user" src="/img/upload/@Model.FotoResponsavelAnaliseCredito" alt="@Model.ResponsavelAnaliseCredito" title="@Model.ResponsavelAnaliseCredito" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="avatar-user d-flex align-items-center justify-content-center bg-primary-subtle text-primary fw-bold" style="font-size:.85rem">
+                                                            @Model.ResponsavelAnaliseCredito[0]
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        @Model.ResponsavelAnaliseCredito <br />
+                                                        <small class="text-muted">@Model.EmailResponsavelAnaliseCredito</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="cliente-info-card">
+                                                <div class="cliente-info-label">Responsável pela Análise de Crédito</div>
+                                                <div class="cliente-info-value text-muted">Não definido</div>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -339,30 +502,51 @@
                             Nenhum título em aberto encontrado.
                         </div>
                         <div class="d-none" id="divTblTitulos">
+                            <div class="row g-2 mb-3" id="titTotais">
+                                <div class="col-6 col-md-3">
+                                    <div class="tit-resumo-card">
+                                        <span class="tit-resumo-label">Títulos</span>
+                                        <span class="tit-resumo-valor" id="titQtde">0</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="tit-resumo-card tit-resumo-vencido">
+                                        <span class="tit-resumo-label">Vencido</span>
+                                        <span class="tit-resumo-valor" id="titVlrVencido">R$ 0,00</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="tit-resumo-card tit-resumo-avencer">
+                                        <span class="tit-resumo-label">A Vencer</span>
+                                        <span class="tit-resumo-valor" id="titVlrAVencer">R$ 0,00</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="tit-resumo-card tit-resumo-credito">
+                                        <span class="tit-resumo-label">Crédito</span>
+                                        <span class="tit-resumo-valor" id="titVlrAntecipacao">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
                             <p class="text-muted mb-2 fs-7">Situação:</p>
                             <div class="tit-filter-bar mb-2" id="titFilterBar"></div>
                             <div class="table-responsive">
-                                <table class="table table-sm styled-table align-middle mb-0" id="tblTitulos">
+                                <table class="table table-sm styled-table align-middle mb-0" id="tblTitulos" style="width:100%">
                                     <thead>
                                         <tr>
-                                            <th class="text-center">Emissão</th>
-                                            <th class="text-center">Nota Fiscal</th>
-                                            <th class="text-center">Série</th>
-                                            <th class="text-center">Parcela</th>
-                                            <th class="text-center">Vencimento</th>
-                                            <th class="text-center">Situação</th>
-                                            <th class="text-end">Valor Original</th>
-                                            <th class="text-end">Valor Saldo</th>
+                                            <th data-priority="9" class="text-center">Emissão</th>
+                                            <th data-priority="1" class="text-center">Nota Fiscal</th>
+                                            <th data-priority="6" class="text-center">Série</th>
+                                            <th data-priority="8" class="text-center">Pedido</th>
+                                            <th data-priority="7" class="text-center">Parcela</th>
+                                            <th data-priority="2" class="text-center">Vencimento</th>
+                                            <th data-priority="3" class="text-center">Situação</th>
+                                            <th data-priority="5" class="text-end">Valor Original</th>
+                                            <th data-priority="4" class="text-end">Valor Saldo</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="tblTitulosBody"></tbody>
+                                    <tbody></tbody>
                                 </table>
-                            </div>
-                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 mt-3" id="titPaginationWrap">
-                                <small class="text-muted" id="titPaginationInfo"></small>
-                                <nav aria-label="Paginação títulos em aberto">
-                                    <ul class="pagination pagination-sm mb-0" id="titPagination"></ul>
-                                </nav>
                             </div>
                         </div>
                     </div>
@@ -377,33 +561,213 @@
                 </h2>
                 <div id="collapseEnderecos" class="accordion-collapse collapse" aria-labelledby="headingEnderecos" data-bs-parent="#clienteDetalhesAccordion">
                     <div class="accordion-body">
-                        @@foreach (var grupo in Model.Enderecos.GroupBy(p => p.Tipo))
-                        {
-                        <div class="produto-prop-group">
-                            <h6 class="produto-prop-group-title">
-                                <i class="fa-duotone fa-folder me-2"></i>@@grupo.Key
-                            </h6>
-                            @@foreach (var prop in grupo)
-                            {
-                            <div class="cad-row">
-                                <div class="cad-label text-muted">@@prop.Nome</div>
-                                <div class="cad-info">@@prop.Valor</div>
+                        <div class="text-center text-muted py-4 d-none" id="enderecosLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
                             </div>
-                            }
+                            <div>Carregando dados...</div>
                         </div>
-                        }
+                        <div class="alert alert-danger d-none" id="enderecosError" role="alert">
+                            Não foi possível carregar os endereços
+                        </div>
+                        <div class="alert alert-secondary d-none" id="enderecosEmpty">
+                            Nenhum endereço encontrado.
+                        </div>
+                        <div class="d-none" id="divTblEnderecos">
+                            <p class="text-muted mb-2 fs-7">Situação:</p>
+                            <div class="tit-filter-bar mb-2" id="enderecosFilterBar"></div>
+                            <div class="table-responsive">
+                                <table class="table table-sm styled-table align-middle mb-0" id="tblEnderecos" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th data-priority="11" class="text-center">ID</th>
+                                            <th data-priority="2" class="text-center">Situação</th>
+                                            <th data-priority="1" class="text-center">Cód. SAP</th>
+                                            <th data-priority="7" class="text-center">Docto.</th>
+                                            <th data-priority="5" class="text-center">Documento</th>
+                                            <th data-priority="8" class="text-start">Razão Social</th>
+                                            <th data-priority="3" class="text-start">Cidade</th>
+                                            <th data-priority="4" class="text-center">UF</th>
+                                            <th data-priority="6" class="text-start">Tabela de Preços</th>
+                                            <th data-priority="9" class="text-end">Pedido Mínimo</th>
+                                            <th data-priority="10" class="text-end">Taxa Entrega</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingLocais">
+                    <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLocais" aria-expanded="false" aria-controls="collapseLocais">
+                        <i class="fa-duotone fa-thin fa-home-alt me-3 produto-accordion-icon"></i> Locais de Entrega
+                        <span class="badge rounded-pill bg-secondary ms-2">@Model.QtLocaisEntrega</span>
+                    </button>
+                </h2>
+                <div id="collapseLocais" class="accordion-collapse collapse" aria-labelledby="headingLocais" data-bs-parent="#clienteDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="text-center text-muted py-4 d-none" id="locaisLoader">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <div>Carregando dados...</div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="locaisError" role="alert">
+                            Não foi possível carregar os locais de entrega
+                        </div>
+                        <div class="alert alert-secondary d-none" id="locaisEmpty">
+                            Nenhum local de entrega encontrado.
+                        </div>
+                        <div class="d-none" id="divTblLocais">
+                            <p class="text-muted mb-2 fs-7">Situação:</p>
+                            <div class="tit-filter-bar mb-2" id="locaisFilterBar"></div>
+                            <div class="table-responsive">
+                                <table class="table table-sm styled-table align-middle mb-0" id="tblLocais" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th data-priority="6" class="text-center">ID</th>
+                                            <th data-priority="2" class="text-center">Situação</th>
+                                            <th data-priority="1" class="text-center">Cód. Controle</th>
+                                            <th data-priority="7" class="text-start">Nome do Local</th>
+                                            <th data-priority="8" class="text-center">Docto.</th>
+                                            <th data-priority="5" class="text-center">Documento</th>
+                                            <th data-priority="3" class="text-start">Cidade</th>
+                                            <th data-priority="4" class="text-center">UF</th>
+                                            <th data-priority="10" class="text-center">Canal de Venda</th>
+                                            <th data-priority="9" class="text-center">Situacao Crédito</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @if (@Model.QtUsuarios > 0)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingUsuarios">
+                        <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUsuarios" aria-expanded="false" aria-controls="collapseUsuarios">
+                            <i class="fa-duotone fa-thin fa-users me-3 produto-accordion-icon"></i> Usuários
+                            <span class="badge rounded-pill bg-secondary ms-2">@Model.QtUsuarios</span>
+                        </button>
+                    </h2>
+                    <div id="collapseUsuarios" class="accordion-collapse collapse" aria-labelledby="headingUsuarios" data-bs-parent="#clienteDetalhesAccordion">
+                        <div class="accordion-body">
+                            <div class="text-center text-muted py-4 d-none" id="usuariosLoader">
+                                <div class="spinner-border text-primary mb-2" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <div>Carregando dados...</div>
+                            </div>
+                            <div class="alert alert-danger d-none" id="usuariosError" role="alert">
+                                Não foi possível carregar os usuários
+                            </div>
+                            <div class="alert alert-secondary d-none" id="usuariosEmpty">
+                                Nenhum usuário encontrado.
+                            </div>
+                            <div class="d-none" id="divTblUsuarios">
+                                <p class="text-muted mb-2 fs-7">Situação:</p>
+                                <div class="tit-filter-bar mb-2" id="usuariosFilterBar"></div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm styled-table align-middle mb-0" id="tblUsuarios" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th data-priority="6" class="text-center">ID</th>
+                                                <th data-priority="2" class="text-center">Situação</th>
+                                                <th data-priority="1" class="text-center">Login</th>
+                                                <th data-priority="7" class="text-center">Nome do Usuário</th>
+                                                <th data-priority="5" class="text-center">E-mail</th>
+                                                <th data-priority="3" class="text-start">Perfil</th>
+                                                <th data-priority="9" class="text-center">Catálogo</th>
+                                                <th data-priority="8" class="text-start">Permissão</th>
+                                                <th data-priority="10" class="text-center">Data Cadastro</th>
+                                                <th data-priority="4" class="text-center">Último Login</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal Saldo de Crédito -->
+<div class="modal fade" id="modalSaldoCredito" tabindex="-1" aria-labelledby="modalSaldoCreditoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSaldoCreditoLabel"><i class="fa-duotone fa-calculator me-2"></i>Saldo de Crédito Disponível</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center text-muted py-4" id="saldoCreditoLoader">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <div>Calculando saldo...</div>
+                </div>
+                <div class="alert alert-danger d-none" id="saldoCreditoError" role="alert">
+                    Não foi possível carregar o saldo de crédito.
+                </div>
+                <div class="d-none" id="saldoCreditoContent">
+                    <div class="saldo-formula">
+                        <div class="saldo-formula-row">
+                            <span class="saldo-formula-label">Limite de Crédito</span>
+                            <span class="saldo-formula-op"></span>
+                            <span class="saldo-formula-value text-primary fw-semibold" id="scLimite">R$ 0,00</span>
+                        </div>
+                        <div class="saldo-formula-row">
+                            <span class="saldo-formula-label">Créditos (Antecipação)</span>
+                            <span class="saldo-formula-op text-success">+</span>
+                            <span class="saldo-formula-value text-success" id="scCreditos">R$ 0,00</span>
+                        </div>
+                        <div class="saldo-formula-row">
+                            <span class="saldo-formula-label">Títulos em Aberto</span>
+                            <span class="saldo-formula-op text-danger">−</span>
+                            <span class="saldo-formula-value text-danger" id="scTitulos">R$ 0,00</span>
+                        </div>
+                        <div class="saldo-formula-row">
+                            <span class="saldo-formula-label">Pedidos Não Faturados</span>
+                            <span class="saldo-formula-op text-danger">−</span>
+                            <span class="saldo-formula-value text-danger" id="scPedidos">R$ 0,00</span>
+                        </div>
+                        <hr class="my-2" />
+                        <div class="saldo-formula-row saldo-formula-total">
+                            <span class="saldo-formula-label fw-bold">Saldo Disponível</span>
+                            <span class="saldo-formula-op">=</span>
+                            <span class="saldo-formula-value fw-bold fs-5" id="scSaldo">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.1/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.1/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.4/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.4/js/responsive.bootstrap5.min.js"></script>
     <script>
         window.clienteConfig = {
-            basePath: '@Url.Content("~/")'.replace(/\/$/, ''),
-            clienteId: @Model.ClienteID
+        basePath: '@Url.Content("~/")'.replace(/\/$/, ''),
+        clienteId: @Model.ClienteID,
+        vlrLimiteCredito: @Model.VlrLimiteCredito.ToString(System.Globalization.CultureInfo.InvariantCulture)
         };
     </script>
     <script src="~/js/clientes/detalhes.js" asp-append-version="true"></script>

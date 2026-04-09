@@ -11,4 +11,8 @@ public interface IClientService
     Task<IReadOnlyList<CatalogEstablishmentDto>> GetEstablishmentsAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ClientConsultantDto>> GetConsultantsAsync(int clienteId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ClientTitleDto>> GetTitulosAsync(int clienteId, CancellationToken cancellationToken = default);
+    Task<ClientCreditBalanceDto> GetCreditBalanceAsync(int clienteId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ClientAddressDto>> GetAddressesAsync(int clienteId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ClientDeliveryLocationDto>> GetDeliveryLocationsAsync(int clienteId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ClientUserDto>> GetUsersAsync(int clienteId, CancellationToken cancellationToken = default);
 }

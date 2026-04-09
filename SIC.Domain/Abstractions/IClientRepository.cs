@@ -27,4 +27,12 @@ public interface IClientRepository
     Task<IReadOnlyList<ClientConsultant>> GetConsultantsAsync(int clienteId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ClientTitle>> GetTitulosAsync(int clienteId, CancellationToken cancellationToken = default);
+
+    Task<ClientCreditBalance> GetCreditBalanceAsync(int clienteId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ClientAddress>> GetAddressesAsync(int clienteId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ClientDeliveryLocation>> GetDeliveryLocationsAsync(int clienteId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ClientUser>> GetUsersAsync(int clienteId, CancellationToken cancellationToken = default);
 }

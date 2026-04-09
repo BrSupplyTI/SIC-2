@@ -82,4 +82,33 @@ public sealed class ClientesController(ClienteApiClient apiClient) : Controller
         var data = await apiClient.GetTitulosAsync(clienteId, cancellationToken);
         return Json(data);
     }
+
+    [HttpGet("Detalhes/{clienteId:int}/SaldoCredito")]
+    public async Task<IActionResult> SaldoCredito(int clienteId, CancellationToken cancellationToken)
+    {
+        var data = await apiClient.GetCreditBalanceAsync(clienteId, cancellationToken);
+        if (data is null) return StatusCode(500);
+        return Json(data);
+    }
+
+    [HttpGet("Detalhes/{clienteId:int}/Enderecos")]
+    public async Task<IActionResult> Enderecos(int clienteId, CancellationToken cancellationToken)
+    {
+        var data = await apiClient.GetAddressesAsync(clienteId, cancellationToken);
+        return Json(data);
+    }
+
+    [HttpGet("Detalhes/{clienteId:int}/LocaisEntrega")]
+    public async Task<IActionResult> LocaisEntrega(int clienteId, CancellationToken cancellationToken)
+    {
+        var data = await apiClient.GetDeliveryLocationsAsync(clienteId, cancellationToken);
+        return Json(data);
+    }
+
+    [HttpGet("Detalhes/{clienteId:int}/Usuarios")]
+    public async Task<IActionResult> Usuarios(int clienteId, CancellationToken cancellationToken)
+    {
+        var data = await apiClient.GetUsersAsync(clienteId, cancellationToken);
+        return Json(data);
+    }
 }

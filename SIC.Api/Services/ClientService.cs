@@ -75,13 +75,30 @@ public sealed class ClientService(IClientRepository repository) : IClientService
             Situacao = entity.Situacao,
             VlrPedidoMinimo = entity.VlrPedidoMinimo,
             VlrTaxaEntrega = entity.VlrTaxaEntrega,
-            FlagValidacaoFiscal = entity.FlagValidacaoFiscal,
-            FlagValidaImpostosTrocaItem = entity.FlagValidaImpostosTrocaItem,
+            FlagIntegracaoAutomaticaSAP = entity.FlagIntegracaoAutomaticaSAP,
+            FlagUtilizaLiberacaoAutomatica = entity.FlagUtilizaLiberacaoAutomatica,
             FlagProgramacaoAutomatica = entity.FlagProgramacaoAutomatica,
             FlagUtilizaJanelaCorte = entity.FlagUtilizaJanelaCorte,
-            FlagUtilizaLiberacaoAutomatica = entity.FlagUtilizaLiberacaoAutomatica,
-            FlagLibCatTercAutomatico = entity.FlagLibCatTercAutomatico,
+            FlagFreteAgrupCNPJ = entity.FlagFreteAgrupCNPJ,
+            FlagValidacaoFiscal = entity.FlagValidacaoFiscal,
+            FlagValidaImpostosTrocaItem = entity.FlagValidaImpostosTrocaItem,
+            FlagNaoLiberarPedidoSemOC = entity.FlagNaoLiberarPedidoSemOC,
+            FlagNaoEditarPedidoComOC = entity.FlagNaoEditarPedidoComOC,
+            FlagPoliticaEntrega = entity.FlagPoliticaEntrega,
+            FlagMultiCD = entity.FlagMultiCD,
+            FlagMultiCDEnderecos = entity.FlagMultiCDEnderecos,
+            FlagMultiCDPedidos = entity.FlagMultiCDPedidos,
+            FlagTrocaItemAutomatica = entity.FlagTrocaItemAutomatica,
+            FlagNaoValidaTrocaItem = entity.FlagNaoValidaTrocaItem,
             FlagNaoValidaNCMTrocaItem = entity.FlagNaoValidaNCMTrocaItem,
+            FlagAutoConcat = entity.FlagAutoConcat,
+            FlagOrdemCompra = entity.FlagOrdemCompra,
+            FlagTipoConcat = entity.FlagTipoConcat,
+            FlagConcatPedidoRuptura = entity.FlagConcatPedidoRuptura,
+            FlagAutoIsentaFrete = entity.FlagAutoIsentaFrete,
+            FlagPrioConcatPerfilSolicitante = entity.FlagPrioConcatPerfilSolicitante,
+            FlagConcatItemFornecedor = entity.FlagConcatItemFornecedor,
+            FlagConcatIsolarCategorias = entity.FlagConcatIsolarCategorias,
             QtUsuarios = entity.QtUsuarios,
             QtEnderecos = entity.QtEnderecos,
             QtLocaisEntrega = entity.QtLocaisEntrega,
@@ -95,15 +112,30 @@ public sealed class ClientService(IClientRepository repository) : IClientService
             DiasAtrasoPermitido = entity.DiasAtrasoPermitido,
             MesesDuracaoAnalise = entity.MesesDuracaoAnalise,
             ResponsavelAnaliseCredito = entity.ResponsavelAnaliseCredito,
+            UsuarioIDAnaliseCredito = entity.UsuarioIDAnaliseCredito,
+            EmailResponsavelAnaliseCredito = entity.EmailResponsavelAnaliseCredito,
+            FotoResponsavelAnaliseCredito = entity.FotoResponsavelAnaliseCredito,
             StatusCredito = entity.StatusCredito,
             FlagStatusCredito = entity.FlagStatusCredito,
-            DiasRestantes = entity.DiasRestantes,
-            FlagIntegracaoAutomaticaSAP = entity.FlagIntegracaoAutomaticaSAP,
+            DiasRestantes = entity.DiasRestantes,            
             NmCanalDistribuicaoSAP = entity.NmCanalDistribuicaoSAP,
             TipoDocumentoSAP = entity.TipoDocumentoSAP,
             DsTipoDocumentoSAP = entity.DsTipoDocumentoSAP,
             DsFormaPagamentoSAP = entity.DsFormaPagamentoSAP,
-            CodFormaPagamentoSAP = entity.CodFormaPagamentoSAP
+            CodFormaPagamentoSAP = entity.CodFormaPagamentoSAP,
+            NmTblPreco = entity.NmTblPreco,
+            TblPrecoID = entity.TblPrecoID,
+            TelefoneCliente = entity.TelefoneCliente,
+            SegmentoCliente = entity.SegmentoCliente,
+            NmCanalVenda = entity.NmCanalVenda,
+            NmClientePerfil = entity.NmClientePerfil,
+            NmCondPagto = entity.NmCondPagto,
+            CanalVendaID = entity.CanalVendaID,
+            Cnae = entity.Cnae,
+            CodCnaeSetor = entity.CodCnaeSetor,
+            DsCnaeSetor = entity.DsCnaeSetor,
+            CdNatJuridica = entity.CdNatJuridica,
+            DsNatJuridica = entity.DsNatJuridica
         };
     }
 
@@ -147,11 +179,79 @@ public sealed class ClientService(IClientRepository repository) : IClientService
             DtEmissao = t.DtEmissao?.ToString("dd/MM/yyyy"),
             NrNotaFiscal = t.NrNotaFiscal,
             Serie = t.Serie,
+            Pedido = t.Pedido,
             Parcela = t.Parcela,
             DtVencimento = t.DtVencimento?.ToString("dd/MM/yyyy"),
             Situacao = t.Situacao,
             VlrOriginal = t.VlrOriginal,
             VlrSaldo = t.VlrSaldo
+        }).ToList();
+    }
+
+    public async Task<ClientCreditBalanceDto> GetCreditBalanceAsync(int clienteId, CancellationToken cancellationToken = default)
+    {
+        var entity = await repository.GetCreditBalanceAsync(clienteId, cancellationToken);
+        return new ClientCreditBalanceDto
+        {
+            VlrCreditos = entity.VlrCreditos,
+            VlrTitulosEmAberto = entity.VlrTitulosEmAberto,
+            VlrPedidosNaoFaturados = entity.VlrPedidosNaoFaturados
+        };
+    }
+
+    public async Task<IReadOnlyList<ClientAddressDto>> GetAddressesAsync(int clienteId, CancellationToken cancellationToken = default)
+    {
+        var items = await repository.GetAddressesAsync(clienteId, cancellationToken);
+        return items.Select(a => new ClientAddressDto
+        {
+            ClienteEnderecoID = a.ClienteEnderecoID,
+            Situacao = a.Situacao,
+            CodSAP = a.CodSAP,
+            TipoDocumento = a.TipoDocumento,
+            CPFCNPJ = a.CPFCNPJ,
+            RazaoSocial = a.RazaoSocial,
+            NmCidade = a.NmCidade,
+            CdUF = a.CdUF,
+            TabelaPreco = a.TabelaPreco,
+            VlrPedidoMinimo = a.VlrPedidoMinimo,
+            VlrTaxaEntrega = a.VlrTaxaEntrega
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<ClientDeliveryLocationDto>> GetDeliveryLocationsAsync(int clienteId, CancellationToken cancellationToken = default)
+    {
+        var items = await repository.GetDeliveryLocationsAsync(clienteId, cancellationToken);
+        return items.Select(l => new ClientDeliveryLocationDto
+        {
+            ClienteLocalEntregaID = l.ClienteLocalEntregaID,
+            Situacao = l.Situacao,
+            CdControle = l.CdControle,
+            NmLocalEntrega = l.NmLocalEntrega,
+            TipoDocumento = l.TipoDocumento,
+            CPFCNPJ = l.CPFCNPJ,
+            NmCidade = l.NmCidade,
+            CdUF = l.CdUF,
+            NmCanalVenda = l.NmCanalVenda,
+            SituacaoCredito = l.SituacaoCredito,
+            TipoEndereco = l.TipoEndereco
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<ClientUserDto>> GetUsersAsync(int clienteId, CancellationToken cancellationToken = default)
+    {
+        var items = await repository.GetUsersAsync(clienteId, cancellationToken);
+        return items.Select(u => new ClientUserDto
+        {
+            ClienteUsuarioID = u.ClienteUsuarioID,
+            Login = u.Login,
+            NmUsuario = u.NmUsuario,
+            Email = u.Email,
+            NmPerfil = u.NmPerfil,
+            Situacao = u.Situacao,
+            Permissao = u.Permissao,
+            Catalogo = u.Catalogo,
+            DtCadastro = u.DtCadastro?.ToString("dd/MM/yyyy"),
+            DtUltimoLogin = u.DtUltimoLogin?.ToString("dd/MM/yyyy")
         }).ToList();
     }
 }

@@ -25,20 +25,8 @@ stages:
 - stage: Deploy_Prod
   displayName: 'Deploy produção'
   jobs:
-  - job: AprovarDeploy
-    displayName: 'Aprovação manual'
-    pool: server
-    steps:
-    - task: ManualValidation@0
-      timeoutInMinutes: 1440
-      inputs:
-        instructions: 'Validar e aprovar deploy em produção.'
-        notifyUsers: ''
-        onTimeout: 'reject'
-
   - job: BuildAndDeploy
     displayName: 'Build e deploy no agente self-hosted'
-    dependsOn: AprovarDeploy
     pool:
       name: 'SIC-agent'
     steps:

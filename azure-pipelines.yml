@@ -1,0 +1,350 @@
+trigger:
+  branches:
+    include:
+      - master
+
+variables:
+  buildConfiguration: 'Release'
+
+  solution: 'SIC.slnx'
+  apiProject: 'SIC.Api/SIC.Api.csproj'
+  webProject: 'SIC.Web/SIC.Web.csproj'
+
+  deployApiPath: 'C:\Sites\SIC\api'
+  deployWebPath: 'C:\Sites\SIC\web'
+  backupRootPath: 'C:\Deploy\Backups'
+  tempPublishRoot: 'C:\Deploy\TempPublish'
+
+  apiAppPool: 'SIC.Api'
+  webAppPool: 'SIC.Web'
+
+  apiHealthUrl: 'https://sic.brsupply.com.br/SIC/api/api/Profile/areas'
+  webHealthUrl: 'https://sic.brsupply.com.br/SIC/web/Account/Login'
+
+stages:
+- stage: Deploy_Prod
+  displayName: 'Deploy produção'
+  jobs:
+  - job: AprovarDeploy
+    displayName: 'Aprovação manual'
+    pool: server
+    steps:
+    - task: ManualValidation@0
+      timeoutInMinutes: 1440
+      inputs:
+        instructions: 'Validar e aprovar deploy em produção.'
+        notifyUsers: ''
+        onTimeout: 'reject'
+
+  - job: BuildAndDeploy
+    displayName: 'Build e deploy no agente self-hosted'
+    dependsOn: AprovarDeploy
+    pool:
+      name: 'SIC-agent'
+    steps:
+    - checkout: self
+      clean: true
+
+    - task: PowerShell@2
+      displayName: 'Validar pré-requisitos do agente'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $ErrorActionPreference = 'Stop'
+
+          $sdks = & dotnet --list-sdks
+          if (-not $sdks) {
+            throw "dotnet SDK não encontrado no agente."
+          }
+
+          if (-not ($sdks | Select-String '^10\.')) {
+            throw "SDK .NET 10 não encontrado no agente. Instale o .NET 10 SDK antes de executar a pipeline."
+          }
+
+          if (-not (Get-Module -ListAvailable -Name WebAdministration)) {
+            throw "Módulo WebAdministration não encontrado. Instale/ative os recursos de IIS Management no servidor."
+          }
+
+          Write-Host "Pré-requisitos validados com sucesso."
+
+    - task: PowerShell@2
+      displayName: 'Build, publish e deploy com rollback'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $ErrorActionPreference = 'Stop'
+          Set-StrictMode -Version Latest
+
+          Import-Module WebAdministration
+
+          $solution = "$(solution)"
+          $apiProject = "$(apiProject)"
+          $webProject = "$(webProject)"
+          $buildConfiguration = "$(buildConfiguration)"
+
+          $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+          $backupRoot = "$(backupRootPath)"
+          $tempPublishRoot = "$(tempPublishRoot)"
+          $apiPublishPath = Join-Path $tempPublishRoot 'api'
+          $webPublishPath = Join-Path $tempPublishRoot 'web'
+          $apiBackup = Join-Path $backupRoot "api-$timestamp"
+          $webBackup = Join-Path $backupRoot "web-$timestamp"
+
+          New-Item -ItemType Directory -Force -Path $backupRoot | Out-Null
+          if (Test-Path $tempPublishRoot) {
+            Remove-Item -LiteralPath $tempPublishRoot -Recurse -Force
+          }
+          New-Item -ItemType Directory -Force -Path $apiPublishPath | Out-Null
+          New-Item -ItemType Directory -Force -Path $webPublishPath | Out-Null
+
+          Write-Host "Restaurando solução..."
+          & dotnet restore $solution
+          if ($LASTEXITCODE -ne 0) { throw "Falha no restore da solução." }
+
+          Write-Host "Compilando solução..."
+          & dotnet build $solution --configuration $buildConfiguration --no-restore
+          if ($LASTEXITCODE -ne 0) { throw "Falha no build da solução." }
+
+          Write-Host "Publicando API..."
+          & dotnet publish $apiProject --configuration $buildConfiguration --no-build --output $apiPublishPath
+          if ($LASTEXITCODE -ne 0) { throw "Falha no publish da API." }
+
+          Write-Host "Publicando Web..."
+          & dotnet publish $webProject --configuration $buildConfiguration --no-build --output $webPublishPath
+          if ($LASTEXITCODE -ne 0) { throw "Falha no publish da Web." }
+
+          function New-Backup {
+            param(
+              [string]$SourcePath,
+              [string]$BackupPath
+            )
+
+            if (Test-Path $SourcePath) {
+              New-Item -ItemType Directory -Force -Path $BackupPath | Out-Null
+              Copy-Item -Path (Join-Path $SourcePath '*') -Destination $BackupPath -Recurse -Force
+            }
+            else {
+              New-Item -ItemType Directory -Force -Path $SourcePath | Out-Null
+              New-Item -ItemType Directory -Force -Path $BackupPath | Out-Null
+            }
+          }
+
+          function Test-IsPreservedRelativePath {
+            param(
+              [string]$RelativePath,
+              [string[]]$PreserveFiles,
+              [string[]]$PreserveDirectories
+            )
+
+            $normalized = $RelativePath.Replace('/', '\').TrimStart('\')
+
+            foreach ($file in $PreserveFiles) {
+              $fileNormalized = $file.Replace('/', '\').TrimStart('\')
+              if ($normalized -ieq $fileNormalized) {
+                return $true
+              }
+            }
+
+            foreach ($dir in $PreserveDirectories) {
+              $dirNormalized = $dir.Replace('/', '\').TrimStart('\')
+              if ($normalized -ieq $dirNormalized) {
+                return $true
+              }
+
+              if ($normalized.StartsWith($dirNormalized + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+                return $true
+              }
+            }
+
+            return $false
+          }
+
+          function Clear-TargetDirectory {
+            param(
+              [string]$TargetPath,
+              [string[]]$PreserveFiles,
+              [string[]]$PreserveDirectories
+            )
+
+            if (-not (Test-Path $TargetPath)) {
+              New-Item -ItemType Directory -Force -Path $TargetPath | Out-Null
+              return
+            }
+
+            $items = Get-ChildItem -Path $TargetPath -Force -Recurse | Sort-Object FullName -Descending
+            foreach ($item in $items) {
+              $relativePath = $item.FullName.Substring($TargetPath.Length).TrimStart('\')
+              if ([string]::IsNullOrWhiteSpace($relativePath)) {
+                continue
+              }
+
+              if (Test-IsPreservedRelativePath -RelativePath $relativePath -PreserveFiles $PreserveFiles -PreserveDirectories $PreserveDirectories) {
+                continue
+              }
+
+              Remove-Item -LiteralPath $item.FullName -Recurse -Force -ErrorAction SilentlyContinue
+            }
+
+            $rootItems = Get-ChildItem -Path $TargetPath -Force
+            foreach ($item in $rootItems) {
+              if (Test-IsPreservedRelativePath -RelativePath $item.Name -PreserveFiles $PreserveFiles -PreserveDirectories $PreserveDirectories) {
+                continue
+              }
+
+              Remove-Item -LiteralPath $item.FullName -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          }
+
+          function Copy-PackageContent {
+            param(
+              [string]$SourcePath,
+              [string]$TargetPath
+            )
+
+            New-Item -ItemType Directory -Force -Path $TargetPath | Out-Null
+            Copy-Item -Path (Join-Path $SourcePath '*') -Destination $TargetPath -Recurse -Force
+          }
+
+          function Restart-AppPoolIfExists {
+            param(
+              [string]$AppPoolName
+            )
+
+            if (Test-Path "IIS:\AppPools\$AppPoolName") {
+              Restart-WebAppPool -Name $AppPoolName
+            }
+          }
+
+          function Invoke-AppHealthCheck {
+            param(
+              [string]$Url,
+              [string]$Name
+            )
+
+            $maxAttempts = 12
+            $delaySeconds = 10
+            $successCodes = @(200, 201, 202, 204, 301, 302, 401, 403)
+
+            for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+              try {
+                $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 30
+                if ($successCodes -contains [int]$response.StatusCode) {
+                  Write-Host "$Name respondeu com sucesso: $($response.StatusCode)"
+                  return
+                }
+              }
+              catch {
+                if ($_.Exception.Response -and $successCodes -contains [int]$_.Exception.Response.StatusCode.value__) {
+                  Write-Host "$Name respondeu com status aceitável: $($_.Exception.Response.StatusCode.value__)"
+                  return
+                }
+              }
+
+              Write-Host "Tentativa $attempt de health check para $Name falhou. Aguardando nova tentativa..."
+              Start-Sleep -Seconds $delaySeconds
+            }
+
+            throw "Health check falhou para $Name em $Url."
+          }
+
+          function Deploy-Application {
+            param(
+              [string]$Name,
+              [string]$SourcePath,
+              [string]$TargetPath,
+              [string]$BackupPath,
+              [string]$AppPoolName,
+              [string]$HealthUrl,
+              [string[]]$PreserveFiles = @(),
+              [string[]]$PreserveDirectories = @()
+            )
+
+            $appOfflineFile = Join-Path $TargetPath 'app_offline.htm'
+            $effectivePreserveFiles = @($PreserveFiles + 'app_offline.htm')
+
+            Write-Host "Iniciando backup de $Name..."
+            New-Backup -SourcePath $TargetPath -BackupPath $BackupPath
+
+            try {
+              New-Item -ItemType Directory -Force -Path $TargetPath | Out-Null
+              Set-Content -Path $appOfflineFile -Value '<html><body><h1>Aplicacao em manutencao</h1></body></html>' -Encoding ASCII
+
+              Write-Host "Limpando pasta de deploy de $Name..."
+              Clear-TargetDirectory -TargetPath $TargetPath -PreserveFiles $effectivePreserveFiles -PreserveDirectories $PreserveDirectories
+
+              Write-Host "Copiando nova versao de $Name..."
+              Copy-PackageContent -SourcePath $SourcePath -TargetPath $TargetPath
+
+              if (Test-Path $appOfflineFile) {
+                Remove-Item -LiteralPath $appOfflineFile -Force
+              }
+
+              Restart-AppPoolIfExists -AppPoolName $AppPoolName
+              Invoke-AppHealthCheck -Url $HealthUrl -Name $Name
+
+              Write-Host "Deploy de $Name concluido com sucesso."
+            }
+            catch {
+              Write-Warning "Falha no deploy de $Name. Iniciando rollback..."
+
+              try {
+                New-Item -ItemType Directory -Force -Path $TargetPath | Out-Null
+                Set-Content -Path $appOfflineFile -Value '<html><body><h1>Rollback em andamento</h1></body></html>' -Encoding ASCII
+
+                Clear-TargetDirectory -TargetPath $TargetPath -PreserveFiles @('app_offline.htm') -PreserveDirectories @()
+
+                if (Test-Path $BackupPath) {
+                  Copy-PackageContent -SourcePath $BackupPath -TargetPath $TargetPath
+                }
+
+                if (Test-Path $appOfflineFile) {
+                  Remove-Item -LiteralPath $appOfflineFile -Force
+                }
+
+                Restart-AppPoolIfExists -AppPoolName $AppPoolName
+              }
+              catch {
+                Write-Error "Rollback de $Name também falhou: $($_.Exception.Message)"
+              }
+
+              throw
+            }
+          }
+
+          Deploy-Application `
+            -Name 'API' `
+            -SourcePath $apiPublishPath `
+            -TargetPath "$(deployApiPath)" `
+            -BackupPath $apiBackup `
+            -AppPoolName "$(apiAppPool)" `
+            -HealthUrl "$(apiHealthUrl)" `
+            -PreserveFiles @('appsettings.json', 'appsettings.Production.json') `
+            -PreserveDirectories @()
+
+          Deploy-Application `
+            -Name 'Web' `
+            -SourcePath $webPublishPath `
+            -TargetPath "$(deployWebPath)" `
+            -BackupPath $webBackup `
+            -AppPoolName "$(webAppPool)" `
+            -HealthUrl "$(webHealthUrl)" `
+            -PreserveFiles @('appsettings.json', 'appsettings.Production.json') `
+            -PreserveDirectories @('wwwroot\img\upload')
+
+    - task: PowerShell@2
+      displayName: 'Registrar versão implantada'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $ErrorActionPreference = 'Stop'
+
+          $logDir = "$(backupRootPath)\logs"
+          New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+
+          $logFile = Join-Path $logDir 'deploy-history.log'
+          $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+
+          $content = "$timestamp | BuildId=$(Build.BuildId) | BuildNumber=$(Build.BuildNumber) | SourceVersion=$(Build.SourceVersion)"
+          Add-Content -Path $logFile -Value $content
+
+          Write-Host $content

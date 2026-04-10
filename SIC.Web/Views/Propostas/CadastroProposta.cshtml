@@ -1,0 +1,107 @@
+@model SIC.Web.Models.Propostas.CadastroPropostaViewModel
+@{
+    ViewData["Title"] = "Cadastro de Proposta";
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h2 class="h4 mb-1">Cadastro de Proposta</h2>
+                <p class="text-muted mb-0">Preencha os dados abaixo para cadastrar uma nova proposta.</p>
+            </div>
+            <i class="fa-solid fa-file-circle-plus fa-xl text-primary"></i>
+        </div>
+
+        <form method="post" class="row g-4">
+            @Html.AntiForgeryToken()
+
+            <div class="col-md-6">
+                <label for="selectEstabelecimento" class="form-label fw-semibold">
+                    <i class="fa-solid fa-warehouse me-1 text-muted"></i>Estabelecimento
+                </label>
+                <select class="form-select" id="selectEstabelecimento" name="EstabelecimentoID">
+                    <option value="">Selecione um estabelecimento</option>
+                    @foreach (var est in Model.Estabelecimentos)
+                    {
+                        <option value="@est.EstabelecimentoID" selected="@(Model.EstabelecimentoID == est.EstabelecimentoID)">@est.NmEstabelecimento</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="inputNomeProposta" class="form-label fw-semibold">
+                    <i class="fa-solid fa-file-signature me-1 text-muted"></i>Nome da Proposta
+                </label>
+                <input type="text" class="form-control" id="inputNomeProposta" name="NomeProposta"
+                       placeholder="Digite o nome da proposta" value="@Model.NomeProposta" />
+            </div>
+
+            <div class="col-md-6">
+                <label for="selectQualidade" class="form-label fw-semibold">
+                    <i class="fa-solid fa-star me-1 text-muted"></i>Qualidade
+                </label>
+                <select class="form-select" id="selectQualidade" name="Qualidade">
+                    <option value="">Selecione a qualidade</option>
+                    @foreach (var q in Model.Qualidades)
+                    {
+                        <option value="@q" selected="@(Model.Qualidade == q)">@q</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="selectSegmento" class="form-label fw-semibold">
+                    <i class="fa-solid fa-layer-group me-1 text-muted"></i>Segmento
+                </label>
+                <select class="form-select" id="selectSegmento" name="Segmento">
+                    <option value="">Selecione o segmento</option>
+                    @foreach (var s in Model.Segmentos)
+                    {
+                        <option value="@s" selected="@(Model.Segmento == s)">@s</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label for="txtResumo" class="form-label fw-semibold">
+                    <i class="fa-solid fa-align-left me-1 text-muted"></i>Resumo (Qualidade e Segmento)
+                </label>
+                <textarea class="form-control" id="txtResumo" rows="3" readonly
+                          placeholder="Selecione a qualidade e o segmento acima para visualizar o resumo aqui."></textarea>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-check me-2"></i>Cadastrar Proposta
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const selectQualidade = document.getElementById('selectQualidade');
+            const selectSegmento = document.getElementById('selectSegmento');
+            const txtResumo = document.getElementById('txtResumo');
+
+            function atualizarResumo() {
+                const partes = [];
+                const qualidade = selectQualidade.options[selectQualidade.selectedIndex]?.text;
+                const segmento = selectSegmento.options[selectSegmento.selectedIndex]?.text;
+
+                if (selectQualidade.value) partes.push('Qualidade: ' + qualidade);
+                if (selectSegmento.value) partes.push('Segmento: ' + segmento);
+
+                txtResumo.value = partes.join('\n');
+            }
+
+            selectQualidade.addEventListener('change', atualizarResumo);
+            selectSegmento.addEventListener('change', atualizarResumo);
+
+            atualizarResumo();
+        })();
+    </script>
+}

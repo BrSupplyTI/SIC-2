@@ -1,4 +1,5 @@
 @using System.Text;
+@using SIC.Web.Models.Home;
 @{
     ViewData["Title"] = "SIC - Portal Corporativo";
 
@@ -16,6 +17,15 @@
         < 18 => "Boa tarde",
         _ => "Boa noite"
     };
+
+    var atalhos = ViewBag.Atalhos as List<ShortcutVm> ?? new List<ShortcutVm>();
+    var usuarioId = (int)(ViewBag.UsuarioID ?? 0);
+    var sicLogin = User.FindFirst("sic_login")?.Value;
+    const int maxSlots = 8;
+
+    var cotacoes = ViewBag.Cotacoes as List<CurrencyQuoteVm> ?? new List<CurrencyQuoteVm>();
+    var clima = ViewBag.Clima as WeatherInfoVm;
+    var ptBR = new System.Globalization.CultureInfo("pt-BR");
 }
 
 <div class="container-fluid">
@@ -27,20 +37,7 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="card border-0 h-100">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #ec4899 15%, transparent);">
-                        <i class="fa-duotone fa-cake-candles fa-lg" style="color:#ec4899;"></i>
-                    </div>
-                    <div>
-                        <p class="text-muted mb-0" style="font-size:.8rem;">Aniversariantes</p>
-                        <h4 class="mb-0 fw-bold">3</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="row g-3 mb-4">        
         <div class="col-6 col-lg-3">
             <div class="card border-0 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -58,10 +55,10 @@
             <div class="card border-0 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #6366f1 15%, transparent);">
-                        <i class="fa-duotone fa-file-signature fa-lg" style="color:#6366f1;"></i>
+                        <i class="fa-duotone fa-diagram-project fa-lg" style="color:#6366f1;"></i>
                     </div>
                     <div>
-                        <p class="text-muted mb-0" style="font-size:.8rem;">Docs p/ Assinar</p>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Projetos Pendentes</p>
                         <h4 class="mb-0 fw-bold">2</h4>
                     </div>
                 </div>
@@ -80,6 +77,153 @@
                 </div>
             </div>
         </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #ec4899 15%, transparent);">
+                        <i class="fa-duotone fa-cake-candles fa-lg" style="color:#ec4899;"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Aniversariantes</p>
+                        <h4 class="mb-0 fw-bold">3</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <div class="row g-3 mb-4">
+
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-rocket text-br"></i>
+                    <strong>Atalhos Rápidos</strong>
+                    <i class="fa-duotone fa-cog text-muted ms-auto" id="btnConfigAtalhos" role="button" title="Gerenciar atalhos" style="cursor:pointer;"></i>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2" id="atalhos-container">
+                        @for (var i = 0; i < maxSlots; i++)
+                        {
+                            if (i < atalhos.Count)
+                            {
+                                var atalho = atalhos[i];
+                                var url = atalho.FlagExterna == 1 ? atalho.Url : Url.Content("~/" + atalho.Url.TrimStart('/'));
+                                url = url.Replace("{userid}", usuarioId.ToString())                                         
+                                         .Replace("{user}", sicLogin)
+                                         .Replace("{hash}", base64);
+                                <div class="col-6 col-xl-3" data-slot="@i" data-atalho-id="@atalho.AtalhoID">
+                                    <div class="position-relative">
+                                        <a href="@url" target="@(atalho.FlagExterna == 1 ? "_blank" : "_self")" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
+                                            <i class="@atalho.Icone fa-lg fa-duotone mb-1"></i>
+                                            @atalho.Nome
+                                        </a>
+                                        <button type="button" class="btn btn-sm position-absolute top-0 end-0 p-1 m-1 text-muted btn-remover-atalho d-none" data-atalho-id="@atalho.AtalhoID" title="Remover atalho" style="line-height:1;font-size:.7rem;">
+                                            <i class="fa-duotone fa-trash-alt fa-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-6 col-xl-3" data-slot="@i">
+                                    <a href="#" class="btn btn-outline-secondary w-100 d-flex flex-column align-items-center gap-1 py-3 btn-escolher-atalho" style="font-size:.85rem;">
+                                        <i class="fa-duotone fa-plus fa-lg mb-1"></i>
+                                        Escolha
+                                    </a>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-sun text-br"></i>
+                    <strong>Clima</strong>
+                </div>
+                @if (clima is not null)
+                {
+                    <div class="card-body text-center">
+                        <!-- céu limpo
+                        céu limpo dia
+                        céu limpo noite
+                        poucas nuvens
+                        poucas nuvens dia
+                        poucas nuvens noite
+                        nuvens dispersas
+                        muitas nuvens
+                        pancadas
+                        pancadas / drizzle
+                        chuva
+                        trovoada
+                        neve
+                        névoa
+                        névoa / atmosfera
+                        atmosfera -->
+                        <h3 class="fw-bold mb-0">@clima.Temperatura.ToString("N0")°C</h3>
+                        <p class="text-muted mb-2" style="font-size:.9rem;">@clima.Descricao</p>
+                        <div class="d-flex justify-content-center gap-3 mb-2" style="font-size:.8rem;">
+                            <span title="Sensação térmica"><i class="fa-duotone fa-temperature-half text-br me-1"></i>@clima.Sensacao.ToString("N0")°C</span>
+                            <span title="Umidade"><i class="fa-duotone fa-droplet text-br me-1"></i>@clima.Umidade.ToString("N0")%</span>
+                            <span title="Vento"><i class="fa-duotone fa-wind text-br me-1"></i>@clima.VelocidadeVento.ToString("N0") km/h</span>
+                        </div>
+                        <small class="text-muted">@clima.Cidade, @clima.UF</small>
+                    </div>
+                    <div class="card-footer bg-transparent border-top text-muted text-center" style="font-size:.75rem;">
+                        <i class="fa-duotone fa-clock me-1"></i>Atualizado em @clima.DtUltimaAtualizacao.ToString("dd/MM/yyyy 'às' HH:mm", ptBR)
+                    </div>
+                }
+                else
+                {
+                    <div class="card-body text-center text-muted">
+                        <i class="fa-duotone fa-cloud-question fa-2x mb-2"></i>
+                        <p class="mb-0" style="font-size:.85rem;">Dados indisponíveis</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-dollar-sign text-br"></i>
+                    <strong>Cotações</strong>
+                </div>
+                <div class="card-body">
+                    @{ var flagMap = new Dictionary<string, string> { ["USD"] = "fi-us", ["EUR"] = "fi-eu" }; }
+                    @for (var i = 0; i < cotacoes.Count; i++)
+                    {
+                        var cotacao = cotacoes[i];
+                        var flagClass = flagMap.GetValueOrDefault(cotacao.Moeda, "fi-xx");
+                        var isNegative = cotacao.Variacao < 0;
+                        var colorClass = isNegative ? "text-success" : "text-danger";
+                        var caretIcon = isNegative ? "fa-caret-down" : "fa-caret-up";
+                        var sinal = isNegative ? "" : "+";
+                        var mbClass = i < cotacoes.Count - 1 ? "mb-3" : "";
+                        <div class="d-flex justify-content-between align-items-center @mbClass">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fi @flagClass rounded-1" style="font-size:1.1rem;"></span>
+                                <span class="fw-semibold">@cotacao.Nome (@cotacao.Moeda)</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold">@cotacao.Valor.ToString("C2", ptBR)</span>
+                                <br /><small class="@colorClass"><i class="fa-solid @caretIcon me-1"></i>@sinal@cotacao.Variacao.ToString("N2", ptBR)%</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (cotacoes.Count > 0)
+                {
+                    <div class="card-footer bg-transparent border-top text-muted text-center" style="font-size:.75rem;">
+                        <i class="fa-duotone fa-clock me-1"></i>Atualizado em @cotacoes[0].DataAtualizacao.ToString("dd/MM/yyyy 'às' HH:mm", ptBR)
+                    </div>
+                }
+            </div>
+        </div>        
     </div>
 
     <div class="row g-3 mb-4">
@@ -162,103 +306,7 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-
-        <div class="col-12 col-md-6 col-lg-3">
-            <div class="card border-0 h-100">
-                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
-                    <i class="fa-duotone fa-sun text-br"></i>
-                    <strong>Clima</strong>
-                </div>
-                <div class="card-body text-center">
-                    <div class="mb-2" style="font-size:2.5rem;">⛅</div>
-                    <h3 class="fw-bold mb-0">27°C</h3>
-                    <p class="text-muted mb-1">Parcialmente nublado</p>
-                    <small class="text-muted">São Paulo, SP</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-6 col-lg-3">
-            <div class="card border-0 h-100">
-                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
-                    <i class="fa-duotone fa-dollar-sign text-br"></i>
-                    <strong>Cotações</strong>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="fi fi-us rounded-1" style="font-size:1.1rem;"></span>
-                            <span class="fw-semibold">Dólar (USD)</span>
-                        </div>
-                        <div class="text-end">
-                            <span class="fw-bold">R$ 5,47</span>
-                            <br /><small class="text-success"><i class="fa-solid fa-caret-down me-1"></i>-0,32%</small>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="fi fi-eu rounded-1" style="font-size:1.1rem;"></span>
-                            <span class="fw-semibold">Euro (EUR)</span>
-                        </div>
-                        <div class="text-end">
-                            <span class="fw-bold">R$ 6,15</span>
-                            <br /><small class="text-danger"><i class="fa-solid fa-caret-up me-1"></i>+0,18%</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 h-100">
-                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
-                    <i class="fa-duotone fa-rocket text-br"></i>
-                    <strong>Atalhos Rápidos</strong>
-                </div>
-                <div class="card-body">
-                    <div class="row g-2">
-                        <div class="col-6 col-md-4">
-                            <a asp-controller="Pedidos" asp-action="Busca" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-magnifying-glass fa-lg mb-1"></i>
-                                Consultar Pedido
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a asp-controller="Account" asp-action="MeusDados" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-id-card fa-lg mb-1"></i>
-                                Meus Dados
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a href="#" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-chart-mixed fa-lg mb-1"></i>
-                                Relatórios
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a href="#" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-user-tie fa-lg mb-1"></i>
-                                Clientes
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a href="#" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-truck-fast fa-lg mb-1"></i>
-                                Logística
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a href="https://intranet.brsupply.com.br/intranet/html/valida_login.php?u=@User.FindFirst("sic_login")?.Value&h=@base64" target="_blank" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-globe fa-lg mb-1"></i>
-                                SIC Antigo
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+   
 
     <div class="row g-3 mb-4">
         <div class="col-12">
@@ -318,3 +366,137 @@
     </div>
 
 </div>
+
+<div class="modal fade" id="modalEscolherAtalho" tabindex="-1" aria-labelledby="modalEscolherAtalhoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEscolherAtalhoLabel">
+                    <i class="fa-duotone fa-rocket text-br me-2"></i>Escolher Atalho
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <label for="selectAtalho" class="form-label">Selecione um atalho disponível:</label>
+                <select id="selectAtalho" class="form-select">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-br" id="btnSalvarAtalho">
+                    <i class="fa-solid fa-check me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    (function () {
+        const container = document.getElementById('atalhos-container');
+        const btnConfig = document.getElementById('btnConfigAtalhos');
+        const modal = new bootstrap.Modal(document.getElementById('modalEscolherAtalho'));
+
+        btnConfig.addEventListener('click', function () {
+            const ativo = btnConfig.classList.toggle('text-br');
+            if (ativo) btnConfig.classList.remove('text-muted');
+            else btnConfig.classList.add('text-muted');
+
+            container.querySelectorAll('.btn-remover-atalho').forEach(btn => {
+                btn.classList.toggle('d-none', !ativo);
+            });
+        });
+        const selectAtalho = document.getElementById('selectAtalho');
+        const btnSalvar = document.getElementById('btnSalvarAtalho');
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (antiForgeryToken) headers['RequestVerificationToken'] = antiForgeryToken;
+
+        container.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-escolher-atalho');
+            if (!btn) return;
+            e.preventDefault();
+
+            selectAtalho.innerHTML = '<option value="">Carregando...</option>';
+            modal.show();
+
+            fetch('@Url.Action("GetAllShortcuts", "Home")')
+                .then(r => r.json())
+                .then(data => {
+                    const usados = [...container.querySelectorAll('[data-atalho-id]')]
+                        .map(el => parseInt(el.dataset.atalhoId));
+
+                    const disponiveis = data.filter(a => !usados.includes(a.atalhoID));
+
+                    selectAtalho.innerHTML = '<option value="">Selecione...</option>';
+                    disponiveis.forEach(a => {
+                        const opt = document.createElement('option');
+                        opt.value = a.atalhoID;
+                        opt.textContent = a.nome;
+                        selectAtalho.appendChild(opt);
+                    });
+                })
+                .catch(() => {
+                    selectAtalho.innerHTML = '<option value="">Erro ao carregar</option>';
+                });
+        });
+
+        btnSalvar.addEventListener('click', function () {
+            const atalhoId = parseInt(selectAtalho.value);
+            if (!atalhoId) return;
+
+            btnSalvar.disabled = true;
+
+            fetch('@Url.Action("AddShortcut", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ atalhoID: atalhoId })
+            })
+                .then(r => {
+                    if (r.ok) {
+                        modal.hide();
+                        location.reload();
+                    } else {
+                        window.sicAlert('Erro', 'Erro ao salvar atalho.', 'error');
+                    }
+                })
+                .catch(() => window.sicAlert('Erro', 'Erro ao salvar atalho.', 'error'))
+                .finally(() => btnSalvar.disabled = false);
+        });
+
+        container.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.btn-remover-atalho');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const atalhoId = parseInt(btn.dataset.atalhoId);
+
+            const result = await Swal.fire({
+                title: 'Remover atalho?',
+                text: 'Deseja remover este atalho da sua lista?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, remover',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
+
+            fetch('@Url.Action("RemoveShortcut", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ atalhoID: atalhoId })
+            })
+                .then(r => {
+                    if (r.ok) location.reload();
+                    else window.sicAlert('Erro', 'Erro ao remover atalho.', 'error');
+                })
+                .catch(() => window.sicAlert('Erro', 'Erro ao remover atalho.', 'error'));
+        });
+    })();
+</script>
+}

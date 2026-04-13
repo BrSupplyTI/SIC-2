@@ -6,8 +6,12 @@ public interface IHomeRepository
 {
     Task<IReadOnlyList<Shortcut>> GetUserShortcutsAsync(int usuarioId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Shortcut>> GetAllShortcutsAsync(CancellationToken cancellationToken = default);
-    Task AddUserShortcutAsync(int usuarioId, int atalhoId, CancellationToken cancellationToken = default);
+    Task AddUserShortcutAsync(int usuarioId, int atalhoId, string estilo, CancellationToken cancellationToken = default);
     Task RemoveUserShortcutAsync(int usuarioId, int atalhoId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CurrencyQuote>> GetCurrencyQuotesAsync(CancellationToken cancellationToken = default);
     Task<WeatherInfo?> GetWeatherInfoAsync(int estabelecimentoId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Entities.Monitor>> GetAllMonitorsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UserMonitorResult>> GetUserMonitorResultsAsync(int usuarioId, CancellationToken cancellationToken = default);
+    Task AddUserMonitorAsync(int usuarioId, int monitorId, string valor, CancellationToken cancellationToken = default);
+    Task RemoveUserMonitorAsync(int usuarioId, int usuarioMonitorId, CancellationToken cancellationToken = default);
 }

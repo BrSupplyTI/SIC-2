@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using SIC.Domain.Abstractions;
 using SIC.Domain.Entities;
 using System.Data;
+using DomainMonitor = SIC.Domain.Entities.Monitor;
 
 namespace SIC.Infrastructure.Repositories;
 
@@ -17,7 +18,7 @@ public sealed class SqlHomeRepository(IConfiguration configuration) : IHomeRepos
         await connection.OpenAsync(cancellationToken);
 
         const string sql = """
-            SELECT TOP 8 A.AtalhoID, A.Nome, A.Url, A.FlagExterna, A.Icone
+            SELECT TOP 8 A.AtalhoID, A.Nome, A.Url, A.FlagExterna, A.Icone, ISNULL(UA.Estilo, '') AS Estilo
             FROM BR_Atalho A WITH (NOLOCK)
             JOIN BR_UsuarioAtalho UA WITH (NOLOCK) ON A.AtalhoID = UA.AtalhoID
             WHERE UA.UsuarioID = @UsuarioID
@@ -38,7 +39,8 @@ public sealed class SqlHomeRepository(IConfiguration configuration) : IHomeRepos
                 Nome = ReadString(reader, "Nome"),
                 Url = ReadString(reader, "Url"),
                 FlagExterna = reader.GetInt32(reader.GetOrdinal("FlagExterna")),
-                Icone = ReadString(reader, "Icone")
+                Icone = ReadString(reader, "Icone"),
+                Estilo = ReadString(reader, "Estilo")
             });
         }
 
@@ -75,7 +77,7 @@ public sealed class SqlHomeRepository(IConfiguration configuration) : IHomeRepos
         return items;
     }
 
-    public async Task AddUserShortcutAsync(int usuarioId, int atalhoId, CancellationToken cancellationToken = default)
+    public async Task AddUserShortcutAsync(int usuarioId, int atalhoId, string estilo, CancellationToken cancellationToken = default)
     {
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -85,12 +87,13 @@ public sealed class SqlHomeRepository(IConfiguration configuration) : IHomeRepos
                 SELECT 1 FROM BR_UsuarioAtalho WITH (NOLOCK)
                 WHERE UsuarioID = @UsuarioID AND AtalhoID = @AtalhoID
             )
-            INSERT INTO BR_UsuarioAtalho (UsuarioID, AtalhoID) VALUES (@UsuarioID, @AtalhoID)
+            INSERT INTO BR_UsuarioAtalho (UsuarioID, AtalhoID, Estilo) VALUES (@UsuarioID, @AtalhoID, @Estilo)
             """;
 
         await using var cmd = new SqlCommand(sql, connection);
         cmd.Parameters.Add("@UsuarioID", SqlDbType.Int).Value = usuarioId;
         cmd.Parameters.Add("@AtalhoID", SqlDbType.Int).Value = atalhoId;
+        cmd.Parameters.Add("@Estilo", SqlDbType.VarChar, 50).Value = string.IsNullOrWhiteSpace(estilo) ? (object)DBNull.Value : estilo;
 
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -180,6 +183,142 @@ public sealed class SqlHomeRepository(IConfiguration configuration) : IHomeRepos
             Descricao = ReadString(reader, "Descricao"),
             DtUltimaAtualizacao = reader.GetDateTime(reader.GetOrdinal("DtUltimaAtualizacao"))
         };
+    }
+
+    public async Task<IReadOnlyList<DomainMonitor>> GetAllMonitorsAsync(CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+            SELECT MonitorID, Nivel, Icone, Nome, Titulo, PromptValor
+            FROM BR_Monitor WITH (NOLOCK)
+            ORDER BY Nivel, Nome
+            """;
+
+        await using var cmd = new SqlCommand(sql, connection);
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+        var items = new List<DomainMonitor>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new DomainMonitor
+            {
+                MonitorID = reader.GetInt32(reader.GetOrdinal("MonitorID")),
+                Nivel = ReadString(reader, "Nivel"),
+                Icone = ReadString(reader, "Icone"),
+                Nome = ReadString(reader, "Nome"),
+                Titulo = ReadString(reader, "Titulo"),
+                PromptValor = ReadString(reader, "PromptValor")
+            });
+        }
+
+        return items;
+    }
+
+    public async Task<IReadOnlyList<UserMonitorResult>> GetUserMonitorResultsAsync(int usuarioId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+            SELECT UM.UsuarioMonitorID, M.MonitorID, M.Nivel, M.Icone, M.Nome, M.Titulo,
+                   M.ComandoSQL, UM.Valor
+            FROM BR_UsuarioMonitor UM WITH (NOLOCK)
+            JOIN BR_Monitor M WITH (NOLOCK) ON M.MonitorID = UM.MonitorID
+            WHERE UM.UsuarioID = @UsuarioID
+            ORDER BY M.Nivel, M.Nome
+            """;
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@UsuarioID", SqlDbType.Int).Value = usuarioId;
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+        var pendentes = new List<(int UsuarioMonitorID, int MonitorID, string Nivel, string Icone, string Nome, string Titulo, string ComandoSQL, string Valor)>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            pendentes.Add((
+                reader.GetInt32(reader.GetOrdinal("UsuarioMonitorID")),
+                reader.GetInt32(reader.GetOrdinal("MonitorID")),
+                ReadString(reader, "Nivel"),
+                ReadString(reader, "Icone"),
+                ReadString(reader, "Nome"),
+                ReadString(reader, "Titulo"),
+                ReadString(reader, "ComandoSQL"),
+                ReadString(reader, "Valor")
+            ));
+        }
+
+        await reader.CloseAsync();
+
+        var items = new List<UserMonitorResult>();
+
+        foreach (var p in pendentes)
+        {
+            var resultado = "Sem resultado";
+            try
+            {
+                var sqlExec = p.ComandoSQL.Replace("{valor}", p.Valor);
+                await using var cmdExec = new SqlCommand(sqlExec, connection);
+                cmdExec.CommandTimeout = 10;
+                var scalar = await cmdExec.ExecuteScalarAsync(cancellationToken);
+                if (scalar is not null and not DBNull)
+                    resultado = scalar.ToString()!.Trim();
+            }
+            catch
+            {
+                resultado = "Erro ao consultar";
+            }
+
+            items.Add(new UserMonitorResult
+            {
+                UsuarioMonitorID = p.UsuarioMonitorID,
+                MonitorID = p.MonitorID,
+                Nivel = p.Nivel,
+                Icone = p.Icone,
+                Nome = p.Nome,
+                Titulo = p.Titulo,
+                Resultado = resultado
+            });
+        }
+
+        return items;
+    }
+
+    public async Task AddUserMonitorAsync(int usuarioId, int monitorId, string valor, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+            INSERT INTO BR_UsuarioMonitor (UsuarioID, MonitorID, DataHora, Valor)
+            VALUES (@UsuarioID, @MonitorID, GETDATE(), @Valor)
+            """;
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@UsuarioID", SqlDbType.Int).Value = usuarioId;
+        cmd.Parameters.Add("@MonitorID", SqlDbType.Int).Value = monitorId;
+        cmd.Parameters.Add("@Valor", SqlDbType.VarChar, 500).Value = valor;
+
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task RemoveUserMonitorAsync(int usuarioId, int usuarioMonitorId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+            DELETE FROM BR_UsuarioMonitor
+            WHERE UsuarioMonitorID = @UsuarioMonitorID AND UsuarioID = @UsuarioID
+            """;
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@UsuarioMonitorID", SqlDbType.Int).Value = usuarioMonitorId;
+        cmd.Parameters.Add("@UsuarioID", SqlDbType.Int).Value = usuarioId;
+
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static string ReadString(SqlDataReader reader, string column)

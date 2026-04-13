@@ -114,7 +114,10 @@
                                          .Replace("{hash}", base64);
                                 <div class="col-6 col-xl-3" data-slot="@i" data-atalho-id="@atalho.AtalhoID">
                                     <div class="position-relative">
-                                        <a href="@url" target="@(atalho.FlagExterna == 1 ? "_blank" : "_self")" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
+                                        @{
+                                            var btnClass = string.IsNullOrWhiteSpace(atalho.Estilo) ? "btn-outline-br" : atalho.Estilo;
+                                        }
+                                        <a href="@url" target="@(atalho.FlagExterna == 1 ? "_blank" : "_self")" class="btn @btnClass w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
                                             <i class="@atalho.Icone fa-lg fa-duotone mb-1"></i>
                                             @atalho.Nome
                                         </a>
@@ -140,38 +143,67 @@
         </div>
 
         <div class="col-12 col-md-6 col-lg-3">
-            <div class="card border-0 h-100">
+            <div class="card border-0 h-100" id="cardPrevisaoTempo">
                 <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
                     <i class="fa-duotone fa-sun text-br"></i>
                     <strong>Clima</strong>
+                    @if (clima is not null)
+                    {
+                        <small class="text-muted ms-auto">@clima.Cidade, @clima.UF</small>
+                    }
                 </div>
                 @if (clima is not null)
                 {
-                    <div class="card-body text-center">
-                        <!-- céu limpo
-                        céu limpo dia
-                        céu limpo noite
-                        poucas nuvens
-                        poucas nuvens dia
-                        poucas nuvens noite
-                        nuvens dispersas
-                        muitas nuvens
-                        pancadas
-                        pancadas / drizzle
-                        chuva
-                        trovoada
-                        neve
-                        névoa
-                        névoa / atmosfera
-                        atmosfera -->
-                        <h3 class="fw-bold mb-0">@clima.Temperatura.ToString("N0")°C</h3>
-                        <p class="text-muted mb-2" style="font-size:.9rem;">@clima.Descricao</p>
-                        <div class="d-flex justify-content-center gap-3 mb-2" style="font-size:.8rem;">
-                            <span title="Sensação térmica"><i class="fa-duotone fa-temperature-half text-br me-1"></i>@clima.Sensacao.ToString("N0")°C</span>
-                            <span title="Umidade"><i class="fa-duotone fa-droplet text-br me-1"></i>@clima.Umidade.ToString("N0")%</span>
-                            <span title="Vento"><i class="fa-duotone fa-wind text-br me-1"></i>@clima.VelocidadeVento.ToString("N0") km/h</span>
+                    var desc = clima.Descricao.Trim().ToLowerInvariant();
+                    var isNoite = desc.Contains("noite") || hora >= 18 || hora < 6;                    
+                    var (weatherIcon, weatherColor, weatherSecondaryColor) = desc switch
+                    {
+                        _ when desc.Contains("trovoada")        => ("fa-cloud-bolt",           "#64748b", "#ffd53d"),
+                        _ when desc.Contains("neve")            => ("fa-snowflake",            "#38bdf8", "linear-gradient(135deg, rgba(56,189,248,.12), rgba(224,231,255,.10))"),
+                        _ when desc.Contains("chuva")           => ("fa-cloud-rain",           "#64748b", "#a3ddf7"),
+                        _ when desc.Contains("pancadas")        => ("fa-cloud-showers-heavy",  "#64748b", "#a3ddf7"),
+                        _ when desc.Contains("névoa") || desc.Contains("atmosfera")
+                                                                => ("fa-smog",                 "#94a3b8", "linear-gradient(135deg, rgba(148,163,184,.12), rgba(203,213,225,.08))"),
+                        _ when desc.Contains("muitas nuvens")   => ("fa-clouds",               "#64748b", "linear-gradient(135deg, rgba(100,116,139,.12), rgba(148,163,184,.08))"),
+                        _ when desc.Contains("nuvens dispersas")=> ("fa-cloud",                "#64748b", "#64748b"),
+                        _ when desc.Contains("poucas nuvens") && isNoite 
+                                                                => ("fa-moon-cloud",           "#64748b", "#f59e0b"),
+                        _ when desc.Contains("poucas nuvens")   => ("fa-sun-cloud",            "#64748b", "#f59e0b"),
+                        _ when desc.Contains("céu limpo") && isNoite => ("fa-moon-stars",      "#f59e0b", "#f7e283"),
+                        _ when desc.Contains("céu limpo")       => ("fa-sun",                  "#f7e283", "#f59e0b"),
+                        _ when desc.Contains("nublado")         => ("fa-cloud",                "#64748b", "#64748b"),
+                        _                                       => ("fa-cloud-sun",            "#64748b", "#f59e0b")
+                    };                                       
+                                        
+                    <div class="card-body text-center px-3 py-3">
+                        <div class="d-flex align-items-center justify-content-center gap-3 mb-2">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 me-2"
+                                 style="width:6px;height:56px;">
+                                <i class="fa-duotone @weatherIcon fa-2x" style="--fa-primary-color: @weatherColor; --fa-secondary-color: @weatherSecondaryColor; --fa-secondary-opacity: 1;"></i>
+                            </div>
+                            <div class="text-start">
+                                <h2 class="fw-bold mb-0 lh-1">@clima.Temperatura.ToString("N0")°</h2>
+                                <p class="mb-0 text-muted text-capitalize" style="font-size:.85rem;">@clima.Descricao</p>
+                            </div>
                         </div>
-                        <small class="text-muted">@clima.Cidade, @clima.UF</small>
+
+                        <div class="row g-0 text-center rounded-3 py-2 mt-1">
+                            <div class="col-4 border-end" style="border-color:var(--bs-border-color)!important;">
+                                <i class="fa-duotone fa-temperature-half mb-1" style="color:@weatherColor;"></i>
+                                <div class="fw-semibold" style="font-size:.8rem;">@clima.Sensacao.ToString("N0")°C</div>
+                                <div class="text-muted" style="font-size:.65rem;">Sensação</div>
+                            </div>
+                            <div class="col-4 border-end" style="border-color:var(--bs-border-color)!important;">
+                                <i class="fa-duotone fa-droplet mb-1" style="color:@weatherColor;"></i>
+                                <div class="fw-semibold" style="font-size:.8rem;">@clima.Umidade.ToString("N0")%</div>
+                                <div class="text-muted" style="font-size:.65rem;">Umidade</div>
+                            </div>
+                            <div class="col-4">
+                                <i class="fa-duotone fa-wind mb-1" style="color:@weatherColor;"></i>
+                                <div class="fw-semibold" style="font-size:.8rem;">@clima.VelocidadeVento.ToString("N0") km/h</div>
+                                <div class="text-muted" style="font-size:.65rem;">Vento</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-footer bg-transparent border-top text-muted text-center" style="font-size:.75rem;">
                         <i class="fa-duotone fa-clock me-1"></i>Atualizado em @clima.DtUltimaAtualizacao.ToString("dd/MM/yyyy 'às' HH:mm", ptBR)
@@ -179,7 +211,7 @@
                 }
                 else
                 {
-                    <div class="card-body text-center text-muted">
+                    <div class="card-body text-center text-muted py-4">
                         <i class="fa-duotone fa-cloud-question fa-2x mb-2"></i>
                         <p class="mb-0" style="font-size:.85rem;">Dados indisponíveis</p>
                     </div>
@@ -312,50 +344,34 @@
         <div class="col-12">
             <div class="card border-0">
                 <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
-                    <i class="fa-duotone fa-clock-rotate-left text-br"></i>
-                    <strong>Últimas Atividades</strong>
+                    <i class="fa-duotone fa-desktop text-br"></i>
+                    <strong>Monitor <span id="monitor-counter" class="text-muted ms-1" style="font-size:.85rem;"></span></strong>                    
+                    <span class="ms-auto dropdown">
+                        <i class="fa-duotone fa-cog text-muted" id="btnConfigMonitor" role="button" title="Gerenciar monitores" style="cursor:pointer;" data-bs-toggle="dropdown" aria-expanded="false"></i>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" role="button" id="btnNovoMonitor"><i class="fa-duotone fa-plus me-2 text-br"></i>Novo Monitor</a></li>
+                            <li><a class="dropdown-item" role="button" id="btnExcluirMonitor"><i class="fa-duotone fa-trash-alt me-2 text-danger"></i>Excluir Monitor</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" role="button" id="btnAtualizarMonitor"><i class="fa-duotone fa-refresh me-2 text-br"></i>Atualizar Dados</a></li>
+                        </ul>
+                    </span>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body p-0">                    
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead>
                                 <tr>
-                                    <th>Atividade</th>
-                                    <th>Módulo</th>
-                                    <th class="text-center">Status</th>
-                                    <th class="text-end">Data/Hora</th>
+                                    <th>Processo</th>
+                                    <th>Título</th>
+                                    <th>Monitorando</th>
+                                    <th>Resultado</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><i class="fa-duotone fa-box-open me-2 text-br"></i>Pedido #84521 aprovado</td>
-                                    <td>Comercial</td>
-                                    <td class="text-center"><span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Concluído</span></td>
-                                    <td class="text-end text-muted">Hoje, 09:32</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fa-duotone fa-file-signature me-2 text-br"></i>Contrato #1203 enviado para assinatura</td>
-                                    <td>Jurídico</td>
-                                    <td class="text-center"><span class="badge-status badge-status-info"><i class="fa-solid fa-clock me-1"></i>Pendente</span></td>
-                                    <td class="text-end text-muted">Hoje, 08:45</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fa-duotone fa-truck me-2 text-br"></i>Embarque NF 5892 confirmado</td>
-                                    <td>Logística</td>
-                                    <td class="text-center"><span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Concluído</span></td>
-                                    <td class="text-end text-muted">Ontem, 17:10</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fa-duotone fa-ticket me-2 text-br"></i>Chamado #TI-445 — Acesso VPN</td>
-                                    <td>TI</td>
-                                    <td class="text-center"><span class="badge-status badge-status-primary"><i class="fa-solid fa-chevron-right me-1"></i>Em andamento</span></td>
-                                    <td class="text-end text-muted">Ontem, 14:22</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fa-duotone fa-box-open me-2 text-br"></i>Pedido #84490 integrado no SAP</td>
-                                    <td>Comercial</td>
-                                    <td class="text-center"><span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Concluído</span></td>
-                                    <td class="text-end text-muted">Ontem, 11:03</td>
+                            <tbody id="monitor-tbody">
+                                <tr id="monitor-loading">
+                                    <td colspan="4" class="text-center text-muted py-3">
+                                        <i class="fa-duotone fa-spinner-third fa-spin me-2"></i>Carregando monitores...
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -377,14 +393,76 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
-                <label for="selectAtalho" class="form-label">Selecione um atalho disponível:</label>
-                <select id="selectAtalho" class="form-select">
-                    <option value="">Carregando...</option>
-                </select>
+                <div class="mb-3">
+                    <label for="selectAtalho" class="form-label">Selecione um atalho disponível:</label>
+                    <select id="selectAtalho" class="form-select">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="selectEstilo" class="form-label">Estilo do botão:</label>
+                    <select id="selectEstilo" class="form-select">
+                        <option value="btn-info">Azul Claro</option>
+                        <option value="btn-primary">Azul</option>
+                        <option value="btn-success">Verde</option>
+                        <option value="btn-danger">Vermelho</option>
+                        <option value="btn-warning">Amarelo</option>
+                        <option value="btn-secondary">Cinza</option>
+                        <option value="btn-br">Laranja</option>
+                        <option value="btn-outline-info">Borda Azul Claro</option>
+                        <option value="btn-outline-primary">Borda Azul</option>
+                        <option value="btn-outline-success">Borda Verde</option>
+                        <option value="btn-outline-danger">Borda Vermelho</option>
+                        <option value="btn-outline-warning">Borda Amarelo</option>
+                        <option value="btn-outline-secondary">Borda Cinza</option>
+                        <option value="btn-outline-br" selected>Borda Laranja</option>
+                    </select>
+                </div>
+                <div id="previewEstiloContainer">
+                    <label class="form-label">Pré-visualização:</label>
+                    <div class="text-center">
+                        <button type="button" id="previewEstiloBtn" class="btn btn-outline-br d-inline-flex flex-column align-items-center gap-1 py-3 px-4" style="font-size:.85rem;">
+                            <i class="fa-duotone fa-rocket fa-lg mb-1"></i>
+                            Exemplo
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-br" id="btnSalvarAtalho">
+                    <i class="fa-solid fa-check me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNovoMonitor" tabindex="-1" aria-labelledby="modalNovoMonitorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNovoMonitorLabel">
+                    <i class="fa-duotone fa-desktop text-br me-2"></i>Novo Monitor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="selectMonitor" class="form-label">Selecione o monitor:</label>
+                    <select id="selectMonitor" class="form-select">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+                <div class="mb-0">
+                    <label for="inputValorMonitor" class="form-label">Valor do parâmetro:</label>
+                    <input type="text" id="inputValorMonitor" class="form-control" placeholder="Ex.: 8317013, ABC123, etc.">
+                    <div class="form-text" id="monitorTituloHint"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-br" id="btnSalvarMonitor">
                     <i class="fa-solid fa-check me-1"></i>Salvar
                 </button>
             </div>
@@ -409,11 +487,17 @@
             });
         });
         const selectAtalho = document.getElementById('selectAtalho');
+        const selectEstilo = document.getElementById('selectEstilo');
+        const previewBtn = document.getElementById('previewEstiloBtn');
         const btnSalvar = document.getElementById('btnSalvarAtalho');
         const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
         const headers = { 'Content-Type': 'application/json' };
         if (antiForgeryToken) headers['RequestVerificationToken'] = antiForgeryToken;
+
+        selectEstilo.addEventListener('change', function () {
+            previewBtn.className = 'btn ' + selectEstilo.value + ' d-inline-flex flex-column align-items-center gap-1 py-3 px-4';
+        });
 
         container.addEventListener('click', function (e) {
             const btn = e.target.closest('.btn-escolher-atalho');
@@ -421,6 +505,8 @@
             e.preventDefault();
 
             selectAtalho.innerHTML = '<option value="">Carregando...</option>';
+            selectEstilo.value = 'btn-outline-br';
+            previewBtn.className = 'btn btn-outline-br d-inline-flex flex-column align-items-center gap-1 py-3 px-4';
             modal.show();
 
             fetch('@Url.Action("GetAllShortcuts", "Home")')
@@ -448,12 +534,13 @@
             const atalhoId = parseInt(selectAtalho.value);
             if (!atalhoId) return;
 
+            const estilo = selectEstilo.value;
             btnSalvar.disabled = true;
 
             fetch('@Url.Action("AddShortcut", "Home")', {
                 method: 'POST',
                 headers: headers,
-                body: JSON.stringify({ atalhoID: atalhoId })
+                body: JSON.stringify({ atalhoID: atalhoId, estilo: estilo })
             })
                 .then(r => {
                     if (r.ok) {
@@ -496,6 +583,212 @@
                     else window.sicAlert('Erro', 'Erro ao remover atalho.', 'error');
                 })
                 .catch(() => window.sicAlert('Erro', 'Erro ao remover atalho.', 'error'));
+        });
+    })();
+
+    // === Monitores (lazy load) ===
+    (function () {
+        const tbody = document.getElementById('monitor-tbody');
+        const btnNovo = document.getElementById('btnNovoMonitor');
+        const btnExcluir = document.getElementById('btnExcluirMonitor');
+        const btnAtualizar = document.getElementById('btnAtualizarMonitor');
+        const modalEl = document.getElementById('modalNovoMonitor');
+        const modal = new bootstrap.Modal(modalEl);
+        const selectMonitor = document.getElementById('selectMonitor');
+        const inputValor = document.getElementById('inputValorMonitor');
+        const tituloHint = document.getElementById('monitorTituloHint');
+        const btnSalvar = document.getElementById('btnSalvarMonitor');
+
+        const counterEl = document.getElementById('monitor-counter');
+        const MAX_MONITORS = 10;
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers = { 'Content-Type': 'application/json' };
+        if (antiForgeryToken) headers['RequestVerificationToken'] = antiForgeryToken;
+
+        let modoExcluir = false;
+        let monitorCount = 0;
+
+        function atualizarContador(count) {
+            monitorCount = count;
+            counterEl.textContent = `(${count} / ${MAX_MONITORS})`;
+            counterEl.classList.toggle('text-danger', count >= MAX_MONITORS);
+            counterEl.classList.toggle('text-muted', count < MAX_MONITORS);
+        }
+
+        function renderRows(data) {
+            atualizarContador(data.length);
+
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3"><i class="fa-duotone fa-inbox me-2"></i>Nenhum monitor cadastrado. Clique em <strong>⚙ → Novo Monitor</strong> para adicionar.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            let nivelAtual = '';
+
+            data.forEach(m => {
+                if (m.nivel !== nivelAtual) {
+                    nivelAtual = m.nivel;
+                    html += `<tr><td colspan="${modoExcluir ? 5 : 4}" class="fw-semibold text-br sic-bg" style="font-size:0.9rem;text-transform: uppercase;">${nivelAtual}</td></tr>`;
+                }
+
+                const partes = (m.resultado || '').split('|');
+
+                const parte1 = partes[0] || '';
+                const parte2 = partes[1] || '';
+
+                const deleteHtml = modoExcluir
+                    ? `<td class="text-center" style="width:1%;"><button class="btn btn-sm p-0 text-danger btn-remover-monitor" data-id="${m.usuarioMonitorID}" title="Remover monitor"><i class="fa-duotone fa-trash-alt"></i></button></td>`
+                    : '';
+
+                html += `<tr>
+                    <td><i class="fa-duotone fa-${m.icone} me-2 text-br"></i>${m.nome}</td>
+                    <td>${m.titulo}</td>
+                    <td>${parte1}</td>
+                    <td><strong><span class="text-br">${parte2}</span></strong></td>
+                    ${deleteHtml}
+                </tr>`;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function carregarResultados() {
+            tbody.innerHTML = '<tr id="monitor-loading"><td colspan="4" class="text-center text-muted py-3"><i class="fa-duotone fa-spinner-third fa-spin me-2"></i>Carregando monitores...</td></tr>';
+
+            fetch('@Url.Action("GetUserMonitorResults", "Home")')
+                .then(r => r.json())
+                .then(data => renderRows(data))
+                .catch(() => {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3"><i class="fa-duotone fa-triangle-exclamation me-2"></i>Erro ao carregar monitores.</td></tr>';
+                });
+        }
+
+        // Lazy load
+        carregarResultados();
+
+        // Excluir toggle
+        btnExcluir.addEventListener('click', function (e) {
+            e.preventDefault();
+            modoExcluir = !modoExcluir;
+            carregarResultados();
+        });
+
+        // Atualizar dados
+        btnAtualizar.addEventListener('click', function (e) {
+            e.preventDefault();
+            carregarResultados();
+        });
+
+        // Remover monitor
+        tbody.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.btn-remover-monitor');
+            if (!btn) return;
+            e.preventDefault();
+
+            const id = parseInt(btn.dataset.id);
+            const result = await Swal.fire({
+                title: 'Remover monitor?',
+                text: 'Deseja remover este monitor da sua lista?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, remover',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
+
+            fetch('@Url.Action("RemoveMonitor", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ usuarioMonitorID: id })
+            })
+                .then(r => {
+                    if (r.ok) carregarResultados();
+                    else window.sicAlert('Erro', 'Erro ao remover monitor.', 'error');
+                })
+                .catch(() => window.sicAlert('Erro', 'Erro ao remover monitor.', 'error'));
+        });
+
+        // Novo monitor
+        btnNovo.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            if (monitorCount >= MAX_MONITORS) {
+                window.sicAlert('Limite atingido', `Você já possui ${MAX_MONITORS} monitores. Remova um existente para adicionar outro.`, 'warning');
+                return;
+            }
+
+            inputValor.value = '';
+            tituloHint.textContent = '';
+            selectMonitor.innerHTML = '<option value="">Carregando...</option>';
+            modal.show();
+
+            fetch('@Url.Action("GetAllMonitors", "Home")')
+                .then(r => r.json())
+                .then(data => {
+                    selectMonitor.innerHTML = '<option value="">Selecione...</option>';
+
+                    const grupos = {};
+                    data.forEach(m => {
+                        if (!grupos[m.nivel]) grupos[m.nivel] = [];
+                        grupos[m.nivel].push(m);
+                    });
+
+                    Object.keys(grupos).sort().forEach(nivel => {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = nivel;
+                        grupos[nivel].forEach(m => {
+                            const opt = document.createElement('option');
+                            opt.value = m.monitorID;
+                            opt.textContent = m.nome;
+                            opt.dataset.titulo = m.titulo;
+                            opt.dataset.prompt = m.promptValor || '';
+                            optgroup.appendChild(opt);
+                        });
+                        selectMonitor.appendChild(optgroup);
+                    });
+                })
+                .catch(() => {
+                    selectMonitor.innerHTML = '<option value="">Erro ao carregar</option>';
+                });
+        });
+
+        selectMonitor.addEventListener('change', function () {
+            const opt = selectMonitor.selectedOptions[0];
+            tituloHint.textContent = opt?.dataset?.titulo || '';
+            const prompt = opt?.dataset?.prompt || '';
+            document.querySelector('label[for="inputValorMonitor"]').textContent = prompt || 'Valor do parâmetro:';
+            inputValor.placeholder = prompt || 'Ex.: 8317013, ABC123, etc.';
+        });
+
+        btnSalvar.addEventListener('click', function () {
+            const monitorId = parseInt(selectMonitor.value);
+            const valor = inputValor.value.trim();
+            if (!monitorId || !valor) {
+                window.sicAlert('Atenção', 'Selecione um monitor e informe o valor.', 'warning');
+                return;
+            }
+
+            btnSalvar.disabled = true;
+
+            fetch('@Url.Action("AddMonitor", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ monitorID: monitorId, valor: valor })
+            })
+                .then(r => {
+                    if (r.ok) {
+                        modal.hide();
+                        modoExcluir = false;
+                        carregarResultados();
+                    } else {
+                        window.sicAlert('Erro', 'Erro ao salvar monitor.', 'error');
+                    }
+                })
+                .catch(() => window.sicAlert('Erro', 'Erro ao salvar monitor.', 'error'))
+                .finally(() => btnSalvar.disabled = false);
         });
     })();
 </script>

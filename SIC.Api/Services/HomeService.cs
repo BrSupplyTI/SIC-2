@@ -16,7 +16,8 @@ public sealed class HomeService(IHomeRepository repository) : IHomeService
             Nome = i.Nome,
             Url = i.Url,
             FlagExterna = i.FlagExterna,
-            Icone = i.Icone
+            Icone = i.Icone,
+            Estilo = i.Estilo
         }).ToList();
     }
 
@@ -34,8 +35,8 @@ public sealed class HomeService(IHomeRepository repository) : IHomeService
         }).ToList();
     }
 
-    public async Task AddUserShortcutAsync(int usuarioId, int atalhoId, CancellationToken cancellationToken = default)
-        => await repository.AddUserShortcutAsync(usuarioId, atalhoId, cancellationToken);
+    public async Task AddUserShortcutAsync(int usuarioId, int atalhoId, string estilo, CancellationToken cancellationToken = default)
+        => await repository.AddUserShortcutAsync(usuarioId, atalhoId, estilo, cancellationToken);
 
     public async Task RemoveUserShortcutAsync(int usuarioId, int atalhoId, CancellationToken cancellationToken = default)
         => await repository.RemoveUserShortcutAsync(usuarioId, atalhoId, cancellationToken);
@@ -72,4 +73,41 @@ public sealed class HomeService(IHomeRepository repository) : IHomeService
             DtUltimaAtualizacao = item.DtUltimaAtualizacao
         };
     }
+
+    public async Task<IReadOnlyList<MonitorDto>> GetAllMonitorsAsync(CancellationToken cancellationToken = default)
+    {
+        var items = await repository.GetAllMonitorsAsync(cancellationToken);
+
+        return items.Select(i => new MonitorDto
+        {
+            MonitorID = i.MonitorID,
+            Nivel = i.Nivel,
+            Icone = i.Icone,
+            Nome = i.Nome,
+            Titulo = i.Titulo,
+            PromptValor = i.PromptValor
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<UserMonitorResultDto>> GetUserMonitorResultsAsync(int usuarioId, CancellationToken cancellationToken = default)
+    {
+        var items = await repository.GetUserMonitorResultsAsync(usuarioId, cancellationToken);
+
+        return items.Select(i => new UserMonitorResultDto
+        {
+            UsuarioMonitorID = i.UsuarioMonitorID,
+            MonitorID = i.MonitorID,
+            Nivel = i.Nivel,
+            Icone = i.Icone,
+            Nome = i.Nome,
+            Titulo = i.Titulo,
+            Resultado = i.Resultado
+        }).ToList();
+    }
+
+    public async Task AddUserMonitorAsync(int usuarioId, int monitorId, string valor, CancellationToken cancellationToken = default)
+        => await repository.AddUserMonitorAsync(usuarioId, monitorId, valor, cancellationToken);
+
+    public async Task RemoveUserMonitorAsync(int usuarioId, int usuarioMonitorId, CancellationToken cancellationToken = default)
+        => await repository.RemoveUserMonitorAsync(usuarioId, usuarioMonitorId, cancellationToken);
 }

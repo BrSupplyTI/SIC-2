@@ -7,4 +7,5 @@ public sealed class ShortcutVm
     public string Url { get; set; } = string.Empty;
     public int FlagExterna { get; set; }
     public string Icone { get; set; } = string.Empty;
+    public string Estilo { get; set; } = string.Empty;
 }

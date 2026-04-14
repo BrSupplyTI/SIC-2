@@ -321,6 +321,52 @@ public sealed class SqlHomeRepository(IConfiguration configuration) : IHomeRepos
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Notice>> GetUserNoticesAsync(int usuarioId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand("SIC_Home_Avisos", connection)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.Add("@UsuarioID", SqlDbType.Int).Value = usuarioId;
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+        var items = new List<Notice>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new Notice
+            {
+                AvisoID = reader.GetInt32(reader.GetOrdinal("AvisoID")),
+                Titulo = ReadString(reader, "Titulo"),
+                Descricao = ReadString(reader, "Descricao"),
+                DataHoraEnvio = reader.GetDateTime(reader.GetOrdinal("DataHoraEnvio")),
+                Prioridade = reader.GetInt32(reader.GetOrdinal("Prioridade"))
+            });
+        }
+
+        return items;
+    }
+
+    public async Task ConfirmNoticeReadAsync(int avisoId, int usuarioId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+            INSERT INTO BR_AvisoUsuario (AvisoID, UsuarioID, DataHoraConfirmacao)
+            VALUES (@AvisoID, @UsuarioID, GETDATE())
+            """;
+
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@AvisoID", SqlDbType.Int).Value = avisoId;
+        cmd.Parameters.Add("@UsuarioID", SqlDbType.Int).Value = usuarioId;
+
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     private static string ReadString(SqlDataReader reader, string column)
     {
         var ordinal = reader.GetOrdinal(column);

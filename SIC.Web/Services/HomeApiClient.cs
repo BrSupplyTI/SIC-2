@@ -128,4 +128,29 @@ public sealed class HomeApiClient(HttpClient httpClient)
             return false;
         }
     }
+
+    public async Task<List<NoticeVm>> GetUserNoticesAsync(int usuarioId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await httpClient.GetFromJsonAsync<List<NoticeVm>>($"api/home/avisos/usuario/{usuarioId}", cancellationToken) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<bool> ConfirmNoticeReadAsync(int usuarioId, int avisoId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("api/home/avisos/confirmar", new { AvisoID = avisoId, UsuarioID = usuarioId }, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

@@ -68,11 +68,11 @@
             <div class="card border-0 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #10b981 15%, transparent);">
-                        <i class="fa-duotone fa-boxes-stacked fa-lg" style="color:#10b981;"></i>
+                        <i class="fa-duotone fa-file-signature fa-lg" style="color:#10b981;"></i>
                     </div>
                     <div>
-                        <p class="text-muted mb-0" style="font-size:.8rem;">Pedidos Hoje</p>
-                        <h4 class="mb-0 fw-bold">42</h4>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Documentos para Assinar</p>
+                        <h4 class="mb-0 fw-bold">0</h4>
                     </div>
                 </div>
             </div>
@@ -265,29 +265,21 @@
                 <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
                     <i class="fa-duotone fa-bullhorn text-br"></i>
                     <strong>Avisos Importantes</strong>
+                    <span id="avisos-counter" class="text-muted" style="font-size:.85rem;"></span>
+                    <span class="ms-auto d-none d-flex align-items-center gap-2" id="avisos-pagination">
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0" id="btnAvisosPrev" title="Anterior">
+                            <i class="fa-duotone fa-chevron-left"></i>
+                        </button>
+                        <small class="text-muted" id="avisos-page-info" style="font-size:.85rem;"></small>
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0" id="btnAvisosNext" title="Próximo">
+                            <i class="fa-duotone fa-chevron-right"></i>
+                        </button>
+                    </span>
                 </div>
                 <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex align-items-start gap-3 py-3">
-                            <span class="badge rounded-pill bg-danger mt-1">Urgente</span>
-                            <div>
-                                <p class="mb-1 fw-semibold">Manutenção programada no SAP — 21/06 das 22h às 02h</p>
-                                <small class="text-muted">Publicado em 18/06/2025 por TI Corporativa</small>
-                            </div>
-                        </div>
-                        <div class="list-group-item d-flex align-items-start gap-3 py-3">
-                            <span class="badge rounded-pill bg-warning text-dark mt-1">Atenção</span>
-                            <div>
-                                <p class="mb-1 fw-semibold">Novo procedimento para solicitação de crédito a partir de Julho</p>
-                                <small class="text-muted">Publicado em 15/06/2025 por Financeiro</small>
-                            </div>
-                        </div>
-                        <div class="list-group-item d-flex align-items-start gap-3 py-3">
-                            <span class="badge rounded-pill bg-info mt-1">Info</span>
-                            <div>
-                                <p class="mb-1 fw-semibold">Confraternização de meio de ano — 27/06 a partir das 17h</p>
-                                <small class="text-muted">Publicado em 12/06/2025 por RH</small>
-                            </div>
+                    <div class="list-group list-group-flush" id="avisos-container">
+                        <div class="list-group-item text-center text-muted py-3">
+                            <i class="fa-duotone fa-spinner-third fa-spin me-2"></i>Carregando avisos...
                         </div>
                     </div>
                 </div>
@@ -464,6 +456,32 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-br" id="btnSalvarMonitor">
                     <i class="fa-solid fa-check me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDetalheAviso" tabindex="-1" aria-labelledby="modalDetalheAvisoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetalheAvisoLabel">
+                    <i class="fa-duotone fa-bullhorn text-br me-2"></i><span id="avisoModalTitulo"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span id="avisoModalBadge" class="badge rounded-pill"></span>
+                    <small class="text-muted" id="avisoModalData"></small>
+                </div>
+                <div id="avisoModalDescricao"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-br" id="btnConfirmarLeitura">
+                    <i class="fa-duotone fa-check me-1"></i>Marcar como lido
                 </button>
             </div>
         </div>
@@ -789,6 +807,162 @@
                 })
                 .catch(() => window.sicAlert('Erro', 'Erro ao salvar monitor.', 'error'))
                 .finally(() => btnSalvar.disabled = false);
+        });
+    })();
+
+    // === Avisos Importantes (lazy load + paginação) ===
+    (function () {
+        const container = document.getElementById('avisos-container');
+        const pagination = document.getElementById('avisos-pagination');
+        const btnPrev = document.getElementById('btnAvisosPrev');
+        const btnNext = document.getElementById('btnAvisosNext');
+        const pageInfo = document.getElementById('avisos-page-info');
+        const counterEl = document.getElementById('avisos-counter');
+
+        const modalEl = document.getElementById('modalDetalheAviso');
+        const modal = new bootstrap.Modal(modalEl);
+        const modalTitulo = document.getElementById('avisoModalTitulo');
+        const modalBadge = document.getElementById('avisoModalBadge');
+        const modalData = document.getElementById('avisoModalData');
+        const modalDescricao = document.getElementById('avisoModalDescricao');
+        const btnConfirmar = document.getElementById('btnConfirmarLeitura');
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers = { 'Content-Type': 'application/json' };
+        if (antiForgeryToken) headers['RequestVerificationToken'] = antiForgeryToken;
+
+        const PAGE_SIZE = 3;
+        let avisos = [];
+        let currentPage = 0;
+        let avisoAtual = null;
+
+        const prioridadeMap = {
+            1: { label: 'Urgente', bg: 'bg-danger', text: '' },
+            2: { label: 'Atenção', bg: 'bg-warning', text: 'text-dark' },
+            3: { label: 'Informação', bg: 'bg-info', text: '' }
+        };
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderPage() {
+            if (!avisos.length) {
+                container.innerHTML = '<div class="list-group-item text-center text-muted py-4"><i class="fa-duotone fa-bell-slash me-2"></i>Nenhum aviso no momento.</div>';
+                pagination.classList.add('d-none');
+                pagination.classList.remove('d-flex');
+                counterEl.textContent = '';
+                return;
+            }
+
+            const totalPages = Math.ceil(avisos.length / PAGE_SIZE);
+            const start = currentPage * PAGE_SIZE;
+            const pageItems = avisos.slice(start, start + PAGE_SIZE);
+
+            let html = '';
+            pageItems.forEach(a => {
+                const p = prioridadeMap[a.prioridade] || prioridadeMap[3];
+                html += `<a href="#" class="list-group-item list-group-item-action d-flex align-items-start gap-3 py-3 btn-ver-aviso"
+                            data-aviso-id="${a.avisoID}"
+                            data-titulo="${a.titulo.replace(/"/g, '&quot;')}"
+                            data-descricao="${encodeURIComponent(a.descricao)}"
+                            data-data="${a.dataHoraEnvio}"
+                            data-prioridade="${a.prioridade}">
+                    <span class="badge rounded-pill ${p.bg} ${p.text} mt-1">${p.label}</span>
+                    <div class="flex-grow-1">
+                        <p class="mb-1 fw-semibold">${a.titulo}</p>
+                        <small class="text-muted">Publicado em ${formatDate(a.dataHoraEnvio)}</small>
+                    </div>
+                    <i class="fa-duotone fa-chevron-right text-muted mt-1"></i>
+                </a>`;
+            });
+
+            container.innerHTML = html;
+            counterEl.textContent = `(${avisos.length})`;
+
+            if (totalPages > 1) {
+                pagination.classList.remove('d-none');
+                pagination.classList.add('d-flex');
+                pageInfo.textContent = `${currentPage + 1} / ${totalPages}`;
+                btnPrev.disabled = currentPage === 0;
+                btnNext.disabled = currentPage >= totalPages - 1;
+            } else {
+                pagination.classList.add('d-none');
+                pagination.classList.remove('d-flex');
+            }
+        }
+
+        function carregarAvisos() {
+            container.innerHTML = '<div class="list-group-item text-center text-muted py-3"><i class="fa-duotone fa-spinner-third fa-spin me-2"></i>Carregando avisos...</div>';
+            pagination.classList.add('d-none');
+            pagination.classList.remove('d-flex');
+
+            fetch('@Url.Action("GetUserNotices", "Home")')
+                .then(r => r.json())
+                .then(data => {
+                    avisos = data;
+                    currentPage = 0;
+                    renderPage();
+                })
+                .catch(() => {
+                    container.innerHTML = '<div class="list-group-item text-center text-danger py-3"><i class="fa-duotone fa-triangle-exclamation me-2"></i>Erro ao carregar avisos.</div>';
+                });
+        }
+
+        carregarAvisos();
+
+        btnPrev.addEventListener('click', () => { if (currentPage > 0) { currentPage--; renderPage(); } });
+        btnNext.addEventListener('click', () => { if (currentPage < Math.ceil(avisos.length / PAGE_SIZE) - 1) { currentPage++; renderPage(); } });
+
+        container.addEventListener('click', function (e) {
+            const item = e.target.closest('.btn-ver-aviso');
+            if (!item) return;
+            e.preventDefault();
+
+            const avisoId = parseInt(item.dataset.avisoId);
+            const titulo = item.dataset.titulo;
+            const descricao = decodeURIComponent(item.dataset.descricao);
+            const data = item.dataset.data;
+            const prioridade = parseInt(item.dataset.prioridade);
+            const p = prioridadeMap[prioridade] || prioridadeMap[3];
+
+            avisoAtual = avisoId;
+            modalTitulo.textContent = titulo;
+            modalBadge.className = `badge rounded-pill ${p.bg} ${p.text}`;
+            modalBadge.textContent = p.label;
+            modalData.textContent = `Publicado em ${formatDate(data)}`;
+            modalDescricao.innerHTML = descricao;
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerHTML = '<i class="fa-duotone fa-check me-1"></i>Marcar como lido';
+            modal.show();
+        });
+
+        btnConfirmar.addEventListener('click', function () {
+            if (!avisoAtual) return;
+            btnConfirmar.disabled = true;
+            btnConfirmar.innerHTML = '<i class="fa-duotone fa-spinner-third fa-spin me-1"></i>Processando...';
+
+            fetch('@Url.Action("ConfirmNoticeRead", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ avisoID: avisoAtual })
+            })
+                .then(r => {
+                    if (r.ok) {
+                        modal.hide();
+                        carregarAvisos();
+                    } else {
+                        window.sicAlert('Erro', 'Erro ao confirmar leitura.', 'error');
+                        btnConfirmar.disabled = false;
+                        btnConfirmar.innerHTML = '<i class="fa-duotone fa-check me-1"></i>Marcar como lido';
+                    }
+                })
+                .catch(() => {
+                    window.sicAlert('Erro', 'Erro ao confirmar leitura.', 'error');
+                    btnConfirmar.disabled = false;
+                    btnConfirmar.innerHTML = '<i class="fa-duotone fa-check me-1"></i>Marcar como lido';
+                });
         });
     })();
 </script>

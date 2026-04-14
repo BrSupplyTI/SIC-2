@@ -1,0 +1,281 @@
+@model List<SIC.Web.Models.Admin.AdminNoticeVm>
+@{
+    ViewData["Title"] = "Mensagens Importantes";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" />
+    <style>
+        .badge-prioridade-1 { background-color: var(--bs-danger); color: #fff; }
+        .badge-prioridade-2 { background-color: var(--bs-warning); color: #212529; }
+        .badge-prioridade-3 { background-color: var(--bs-info); color: #fff; }
+
+        .badge-situacao-ativa { background-color: var(--bs-success); color: #fff; }
+        .badge-situacao-expirada { background-color: var(--bs-secondary); color: #fff; }
+
+        .btn-acao-mensagem {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.05rem;
+            padding: 0.25rem 0.45rem;
+            border-radius: 0.35rem;
+            transition: background-color 0.15s ease-in-out;
+        }
+        .btn-acao-mensagem:hover {
+            background-color: var(--bs-tertiary-bg, #f0f0f0);
+        }
+        .btn-acao-excluir { color: var(--bs-danger); }
+        .btn-acao-expirar { color: var(--bs-warning-text-emphasis, #997404); }
+
+        .admin-mensagens-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .admin-mensagens-header h5 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.15rem;
+        }
+
+        .rich-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            padding: 0.4rem;
+            border: 1px solid var(--bs-border-color);
+            border-bottom: none;
+            border-radius: 0.375rem 0.375rem 0 0;
+            background: var(--bs-tertiary-bg, #f8f9fa);
+        }
+        .rich-toolbar button {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.85rem;
+            color: var(--bs-body-color);
+        }
+        .rich-toolbar button:hover {
+            background-color: var(--bs-secondary-bg, #e9ecef);
+        }
+        .rich-toolbar .separator {
+            width: 1px;
+            background: var(--bs-border-color);
+            margin: 0.15rem 0.25rem;
+        }
+        .rich-toolbar select {
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.25rem;
+            padding: 0.15rem 0.35rem;
+            font-size: 0.8rem;
+            background: var(--bs-body-bg);
+            color: var(--bs-body-color);
+        }
+        #editorDescricao {
+            min-height: 150px;
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0 0 0.375rem 0.375rem;
+            padding: 0.75rem;
+            background: var(--bs-body-bg);
+        }
+        #editorDescricao:focus {
+            outline: none;
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), .15);
+        }
+    </style>
+}
+
+<div class="admin-area">
+    <div class="admin-mensagens-header">
+        <h5>
+            <a asp-area="Admin" asp-controller="Admin" asp-action="Index" class="text-decoration-none text-muted me-1" title="Voltar ao Painel">
+                <i class="fa-duotone fa-arrow-left"></i>
+            </a>
+            <i class="fa-duotone fa-bullhorn text-br me-2"></i>Mensagens Importantes
+        </h5>
+        <button type="button" class="btn btn-sm btn-primary" id="btnAdicionarNova" data-bs-toggle="modal" data-bs-target="#modalNovaMensagem">
+            <i class="fa-duotone fa-plus me-1"></i>Nova Mensagem
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table id="tblMensagens" class="table styled-table w-100">
+            <thead>
+                <tr>
+                    <th class="text-center">ID</th>
+                    <th>Mensagem</th>
+                    <th class="text-center">Prioridade</th>
+                    <th class="text-center">Envio / Expiração</th>                                                            
+                    <th class="text-center">Situação</th>
+                    <th class="text-center">Leituras</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var prioridadeLabel = item.Prioridade switch
+                    {
+                        1 => "Urgente",
+                        2 => "Atenção",
+                        3 => "Informação",
+                        _ => "Outro"
+                    };
+                    var prioridadeClass = $"badge-prioridade-{item.Prioridade}";
+                    var situacaoClass = item.Situacao == "Ativa" ? "badge-situacao-ativa" : "badge-situacao-expirada";
+                    var corClass = item.Situacao == "Ativa" ? "text-success" : "text-danger";
+
+                    <tr data-aviso-id="@item.AvisoID" data-qt-leituras="@item.QtLeituras" data-situacao="@item.Situacao">
+                        <td class="text-center">@item.AvisoID</td>
+                        <td title="@item.Descricao">@item.Titulo<br /><span class="text-muted fs-6">Para: @item.Destinatario</span></td>
+                        <td class="text-center"><span class="badge @prioridadeClass">@prioridadeLabel</span></td>
+                        <td class="text-center" data-order="@item.DataHoraEnvio.ToString("yyyy-MM-dd HH:mm")"><i class="fa-solid fa-send me-2 text-primary"></i> @item.DataHoraEnvio.ToString("dd/MM/yyyy HH:mm")<br /> <i class="fa-solid fa-clock me-2 @corClass"></i>@item.DataHoraExpiracao.ToString("dd/MM/yyyy HH:mm")</td>                                                                        
+                        <td class="text-center"><span class="badge @situacaoClass">@item.Situacao</span></td>
+                        <td class="text-center">@item.QtLeituras</td>
+                        <td class="text-center text-nowrap">
+                            @if (item.Situacao == "Ativa")
+                            {
+                                @if (item.QtLeituras == 0)
+                                {
+                                    <button type="button"
+                                            class="btn-acao-mensagem btn-acao-excluir"
+                                            title="Excluir mensagem"
+                                            data-action="excluir"
+                                            data-aviso-id="@item.AvisoID">
+                                        <i class="fa-duotone fa-trash-alt"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button"
+                                            class="btn-acao-mensagem btn-acao-expirar"
+                                            title="Expirar mensagem"
+                                            data-action="expirar"
+                                            data-aviso-id="@item.AvisoID">
+                                        <i class="fa-duotone fa-calendar-xmark"></i>
+                                    </button>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted" title="Mensagem já expirada">—</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Nova Mensagem -->
+<div class="modal fade" id="modalNovaMensagem" tabindex="-1" aria-labelledby="modalNovaMensagemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNovaMensagemLabel">
+                    <i class="fa-duotone fa-plus-circle text-primary me-2"></i>Nova Mensagem
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="txtTitulo" class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="txtTitulo" maxlength="100" placeholder="Título do aviso" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Descrição <span class="text-danger">*</span></label>
+                    <div class="rich-toolbar" id="richToolbar">
+                        <button type="button" data-cmd="bold" title="Negrito"><i class="fa-solid fa-bold"></i></button>
+                        <button type="button" data-cmd="italic" title="Itálico"><i class="fa-solid fa-italic"></i></button>
+                        <button type="button" data-cmd="underline" title="Sublinhado"><i class="fa-solid fa-underline"></i></button>
+                        <button type="button" data-cmd="strikeThrough" title="Tachado"><i class="fa-solid fa-strikethrough"></i></button>
+                        <div class="separator"></div>
+                        <button type="button" data-cmd="insertUnorderedList" title="Lista"><i class="fa-solid fa-list-ul"></i></button>
+                        <button type="button" data-cmd="insertOrderedList" title="Lista numerada"><i class="fa-solid fa-list-ol"></i></button>
+                        <div class="separator"></div>
+                        <select id="cmdForeColor" title="Cor do texto">
+                            <option value="">Cor</option>
+                            <option value="#000000" style="color:#000">&#9632; Preto</option>
+                            <option value="#dc3545" style="color:#dc3545">&#9632; Vermelho</option>
+                            <option value="#198754" style="color:#198754">&#9632; Verde</option>
+                            <option value="#0d6efd" style="color:#0d6efd">&#9632; Azul</option>
+                            <option value="#ffc107" style="color:#ffc107">&#9632; Amarelo</option>
+                            <option value="#6f42c1" style="color:#6f42c1">&#9632; Roxo</option>
+                        </select>
+                        <div class="separator"></div>
+                        <button type="button" data-cmd="removeFormat" title="Limpar formatação"><i class="fa-solid fa-eraser"></i></button>
+                    </div>
+                    <div contenteditable="true" id="editorDescricao"></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="selPrioridade" class="form-label fw-semibold">Prioridade <span class="text-danger">*</span></label>
+                        <select class="form-select" id="selPrioridade">
+                            <option value="1">1 — Urgente</option>
+                            <option value="2">2 — Atenção</option>
+                            <option value="3" selected>3 — Informação</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="txtExpiracao" class="form-label fw-semibold">Data de Expiração <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control" id="txtExpiracao" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="selDestinatarioTipo" class="form-label fw-semibold">Destinatário</label>
+                    <select class="form-select" id="selDestinatarioTipo">
+                        <option value="todos" selected>Todos os usuários</option>
+                        <option value="area">Área específica</option>
+                        <option value="usuario">Usuário específico</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 d-none" id="wrapperArea">
+                    <label for="selArea" class="form-label fw-semibold">Área</label>
+                    <select class="form-select" id="selArea">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 d-none" id="wrapperUsuario">
+                    <label for="selUsuario" class="form-label fw-semibold">Usuário</label>
+                    <select class="form-select" id="selUsuario">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-xmark me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnSalvarMensagem">
+                    <i class="fa-solid fa-check me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="~/js/admin/mensagens-importantes.js" asp-append-version="true"></script>
+}

@@ -110,6 +110,30 @@ public sealed class HomeController(HomeApiClient homeApi) : Controller
         return ok ? Ok() : StatusCode(500);
     }
 
+    [Authorize]
+    [HttpGet("Home/Avisos")]
+    public async Task<IActionResult> GetUserNotices(CancellationToken cancellationToken)
+    {
+        var usuarioIdClaim = User.FindFirst("sic_usuarioid")?.Value;
+        if (!int.TryParse(usuarioIdClaim, out var usuarioId))
+            return Unauthorized();
+
+        var avisos = await homeApi.GetUserNoticesAsync(usuarioId, cancellationToken);
+        return Json(avisos);
+    }
+
+    [Authorize]
+    [HttpPost("Home/Avisos/Confirmar")]
+    public async Task<IActionResult> ConfirmNoticeRead([FromBody] ConfirmNoticeReadRequest request, CancellationToken cancellationToken)
+    {
+        var usuarioIdClaim = User.FindFirst("sic_usuarioid")?.Value;
+        if (!int.TryParse(usuarioIdClaim, out var usuarioId))
+            return Unauthorized();
+
+        var ok = await homeApi.ConfirmNoticeReadAsync(usuarioId, request.AvisoID, cancellationToken);
+        return ok ? Ok() : StatusCode(500);
+    }
+
     [AllowAnonymous]
     public IActionResult Privacy()
     {
@@ -145,4 +169,9 @@ public sealed class AddMonitorRequest
 public sealed class RemoveMonitorRequest
 {
     public int UsuarioMonitorID { get; set; }
+}
+
+public sealed class ConfirmNoticeReadRequest
+{
+    public int AvisoID { get; set; }
 }

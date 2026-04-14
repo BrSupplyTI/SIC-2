@@ -76,6 +76,20 @@ public sealed class HomeApiController(IHomeService service) : ControllerBase
         await service.RemoveUserMonitorAsync(usuarioId, usuarioMonitorId, cancellationToken);
         return NoContent();
     }
+
+    [HttpGet("avisos/usuario/{usuarioId:int}")]
+    public async Task<IActionResult> GetUserNotices(int usuarioId, CancellationToken cancellationToken)
+    {
+        var result = await service.GetUserNoticesAsync(usuarioId, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("avisos/confirmar")]
+    public async Task<IActionResult> ConfirmNoticeRead([FromBody] ConfirmNoticeReadRequest request, CancellationToken cancellationToken)
+    {
+        await service.ConfirmNoticeReadAsync(request.AvisoID, request.UsuarioID, cancellationToken);
+        return NoContent();
+    }
 }
 
 public sealed class AddUserMonitorRequest
@@ -90,4 +104,10 @@ public sealed class AddUserShortcutRequest
     public int UsuarioID { get; set; }
     public int AtalhoID { get; set; }
     public string Estilo { get; set; } = string.Empty;
+}
+
+public sealed class ConfirmNoticeReadRequest
+{
+    public int AvisoID { get; set; }
+    public int UsuarioID { get; set; }
 }

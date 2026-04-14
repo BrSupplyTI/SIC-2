@@ -1,0 +1,212 @@
+@{
+    ViewData["Title"] = "Administração";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin.css" asp-append-version="true" />
+}
+
+<div class="admin-area">
+    <div class="admin-header">
+        <h2>
+            <i class="fa-duotone fa-shield-halved text-br me-2"></i>Painel de Administração
+        </h2>
+        <p>
+            Gerencie configurações do sistema, usuários e parâmetros operacionais.
+            Selecione uma seção abaixo para expandir suas opções.
+        </p>
+    </div>
+
+    <div class="accordion admin-accordion" id="adminAccordion">
+
+        @* ──────────────────────────────────────────────────────────
+           1. Mensagens
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingMensagens">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseMensagens"
+                        aria-expanded="false"
+                        aria-controls="collapseMensagens">
+                    <i class="fa-duotone fa-envelope-open-text admin-icon"></i>
+                    Mensagens
+                </button>
+            </h2>
+            <div id="collapseMensagens" class="accordion-collapse collapse" aria-labelledby="headingMensagens" data-bs-parent="#adminAccordion">
+                <div class="accordion-body">
+                    <div class="admin-module-desc">
+                        Gerencie as mensagens exibidas na página inicial do portal.
+                        Crie, expire ou exclua avisos importantes destinados a todos os usuários, áreas ou pessoas específicas.
+                    </div>
+                    <ul class="admin-feature-list">
+                        <li class="admin-feature-item admin-feature-item-link">
+                            <a asp-area="Admin" asp-controller="Admin" asp-action="MensagensImportantes" class="admin-feature-link">
+                                <i class="fa-duotone fa-bullhorn admin-feature-icon"></i>
+                                <div class="admin-feature-content">
+                                    <h6>Mensagens Importantes</h6>
+                                    <p>Administrar os avisos importantes exibidos na home do portal.</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right admin-feature-arrow"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* ──────────────────────────────────────────────────────────
+           2. Gerenciamento de Usuários
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingUsuarios">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseUsuarios"
+                        aria-expanded="false"
+                        aria-controls="collapseUsuarios">
+                    <i class="fa-duotone fa-users-gear admin-icon"></i>
+                    Gerenciamento de Usuários
+                </button>
+            </h2>
+            <div id="collapseUsuarios" class="accordion-collapse collapse" aria-labelledby="headingUsuarios" data-bs-parent="#adminAccordion">
+                <div class="accordion-body">
+                    <div class="admin-module-desc">
+                        Controle completo sobre os usuários do sistema: criação de novas contas,
+                        ajuste de permissões, vínculos com estabelecimentos, redefinição de senhas e
+                        desativação de acessos. Todas as alterações são registradas no log de auditoria.
+                    </div>
+                    <ul class="admin-feature-list">
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-user-plus admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Cadastro de Usuários <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Criar novos usuários com login, e-mail, estabelecimento padrão e perfil de acesso.</p>
+                            </div>
+                        </li>
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-key admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Permissões e Perfis <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Definir quais módulos e telas cada usuário ou grupo pode acessar.</p>
+                            </div>
+                        </li>
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-building admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Vínculos de Estabelecimento <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Associar ou revogar acessos de usuários a estabelecimentos específicos.</p>
+                            </div>
+                        </li>
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-lock-open admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Reset de Senhas <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Redefinir a senha de qualquer usuário ativo do sistema.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* ──────────────────────────────────────────────────────────
+           3. Configurações do Sistema
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingSistema">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseSistema"
+                        aria-expanded="false"
+                        aria-controls="collapseSistema">
+                    <i class="fa-duotone fa-sliders admin-icon"></i>
+                    Configurações do Sistema
+                </button>
+            </h2>
+            <div id="collapseSistema" class="accordion-collapse collapse" aria-labelledby="headingSistema" data-bs-parent="#adminAccordion">
+                <div class="accordion-body">
+                    <div class="admin-module-desc">
+                        Parâmetros globais que afetam o comportamento do SIC em todas as áreas.
+                        Alterações aqui são refletidas imediatamente para todos os usuários e estabelecimentos.
+                    </div>
+                    <ul class="admin-feature-list">
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-clock admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Timeout de Sessão <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Ajustar o tempo de expiração de sessão dos usuários logados.</p>
+                            </div>
+                        </li>
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-envelope admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Configuração de E-mail <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Definir servidor SMTP, remetente padrão e templates de notificação.</p>
+                            </div>
+                        </li>
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-database admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Parâmetros de Integração <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Configurar strings de conexão, APIs externas e intervalos de sincronização.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* ──────────────────────────────────────────────────────────
+           4. Logs e Auditoria
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingLogs">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseLogs"
+                        aria-expanded="false"
+                        aria-controls="collapseLogs">
+                    <i class="fa-duotone fa-file-magnifying-glass admin-icon"></i>
+                    Logs e Auditoria
+                </button>
+            </h2>
+            <div id="collapseLogs" class="accordion-collapse collapse" aria-labelledby="headingLogs" data-bs-parent="#adminAccordion">
+                <div class="accordion-body">
+                    <div class="admin-module-desc">
+                        Visualize o histórico de ações realizadas no sistema. Acompanhe alterações em cadastros,
+                        logins, trocas de estabelecimento e demais operações críticas para fins de rastreabilidade e compliance.
+                    </div>
+                    <ul class="admin-feature-list">
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-timeline admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Log de Atividades <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Histórico cronológico de todas as ações (login, alteração de dados, exclusões) por usuário.</p>
+                            </div>
+                        </li>
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-user-clock admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Sessões Ativas <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Monitorar em tempo real quais usuários estão logados, seu IP e última atividade.</p>
+                            </div>
+                        </li>
+                        <li class="admin-feature-item">
+                            <i class="fa-duotone fa-chart-mixed admin-feature-icon"></i>
+                            <div class="admin-feature-content">
+                                <h6>Relatórios de Uso <span class="admin-badge-soon">Em breve</span></h6>
+                                <p>Estatísticas de acesso ao sistema: frequência de login, módulos mais acessados e horários de pico.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

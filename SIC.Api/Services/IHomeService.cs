@@ -14,4 +14,6 @@ public interface IHomeService
     Task<IReadOnlyList<UserMonitorResultDto>> GetUserMonitorResultsAsync(int usuarioId, CancellationToken cancellationToken = default);
     Task AddUserMonitorAsync(int usuarioId, int monitorId, string valor, CancellationToken cancellationToken = default);
     Task RemoveUserMonitorAsync(int usuarioId, int usuarioMonitorId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<NoticeDto>> GetUserNoticesAsync(int usuarioId, CancellationToken cancellationToken = default);
+    Task ConfirmNoticeReadAsync(int avisoId, int usuarioId, CancellationToken cancellationToken = default);
 }

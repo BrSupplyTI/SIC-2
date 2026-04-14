@@ -1,10 +1,13 @@
 using SIC.Api.Services;
+using SIC.Api.Services.Admin;
 using SIC.Api.Services.PrePedidosPDF;
 using SIC.Domain.Abstractions;
+using SIC.Domain.Abstractions.Admin;
 using SIC.Domain.Abstractions.PrePedidosPDF;
 using SIC.Infrastructure.Integrations;
 using SIC.Infrastructure.Integrations.PrePedidosPDF;
 using SIC.Infrastructure.Repositories;
+using SIC.Infrastructure.Repositories.Admin;
 using SIC.Infrastructure.Repositories.PrePedidosPDF;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +37,10 @@ builder.Services.AddScoped<IPrePedidoPDFCommandRepository, SqlPrePedidoPDFComman
 builder.Services.AddScoped<IPrePedidoPDFQueryService, PrePedidoPDFQueryService>();
 builder.Services.AddScoped<IPrePedidoPDFCommandService, PrePedidoPDFCommandService>();
 builder.Services.AddHttpClient<IPrePedidoPDFIntegrationService, PrePedidoPDFIntegrationService>();
+
+// Admin
+builder.Services.AddScoped<IAdminNoticeRepository, SqlAdminNoticeRepository>();
+builder.Services.AddScoped<IAdminNoticeService, AdminNoticeService>();
 
 var app = builder.Build();
 

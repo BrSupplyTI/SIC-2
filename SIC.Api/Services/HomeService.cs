@@ -110,4 +110,21 @@ public sealed class HomeService(IHomeRepository repository) : IHomeService
 
     public async Task RemoveUserMonitorAsync(int usuarioId, int usuarioMonitorId, CancellationToken cancellationToken = default)
         => await repository.RemoveUserMonitorAsync(usuarioId, usuarioMonitorId, cancellationToken);
+
+    public async Task<IReadOnlyList<NoticeDto>> GetUserNoticesAsync(int usuarioId, CancellationToken cancellationToken = default)
+    {
+        var items = await repository.GetUserNoticesAsync(usuarioId, cancellationToken);
+
+        return items.Select(i => new NoticeDto
+        {
+            AvisoID = i.AvisoID,
+            Titulo = i.Titulo,
+            Descricao = i.Descricao,
+            DataHoraEnvio = i.DataHoraEnvio,
+            Prioridade = i.Prioridade
+        }).ToList();
+    }
+
+    public async Task ConfirmNoticeReadAsync(int avisoId, int usuarioId, CancellationToken cancellationToken = default)
+        => await repository.ConfirmNoticeReadAsync(avisoId, usuarioId, cancellationToken);
 }

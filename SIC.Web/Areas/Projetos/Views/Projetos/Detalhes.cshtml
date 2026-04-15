@@ -1,0 +1,511 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoDetalhesViewModel
+@{
+    ViewData["Title"] = Model.NmProjeto;
+
+    var pct = Model.QtTarefas > 0 ? (int)Math.Round(Model.QtTarefasConcluidas * 100.0 / Model.QtTarefas) : 0;
+    var progressColor = pct == 100 ? "#198754" : pct >= 50 ? "#0d6efd" : "#ffc107";
+    var podeEditar = Model.IsAdmin || Model.UsuarioCriadorID == Model.UsuarioLogadoID;
+
+    string ToIsoDate(string? brDate)
+    {
+        if (string.IsNullOrWhiteSpace(brDate)) return string.Empty;
+        return DateTime.TryParseExact(brDate, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var dt)
+            ? dt.ToString("yyyy-MM-dd") : string.Empty;
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/projetos/detalhes.css" asp-append-version="true" />
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin fa-diagram-project me-2 text-br"></i>@Model.NmProjeto</h2>
+                    <span class="badge rounded-pill" style="background: @Model.CdCorStatus;">@Model.NmStatus</span>
+                </div>
+                <nav class="mt-1" style="font-size: 0.82rem;">
+                    <a asp-area="Projetos" asp-controller="Projetos" asp-action="Index" class="text-muted text-decoration-none">Projetos</a>
+                    <i class="fa-solid fa-chevron-right mx-1 text-muted" style="font-size: 0.6rem;"></i>
+                    <span class="text-muted">@Model.NmProjeto</span>
+                </nav>
+            </div>
+            <div class="d-flex gap-2">
+                @if (podeEditar)
+                {
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarProjeto">
+                        <i class="fa-solid fa-pen me-1"></i>Editar
+                    </button>
+                }
+                <a asp-area="Projetos" asp-controller="Projetos" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Voltar
+                </a>
+            </div>
+        </div>
+
+        <!-- Descrição -->
+        @if (!string.IsNullOrWhiteSpace(Model.DsProjeto))
+        {
+            <p class="text-muted mb-4" style="font-size: 0.9rem;">@Model.DsProjeto</p>
+        }
+
+        <!-- Quick Info Cards -->
+        <div class="row g-2 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="projeto-quick-card card border shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-duotone fa-list-check text-br fa-lg"></i>
+                        <div>
+                            <small class="text-muted">Tarefas</small>
+                            <div class="fw-semibold">@Model.QtTarefasConcluidas / @Model.QtTarefas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="projeto-quick-card card border shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-duotone fa-chart-pie text-br fa-lg"></i>
+                        <div>
+                            <small class="text-muted">Progresso</small>
+                            <div class="fw-semibold">@pct%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="projeto-quick-card card border shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-duotone fa-users text-br fa-lg"></i>
+                        <div>
+                            <small class="text-muted">Participantes</small>
+                            <div class="fw-semibold">@Model.Participantes.Count</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="projeto-quick-card card border shadow-sm p-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-duotone fa-calendar-range text-br fa-lg"></i>
+                        <div>
+                            <small class="text-muted">Prazo</small>
+                            <div class="fw-semibold" style="font-size: 0.85rem;">@(Model.DtInicio ?? "—") → @(Model.DtPrevisaoFim ?? "—")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de progresso -->
+        <div class="mb-4">
+            <div class="projeto-detalhe-progress">
+                <div class="projeto-detalhe-progress-bar" style="width: @pct%; background: @progressColor;"></div>
+            </div>
+        </div>
+
+        <!-- Accordion -->
+        <div class="accordion" id="projetoDetalhesAccordion">
+
+            <!-- ===== TAREFAS ===== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTarefas">
+                    <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTarefas" aria-expanded="true" aria-controls="collapseTarefas">
+                        <i class="fa-duotone fa-thin fa-list-check me-3 text-br"></i> Tarefas
+                        <span class="badge bg-secondary ms-2">@Model.Tarefas.Count</span>
+                    </button>
+                </h2>
+                <div id="collapseTarefas" class="accordion-collapse collapse show" aria-labelledby="headingTarefas" data-bs-parent="#projetoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <div>
+                                @if (podeEditar)
+                                {
+                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaTarefa">
+                                        <i class="fa-solid fa-plus me-1"></i>Nova Tarefa
+                                    </button>
+                                }
+                            </div>
+                            @if (Model.Tarefas.Count > 0)
+                            {
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Visualização de tarefas">
+                                    <button type="button" class="btn btn-outline-secondary active" id="btnViewLista" title="Visualização em lista">
+                                        <i class="fa-solid fa-list"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="btnViewKanban" title="Visualização Kanban">
+                                        <i class="fa-solid fa-columns"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+
+                        @* ── Vista Lista ── *@
+                        <div id="tarefasViewLista">
+                            @if (Model.Tarefas.Count == 0)
+                            {
+                                <p class="text-muted mb-0">Nenhuma tarefa cadastrada.</p>
+                            }
+                            else
+                            {
+                                @foreach (var tarefa in Model.Tarefas)
+                                {
+                                    <partial name="_TarefaItem" model="tarefa" view-data='new ViewDataDictionary(ViewData) { { "PodeEditar", podeEditar }, { "TarefaStatusDisponiveis", Model.TarefaStatusDisponiveis } }' />
+                                }
+                            }
+                        </div>
+
+                        @* ── Vista Kanban ── *@
+                        <div id="tarefasViewKanban" class="d-none">
+                            <partial name="_KanbanBoard" model="Model" view-data='new ViewDataDictionary(ViewData) { { "PodeEditar", podeEditar } }' />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== PARTICIPANTES ===== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingParticipantes">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseParticipantes" aria-expanded="false" aria-controls="collapseParticipantes">
+                        <i class="fa-duotone fa-thin fa-users me-3 text-br"></i> Participantes
+                        <span class="badge bg-secondary ms-2">@Model.Participantes.Count</span>
+                    </button>
+                </h2>
+                <div id="collapseParticipantes" class="accordion-collapse collapse" aria-labelledby="headingParticipantes" data-bs-parent="#projetoDetalhesAccordion">
+                    <div class="accordion-body">
+                        @if (podeEditar)
+                        {
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalAdicionarParticipante">
+                                    <i class="fa-solid fa-user-plus me-1"></i>Adicionar Participante
+                                </button>
+                            </div>
+                        }
+                        @if (Model.Participantes.Count == 0)
+                        {
+                            <p class="text-muted mb-0">Nenhum participante cadastrado.</p>
+                        }
+                        else
+                        {
+                            @for (var i = 0; i < Model.Participantes.Count; i++)
+                            {
+                                <partial name="_ParticipanteRow" model="Model.Participantes[i]" view-data='new ViewDataDictionary(ViewData) { { "Index", i }, { "PodeEditar", podeEditar }, { "UsuarioCriadorID", Model.UsuarioCriadorID } }' />
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== HISTÓRICO ===== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingHistorico">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHistorico" aria-expanded="false" aria-controls="collapseHistorico">
+                        <i class="fa-duotone fa-thin fa-clock-rotate-left me-3 text-br"></i> Histórico
+                        <span class="badge bg-secondary ms-2">@Model.Historico.Count</span>
+                    </button>
+                </h2>
+                <div id="collapseHistorico" class="accordion-collapse collapse" aria-labelledby="headingHistorico" data-bs-parent="#projetoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <partial name="_HistoricoTimeline" model="Model.Historico" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== INFORMAÇÕES DO PROJETO ===== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingInfo">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfo" aria-expanded="false" aria-controls="collapseInfo">
+                        <i class="fa-duotone fa-thin fa-circle-info me-3 text-br"></i> Informações do Projeto
+                    </button>
+                </h2>
+                <div id="collapseInfo" class="accordion-collapse collapse" aria-labelledby="headingInfo" data-bs-parent="#projetoDetalhesAccordion">
+                    <div class="accordion-body">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Criado por</small>
+                                <span class="fw-semibold">@Model.NmCriador</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Data de Criação</small>
+                                <span class="fw-semibold">@(Model.DtCriacao ?? "—")</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Início</small>
+                                <span class="fw-semibold">@(Model.DtInicio ?? "—")</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Previsão de Término</small>
+                                <span class="fw-semibold">@(Model.DtPrevisaoFim ?? "—")</span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(Model.DtFimReal))
+                            {
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Término Real</small>
+                                    <span class="fw-semibold">@Model.DtFimReal</span>
+                                </div>
+                            }
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Última Atualização</small>
+                                <span class="fw-semibold">@(Model.DtUltimaAtualizacao ?? "—")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@if (podeEditar)
+{
+<!-- Modal Nova Tarefa -->
+<div class="modal fade" id="modalNovaTarefa" tabindex="-1" aria-labelledby="modalNovaTarefaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formNovaTarefa" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalNovaTarefaLabel">
+                        <i class="fa-duotone fa-thin fa-circle-plus me-2 text-br"></i>Nova Tarefa
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="ntProjetoID" value="@Model.ProjetoID" />
+
+                    <div class="mb-3">
+                        <label for="ntNmTarefa" class="form-label">Nome da Tarefa <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="ntNmTarefa" maxlength="200" required />
+                        <div class="invalid-feedback">O nome da tarefa é obrigatório.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ntDsTarefa" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="ntDsTarefa" rows="3" maxlength="2000"></textarea>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="ntProjetoTarefaStatusID" class="form-label">Status</label>
+                            <select class="form-select" id="ntProjetoTarefaStatusID">
+                                @foreach (var s in Model.TarefaStatusDisponiveis)
+                                {
+                                    <option value="@s.ProjetoTarefaStatusID">@s.NmStatus</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="ntProjetoTarefaPrioridadeID" class="form-label">Prioridade</label>
+                            <select class="form-select" id="ntProjetoTarefaPrioridadeID">
+                                @foreach (var p in Model.TarefaPrioridadesDisponiveis)
+                                {
+                                    <option value="@p.ProjetoTarefaPrioridadeID"
+                                            selected="@(p.ProjetoTarefaPrioridadeID == 2)">@p.NmPrioridade</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="ntDtInicio" class="form-label">Data de Início</label>
+                            <input type="date" class="form-control" id="ntDtInicio" />
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="ntDtPrevisaoFim" class="form-label">Previsão de Término</label>
+                            <input type="date" class="form-control" id="ntDtPrevisaoFim" />
+                            <div class="invalid-feedback">A previsão de término não pode ser anterior à data de início.</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ntProjetoTarefaPaiID" class="form-label">Tarefa Pai <small class="text-muted">(opcional — para subtarefa)</small></label>
+                        <select class="form-select" id="ntProjetoTarefaPaiID">
+                            <option value="">Nenhuma (tarefa raiz)</option>
+                            @foreach (var t in Model.Tarefas)
+                            {
+                                <option value="@t.ProjetoTarefaID">@t.NmTarefa</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarNovaTarefa">
+                        <i class="fa-solid fa-check me-1"></i>Criar Tarefa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Tarefa -->
+<div class="modal fade" id="modalEditarTarefa" tabindex="-1" aria-labelledby="modalEditarTarefaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarTarefa" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarTarefaLabel">
+                        <i class="fa-duotone fa-thin fa-pen-to-square me-2 text-br"></i>Editar Tarefa
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="etProjetoTarefaID" />
+
+                    <div class="mb-3">
+                        <label for="etNmTarefa" class="form-label">Nome da Tarefa <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="etNmTarefa" maxlength="200" required />
+                        <div class="invalid-feedback">O nome da tarefa é obrigatório.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="etDsTarefa" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="etDsTarefa" rows="3" maxlength="2000"></textarea>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="etProjetoTarefaStatusID" class="form-label">Status</label>
+                            <select class="form-select" id="etProjetoTarefaStatusID">
+                                @foreach (var s in Model.TarefaStatusDisponiveis)
+                                {
+                                    <option value="@s.ProjetoTarefaStatusID">@s.NmStatus</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="etProjetoTarefaPrioridadeID" class="form-label">Prioridade</label>
+                            <select class="form-select" id="etProjetoTarefaPrioridadeID">
+                                @foreach (var p in Model.TarefaPrioridadesDisponiveis)
+                                {
+                                    <option value="@p.ProjetoTarefaPrioridadeID">@p.NmPrioridade</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-4">
+                            <label for="etDtInicio" class="form-label">Início</label>
+                            <input type="date" class="form-control" id="etDtInicio" />
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <label for="etDtPrevisaoFim" class="form-label">Prev. Término</label>
+                            <input type="date" class="form-control" id="etDtPrevisaoFim" />
+                            <div class="invalid-feedback">A previsão de término não pode ser anterior à data de início.</div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <label for="etDtFimReal" class="form-label">Término Real</label>
+                            <input type="date" class="form-control" id="etDtFimReal" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarEditarTarefa">
+                        <i class="fa-solid fa-check me-1"></i>Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Projeto -->
+<div class="modal fade" id="modalEditarProjeto" tabindex="-1" aria-labelledby="modalEditarProjetoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarProjeto" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarProjetoLabel">
+                        <i class="fa-duotone fa-thin fa-pen-to-square me-2 text-br"></i>Editar Projeto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="epProjetoID" value="@Model.ProjetoID" />
+
+                    <div class="mb-3">
+                        <label for="epNmProjeto" class="form-label">Nome do Projeto <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="epNmProjeto" maxlength="200" required
+                               value="@Model.NmProjeto" />
+                        <div class="invalid-feedback">O nome do projeto é obrigatório.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="epDsProjeto" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="epDsProjeto" rows="3" maxlength="2000">@Model.DsProjeto</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="epProjetoStatusID" class="form-label">Status</label>
+                        <select class="form-select" id="epProjetoStatusID">
+                            @foreach (var s in Model.StatusDisponiveis)
+                            {
+                                <option value="@s.ProjetoStatusID" selected="@(Model.ProjetoStatusID == s.ProjetoStatusID)">@s.NmStatus</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-4">
+                            <label for="epDtInicio" class="form-label">Início</label>
+                            <input type="date" class="form-control" id="epDtInicio" value="@ToIsoDate(Model.DtInicio)" />
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <label for="epDtPrevisaoFim" class="form-label">Prev. Término</label>
+                            <input type="date" class="form-control" id="epDtPrevisaoFim" value="@ToIsoDate(Model.DtPrevisaoFim)" />
+                            <div class="invalid-feedback">A previsão de término não pode ser anterior à data de início.</div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <label for="epDtFimReal" class="form-label">Término Real</label>
+                            <input type="date" class="form-control" id="epDtFimReal" value="@ToIsoDate(Model.DtFimReal)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarEditarProjeto">
+                        <i class="fa-solid fa-check me-1"></i>Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL ADICIONAR PARTICIPANTE ===== -->
+<div class="modal fade" id="modalAdicionarParticipante" tabindex="-1" aria-labelledby="lblModalAdicionarParticipante" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lblModalAdicionarParticipante">
+                    <i class="fa-solid fa-user-plus me-2 text-br"></i>Adicionar Participante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="apProjetoID" value="@Model.ProjetoID" />
+                <input type="hidden" id="apUsuarioID" value="" />
+                <div class="mb-3">
+                    <label for="apBuscaUsuario" class="form-label">Usuário</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="apBuscaUsuario" placeholder="Digite para buscar..." autocomplete="off" />
+                        <div id="apResultadosBusca" class="ap-autocomplete-dropdown d-none"></div>
+                    </div>
+                    <div class="invalid-feedback">Selecione um usuário da lista.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="apNmPapel" class="form-label">Papel no Projeto</label>
+                    <input type="text" class="form-control" id="apNmPapel" placeholder="Ex: Desenvolvedor, Analista, QA..." maxlength="100" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarParticipante">
+                    <i class="fa-solid fa-check me-1"></i>Adicionar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+@section Scripts {
+    <script src="~/js/projetos/detalhes.js" asp-append-version="true"></script>
+}

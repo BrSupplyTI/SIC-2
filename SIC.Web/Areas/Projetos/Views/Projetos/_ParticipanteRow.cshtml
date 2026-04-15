@@ -1,0 +1,47 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoParticipanteItemVm
+@{
+    var avatarColors = new[] { "#0d6efd", "#198754", "#fd7e14", "#6f42c1", "#dc3545", "#20c997", "#0dcaf0", "#6c757d" };
+    var colorIndex = (int)(ViewData["Index"] ?? 0);
+    var color = avatarColors[colorIndex % avatarColors.Length];
+    var podeEditar = ViewData["PodeEditar"] is true;
+    var usuarioCriadorID = (int)(ViewData["UsuarioCriadorID"] ?? 0);
+    var isCriador = Model.UsuarioID == usuarioCriadorID;
+
+    string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}".ToUpper()
+            : parts[0][..Math.Min(2, parts[0].Length)].ToUpper();
+    }
+}
+
+<div class="participante-row">
+    <div class="participante-avatar" style="background: @color;">
+        @GetInitials(Model.NmUsuario)
+    </div>
+    <div class="flex-grow-1">
+        <div class="fw-semibold" style="font-size: 0.88rem;">@Model.NmUsuario</div>
+        <small class="text-muted">@Model.NmPapel</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <small class="text-muted"><i class="fa-solid fa-calendar-day me-1"></i>@Model.DtEntrada</small>
+        @if (podeEditar)
+        {
+            <button type="button" class="btn btn-sm btn-link p-0 btn-editar-papel" title="Editar papel"
+                    data-participante-id="@Model.ProjetoParticipanteID"
+                    data-nm-papel="@Model.NmPapel">
+                <i class="fa-solid fa-pen text-muted" style="font-size: 0.75rem;"></i>
+            </button>
+            @if (!isCriador)
+            {
+                <button type="button" class="btn btn-sm btn-link p-0 btn-remover-participante" title="Remover participante"
+                        data-participante-id="@Model.ProjetoParticipanteID"
+                        data-nm-usuario="@Model.NmUsuario">
+                    <i class="fa-solid fa-trash-can text-danger" style="font-size: 0.75rem;"></i>
+                </button>
+            }
+        }
+    </div>
+</div>

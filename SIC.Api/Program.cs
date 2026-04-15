@@ -37,8 +37,8 @@ builder.Services.AddScoped<IPrePedidoPDFCommandRepository, SqlPrePedidoPDFComman
 builder.Services.AddScoped<IPrePedidoPDFQueryService, PrePedidoPDFQueryService>();
 builder.Services.AddScoped<IPrePedidoPDFCommandService, PrePedidoPDFCommandService>();
 builder.Services.AddHttpClient<IPrePedidoPDFIntegrationService, PrePedidoPDFIntegrationService>();
-
-// Admin
+builder.Services.AddScoped<IProjetoRepository, SqlProjetoRepository>();
+builder.Services.AddScoped<IProjetoService, ProjetoService>();
 builder.Services.AddScoped<IAdminNoticeRepository, SqlAdminNoticeRepository>();
 builder.Services.AddScoped<IAdminNoticeService, AdminNoticeService>();
 

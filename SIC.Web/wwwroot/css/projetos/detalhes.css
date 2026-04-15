@@ -1,0 +1,908 @@
+/* ============================================
+   Projetos – Detalhes
+   Alinhado com o design system SIC
+   ============================================ */
+
+/* ====== Quick cards (métricas) ====== */
+.projeto-quick-card {
+    min-height: 80px;
+    transition: border-color 0.2s ease;
+}
+
+.projeto-quick-card:hover {
+    border-color: var(--sic-brand) !important;
+}
+
+/* ====== Tarefa item ====== */
+.tarefa-item {
+    border: 1px solid var(--sic-border);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.tarefa-item:hover {
+    background: var(--sic-surface-2);
+    border-color: color-mix(in srgb, var(--sic-brand) 30%, var(--sic-border));
+}
+
+.tarefa-item + .tarefa-item {
+    margin-top: 0.5rem;
+}
+
+/* Sub-tarefas (indentação) */
+.tarefa-subtarefas {
+    margin-top: 0.5rem;
+    padding-left: 1.5rem;
+    border-left: 2px solid var(--sic-border);
+}
+
+.tarefa-subtarefas .tarefa-item {
+    border-style: dashed;
+}
+
+/* ====== Tarefa badges ====== */
+.tarefa-badge-status,
+.tarefa-badge-prioridade {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2em 0.55em;
+    border-radius: 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+}
+
+/* ====== Status dropdown (quick change) ====== */
+.tarefa-status-trigger:hover {
+    opacity: 0.85;
+}
+
+.tarefa-status-dropdown-menu {
+    min-width: 10rem;
+    font-size: 0.82rem;
+    padding: 0.25rem 0;
+}
+
+.tarefa-status-dropdown-menu .dropdown-item {
+    font-size: 0.82rem;
+    padding: 0.35rem 0.75rem;
+}
+
+.tarefa-status-dropdown-menu .dropdown-item:hover:not(.disabled) {
+    background: var(--sic-surface-2);
+}
+
+.tarefa-status-dropdown-menu .dropdown-item.disabled {
+    opacity: 0.7;
+    background: color-mix(in srgb, var(--sic-brand) 8%, transparent);
+}
+
+/* ====== Participante row ====== */
+.participante-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--sic-border);
+}
+
+.participante-row:last-child {
+    border-bottom: none;
+}
+
+.participante-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+/* ====== Histórico / Timeline ====== */
+.historico-timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.historico-timeline::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--sic-border);
+}
+
+.historico-item {
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.historico-item:last-child {
+    padding-bottom: 0;
+}
+
+.historico-item::before {
+    content: "";
+    position: absolute;
+    left: -1.5rem;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--sic-brand);
+    border: 2px solid var(--sic-surface);
+    z-index: 1;
+}
+
+.historico-item .historico-data {
+    font-size: 0.75rem;
+    color: var(--sic-muted);
+}
+
+.historico-item .historico-acao {
+    font-size: 0.85rem;
+}
+
+.historico-item .historico-usuario {
+    font-weight: 600;
+}
+
+/* ====== Progress bar (detalhes) ====== */
+.projeto-detalhe-progress {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--sic-border);
+}
+
+.projeto-detalhe-progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+/* ====== Kanban Board ====== */
+.kanban-board {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    min-height: 200px;
+}
+
+.kanban-column {
+    flex: 1 1 0;
+    min-width: 220px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    background: var(--sic-surface-2, #f8f9fa);
+    border-radius: 0.5rem;
+    border: 1px solid var(--sic-border);
+}
+
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--sic-border);
+}
+
+.kanban-column-body {
+    flex: 1;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 80px;
+    transition: background 0.15s ease;
+}
+
+.kanban-column-body.kanban-drag-over {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 8%, transparent);
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+.kanban-card {
+    background: var(--sic-surface, #fff);
+    border: 1px solid var(--sic-border);
+    border-radius: 0.4rem;
+    padding: 0.6rem 0.7rem;
+    cursor: default;
+    transition: box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.kanban-card.kanban-draggable {
+    cursor: grab;
+}
+
+.kanban-card.kanban-draggable:active {
+    cursor: grabbing;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.kanban-card.kanban-dragging {
+    opacity: 0.5;
+    transform: scale(0.97);
+}
+
+.kanban-card-title {
+    font-size: 0.84rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    line-height: 1.3;
+}
+
+.kanban-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+
+.kanban-card-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15em 0.45em;
+    border-radius: 0.3rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+}
+
+.kanban-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+    padding-top: 0.3rem;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+}
+
+.kanban-card-date {
+    font-size: 0.7rem;
+    color: var(--sic-muted, #6c757d);
+}
+
+.kanban-card-date i {
+    font-size: 0.6rem;
+}
+
+.kanban-card-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 12%, transparent);
+    color: var(--sic-brand, #0d6efd);
+    font-size: 0.6rem;
+    margin-left: auto;
+    cursor: default;
+    flex-shrink: 0;
+}
+
+.kanban-card-responsavel:hover {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 22%, transparent);
+}
+
+.kanban-card-subtarefa-badge {
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: var(--sic-muted, #6c757d);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    margin-bottom: 0.2rem;
+}
+
+.kanban-empty-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    border: 2px dashed var(--sic-border);
+    border-radius: 0.4rem;
+    opacity: 0.6;
+}
+
+/* ====== Kanban: Subtarefas embutidas no card ====== */
+
+/* Container da seção de subtarefas dentro do card */
+.kanban-subtask-section {
+    margin-top: 0.4rem;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+    padding-top: 0.3rem;
+}
+
+/* Header com toggle e progresso */
+.kanban-subtask-header {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    padding: 0.15rem 0;
+    user-select: none;
+    transition: color 0.15s ease;
+}
+
+.kanban-subtask-header:hover {
+    color: var(--sic-brand, #0d6efd);
+}
+
+.kanban-subtask-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+.kanban-subtask-toggle[aria-expanded="false"] {
+    transform: rotate(-90deg);
+}
+
+.kanban-subtask-progress {
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--sic-muted, #6c757d);
+}
+
+/* Barra de progresso compacta */
+.kanban-subtask-progress-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--sic-border, #dee2e6);
+    border-radius: 2px;
+    overflow: hidden;
+    max-width: 60px;
+}
+
+.kanban-subtask-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--sic-brand, #0d6efd);
+    transition: width 0.3s ease;
+}
+
+/* Lista de subtarefas */
+.kanban-subtask-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+.kanban-subtask-list:has(.kanban-subtask-status-menu.show),
+.kanban-subtask-list:has(.kanban-subtask-search-popover.show) {
+    overflow: visible;
+}
+
+.kanban-subtask-list.collapsed {
+    display: none;
+}
+
+/* Cada item de subtarefa */
+.kanban-subtask-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.3rem 0 0.3rem 0.45rem;
+    border-left: 2px solid var(--sic-border, #dee2e6);
+    transition: background 0.15s ease, border-color 0.15s ease;
+    position: relative;
+}
+
+.kanban-subtask-item + .kanban-subtask-item {
+    border-top: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 50%, transparent);
+}
+
+.kanban-subtask-item:hover {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 4%, transparent);
+}
+
+/* Título da subtarefa */
+.kanban-subtask-title {
+    font-size: 0.76rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--sic-text, #212529);
+    word-break: break-word;
+}
+
+/* Linha de ações: status + responsável */
+.kanban-subtask-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+}
+
+/* Dropdown trigger de status */
+.kanban-subtask-status-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+}
+
+.kanban-subtask-status-trigger:hover {
+    border-color: var(--sic-border, #dee2e6);
+    background: var(--sic-surface-2, #f8f9fa);
+}
+
+.kanban-subtask-status-trigger .fa-caret-down {
+    font-size: 0.55rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.kanban-subtask-status-trigger:hover .fa-caret-down {
+    opacity: 1;
+}
+
+/* Menu de opções de status */
+.kanban-subtask-status-menu {
+    position: absolute;
+    z-index: 1060;
+    background: var(--sic-surface, #fff);
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.35rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    padding: 0.25rem 0;
+    min-width: 140px;
+    display: none;
+    animation: kanbanSubtaskMenuFadeIn 0.12s ease;
+}
+
+.kanban-subtask-status-menu.show {
+    display: block;
+}
+
+@keyframes kanbanSubtaskMenuFadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.kanban-subtask-status-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    color: var(--sic-text, #212529);
+}
+
+.kanban-subtask-status-option:hover {
+    background: var(--sic-hover, #f0f4ff);
+}
+
+.kanban-subtask-status-option.active {
+    font-weight: 600;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 8%, transparent);
+}
+
+.kanban-subtask-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Responsável da subtarefa */
+.kanban-subtask-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 12%, transparent);
+    color: var(--sic-brand, #0d6efd);
+    font-size: 0.55rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.kanban-subtask-responsavel:hover {
+    border-color: var(--sic-border, #dee2e6);
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 22%, transparent);
+}
+
+/* Botão adicionar responsável (quando vazio) */
+.kanban-subtask-btn-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.62rem;
+    padding: 0.1rem 0.25rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    margin-left: auto;
+    opacity: 0;
+}
+
+.kanban-subtask-item:hover .kanban-subtask-btn-responsavel {
+    opacity: 1;
+}
+
+.kanban-subtask-btn-responsavel:hover {
+    color: var(--sic-brand, #0d6efd);
+    border-color: var(--sic-border, #dee2e6);
+    background: var(--sic-surface-2, #f8f9fa);
+}
+
+/* Popover de busca de responsável */
+.kanban-subtask-search-popover {
+    position: absolute;
+    z-index: 1070;
+    background: var(--sic-surface, #fff);
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.4rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+    padding: 0.4rem;
+    min-width: 180px;
+    max-width: 220px;
+    display: none;
+    animation: kanbanSubtaskMenuFadeIn 0.12s ease;
+}
+
+.kanban-subtask-search-popover.show {
+    display: block;
+}
+
+.kanban-subtask-search-input {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.25rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.kanban-subtask-search-input:focus {
+    border-color: var(--sic-brand, #0d6efd);
+}
+
+.kanban-subtask-search-results {
+    list-style: none;
+    margin: 0.3rem 0 0;
+    padding: 0;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.kanban-subtask-search-item {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+    border-radius: 0.2rem;
+    transition: background 0.12s ease;
+}
+
+.kanban-subtask-search-item:hover {
+    background: var(--sic-hover, #f0f4ff);
+}
+
+.kanban-subtask-search-item.text-muted {
+    cursor: default;
+    font-style: italic;
+}
+
+.kanban-subtask-search-btn-remove {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    width: 100%;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.68rem;
+    color: var(--bs-danger, #dc3545);
+    background: none;
+    border: none;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+    margin-top: 0.25rem;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+
+.kanban-subtask-search-btn-remove:hover {
+    background: color-mix(in srgb, var(--bs-danger, #dc3545) 8%, transparent);
+}
+
+/* ====== Kanban: Criação rápida inline ====== */
+
+/* Rodapé da coluna — botão "+ Tarefa" */
+.kanban-column-footer {
+    padding: 0.35rem 0.5rem 0.5rem;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+}
+
+.kanban-btn-add-task {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    background: none;
+    border: none;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.3rem 0.4rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.kanban-btn-add-task:hover {
+    color: var(--sic-brand, #0d6efd);
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 8%, transparent);
+}
+
+.kanban-btn-add-task i {
+    font-size: 0.65rem;
+}
+
+/* Link "+ Subitem" no rodapé do card */
+.kanban-btn-add-subtask {
+    display: none;
+    align-items: center;
+    gap: 0.25em;
+    background: none;
+    border: none;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 0.2rem 0;
+    margin-top: 0.35rem;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.kanban-btn-add-subtask:hover {
+    color: var(--sic-brand, #0d6efd);
+}
+
+.kanban-btn-add-subtask i {
+    font-size: 0.55rem;
+}
+
+.kanban-card:hover .kanban-btn-add-subtask {
+    display: inline-flex;
+}
+
+/* Form inline (usado na coluna e dentro do card) */
+.kanban-inline-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.4rem 0;
+    animation: kanbanInlineFadeIn 0.15s ease;
+}
+
+@keyframes kanbanInlineFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.kanban-inline-input {
+    font-size: 0.82rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.3rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kanban-inline-input:focus {
+    border-color: var(--sic-brand, #0d6efd);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand, #0d6efd) 15%, transparent);
+}
+
+.kanban-inline-input.is-invalid {
+    border-color: var(--bs-danger, #dc3545);
+}
+
+.kanban-inline-input.is-invalid:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bs-danger, #dc3545) 15%, transparent);
+}
+
+/* Botões de ação do form inline */
+.kanban-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.kanban-inline-btn-confirm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25em;
+    background: var(--sic-brand, #0d6efd);
+    color: #fff;
+    border: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.kanban-inline-btn-confirm:hover {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 85%, #000);
+}
+
+.kanban-inline-btn-confirm:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.kanban-inline-btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    color: var(--sic-muted, #6c757d);
+    border: 1px solid var(--sic-border, #dee2e6);
+    font-size: 0.72rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.kanban-inline-btn-cancel:hover {
+    background: var(--sic-surface-2, #f8f9fa);
+    color: var(--sic-text, #212529);
+}
+
+/* Form inline dentro do card (subtarefa) */
+.kanban-card .kanban-inline-form {
+    padding: 0.3rem 0 0;
+    border-top: 1px dashed var(--sic-border, #dee2e6);
+    margin-top: 0.35rem;
+}
+
+/* ====== Participante autocomplete ====== */
+.ap-autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-top: none;
+    border-radius: 0 0 0.375rem 0.375rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.ap-autocomplete-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: background 0.15s;
+}
+
+.ap-autocomplete-item:hover {
+    background: var(--sic-hover, #f0f4ff);
+}
+
+.ap-autocomplete-item.text-muted {
+    cursor: default;
+    font-style: italic;
+}
+
+/* ====== Page loading overlay ====== */
+.projeto-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.projeto-loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.projeto-loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--sic-border, #dee2e6);
+    border-top-color: var(--sic-brand, #0d6efd);
+    border-radius: 50%;
+    animation: projeto-spin 0.75s linear infinite;
+}
+
+@keyframes projeto-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ====== Responsivo ====== */
+@media (max-width: 575.98px) {
+    .tarefa-subtarefas {
+        padding-left: 1rem;
+    }
+
+    /* Kanban inline: sempre visível no mobile (sem hover) */
+    .kanban-btn-add-subtask {
+        display: inline-flex;
+    }
+
+    .kanban-inline-input {
+        font-size: 0.85rem;
+    }
+
+    /* Subtarefas embutidas: ajustes mobile */
+    .kanban-subtask-btn-responsavel {
+        opacity: 1;
+    }
+
+    .kanban-subtask-actions {
+        flex-wrap: wrap;
+    }
+
+    .kanban-subtask-responsavel {
+        max-width: none;
+    }
+
+    .kanban-subtask-status-trigger .fa-caret-down {
+        opacity: 1;
+    }
+}

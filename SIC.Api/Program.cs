@@ -33,6 +33,9 @@ builder.Services.AddScoped<IPrePedidoPDFQueryService, PrePedidoPDFQueryService>(
 builder.Services.AddScoped<IPrePedidoPDFCommandService, PrePedidoPDFCommandService>();
 builder.Services.AddHttpClient<IPrePedidoPDFIntegrationService, PrePedidoPDFIntegrationService>();
 
+builder.Services.AddScoped<IProjetoRepository, SqlProjetoRepository>();
+builder.Services.AddScoped<IProjetoService, ProjetoService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

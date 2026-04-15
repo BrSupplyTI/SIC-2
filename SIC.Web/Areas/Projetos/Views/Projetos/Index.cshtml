@@ -1,0 +1,341 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoListaViewModel
+@{
+    ViewData["Title"] = "Projetos";
+
+    var statusSelecionado = Model.StatusDisponiveis.FirstOrDefault(s => s.ProjetoStatusID == Model.ProjetoStatusID);
+    var modo = Model.ModoVisualizacao;
+
+    // Serialize status/priority lists for List mode JS interactions
+    var tarefaStatusColumns = Model.TarefaStatusDisponiveis.OrderBy(s => s.NrOrdem).ToList();
+    var listaStatusJson = System.Text.Json.JsonSerializer.Serialize(
+        tarefaStatusColumns.Select(s => new { id = s.ProjetoTarefaStatusID, nome = s.NmStatus, cor = s.CdCor }));
+    var listaPrioridadeJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.TarefaPrioridadesDisponiveis.Select(p => new { id = p.ProjetoTarefaPrioridadeID, nome = p.NmPrioridade, cor = p.CdCor }));
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/projetos/index.css" asp-append-version="true" />
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 projeto-page-header">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin fa-diagram-project me-2 text-br"></i>Projetos</h2>
+                </div>
+                <p class="projeto-page-subtitle">
+                    <strong>@Model.TotalRegistros</strong> projeto(s) encontrado(s)
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="btn-group btn-group-sm projeto-view-toggle" role="group" aria-label="Modo de visualização">
+                    <button type="button" class="btn btn-outline-secondary @(modo == "quadro" ? "active" : "")" data-view-mode="quadro" title="Quadro">
+                        <i class="fa-solid fa-grid-2"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary @(modo == "lista" ? "active" : "")" data-view-mode="lista" title="Lista">
+                        <i class="fa-solid fa-list"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary @(modo == "kanban" ? "active" : "")" data-view-mode="kanban" title="Kanban">
+                        <i class="fa-solid fa-columns"></i>
+                    </button>
+                </div>
+                <button type="button" class="btn btn-br" data-bs-toggle="modal" data-bs-target="#modalNovoProjeto">
+                    <i class="fa-solid fa-plus me-1"></i>Novo Projeto
+                </button>
+            </div>
+        </div>
+
+        <!-- Busca & Controles -->
+        <div class="projeto-filters">
+            <form method="get" asp-area="Projetos" asp-controller="Projetos" asp-action="Index" id="formFiltros">
+                <input type="hidden" name="page" id="inputPage" value="@Model.PageNumber" />
+
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-lg-4">
+                        <small class="text-muted">Pesquisar por nome</small>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="texto" value="@Model.Texto"
+                                   placeholder="Nome do projeto..." id="inputTexto" />
+                            <button type="submit" class="btn btn-br">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <small class="text-muted">Status</small>
+                        <select class="form-select" name="projetoStatusId" id="selectStatus"
+                                onchange="document.getElementById('inputPage').value=1;document.getElementById('formFiltros').submit();">
+                            <option value="0">Todos</option>
+                            @foreach (var s in Model.StatusDisponiveis)
+                            {
+                                <option value="@s.ProjetoStatusID" selected="@(Model.ProjetoStatusID == s.ProjetoStatusID)">@s.NmStatus</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <small class="text-muted">Por página</small>
+                        <select class="form-select" name="pageSize" id="selectPageSize"
+                                onchange="document.getElementById('inputPage').value=1;document.getElementById('formFiltros').submit();">
+                            @foreach (var size in new[] { 6, 12, 24, 48 })
+                            {
+                                <option value="@size" selected="@(Model.PageSize == size)">@size itens</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <small class="text-muted d-none d-lg-block">&nbsp;</small>
+                        <a asp-area="Projetos" asp-controller="Projetos" asp-action="Index"
+                           class="btn btn-outline-secondary w-100" id="btnLimparFiltros" title="Limpar filtros">
+                            <i class="fa-solid fa-rotate-left me-1"></i>Limpar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Filtros ativos -->
+        <div class="d-flex flex-wrap gap-2 mb-3" id="activeFilters">
+            @if (!string.IsNullOrWhiteSpace(Model.Texto))
+            {
+                <span class="badge-status badge-status-primary projeto-filter-tag" data-field="texto">
+                    <i class="fa-solid fa-search me-1"></i>"@Model.Texto"<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (statusSelecionado is not null)
+            {
+                <span class="badge-status badge-status-primary projeto-filter-tag" data-field="projetoStatusId">
+                    <i class="fa-solid fa-circle me-1" style="color: @statusSelecionado.CdCor; font-size: 0.5rem;"></i>@statusSelecionado.NmStatus<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+        </div>
+
+        <!-- Grid de projetos -->
+        @if (Model.Itens.Count == 0)
+        {
+            <div class="projeto-empty">
+                <i class="fa-duotone fa-folder-open d-block"></i>
+                <h5 class="text-muted">Nenhum projeto encontrado</h5>
+                <p class="text-muted mb-3">Tente ajustar os filtros ou o termo de busca.</p>
+                <a asp-area="Projetos" asp-controller="Projetos" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                    <i class="fa-solid fa-rotate-left me-1"></i>Limpar filtros
+                </a>
+            </div>
+        }
+        else
+        {
+            @* ── Modo Quadro ── *@
+            <div id="viewQuadro" class="@(modo != "quadro" ? "d-none" : "")">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+                    @foreach (var item in Model.Itens)
+                    {
+                        <div class="col">
+                            <partial name="_ProjetoCard" model="item" />
+                        </div>
+                    }
+                </div>
+
+                <!-- Paginação -->
+                @if (Model.TotalPaginas > 1)
+                {
+                    var totalPages = Model.TotalPaginas;
+                    var currentPage = Model.PageNumber;
+                    var startPage = Math.Max(1, currentPage - 2);
+                    var endPage = Math.Min(totalPages, currentPage + 2);
+
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mt-4 gap-2">
+                        <small class="text-muted">
+                            Página <strong>@currentPage</strong> de <strong>@totalPages</strong>
+                            — @Model.Itens.Count de @Model.TotalRegistros projetos
+                        </small>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(1)"><i class="fa-solid fa-angles-left"></i></a>
+                            </li>
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage - 1))"><i class="fa-solid fa-angle-left"></i></a>
+                            </li>
+                            @for (var p = startPage; p <= endPage; p++)
+                            {
+                                <li class="page-item @(p == currentPage ? "active" : "")">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(@p)">@p</a>
+                                </li>
+                            }
+                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage + 1))"><i class="fa-solid fa-angle-right"></i></a>
+                            </li>
+                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(@totalPages)"><i class="fa-solid fa-angles-right"></i></a>
+                            </li>
+                        </ul>
+                    </div>
+                }
+            </div>
+
+            @* ── Modo Lista ── *@
+            <div id="viewLista" class="@(modo != "lista" ? "d-none" : "")" data-status-list="@listaStatusJson" data-prioridade-list="@listaPrioridadeJson">
+                @if (Model.ItensComTarefas.Count > 0)
+                {
+                    <div class="projeto-list-container">
+                        @foreach (var item in Model.ItensComTarefas)
+                        {
+                            <partial name="_ProjetoListRow" model="item" />
+                        }
+                    </div>
+
+                    @if (Model.TotalPaginas > 1)
+                    {
+                        var totalPagesL = Model.TotalPaginas;
+                        var currentPageL = Model.PageNumber;
+                        var startPageL = Math.Max(1, currentPageL - 2);
+                        var endPageL = Math.Min(totalPagesL, currentPageL + 2);
+
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mt-4 gap-2">
+                            <small class="text-muted">
+                                Página <strong>@currentPageL</strong> de <strong>@totalPagesL</strong>
+                                — @Model.ItensComTarefas.Count de @Model.TotalRegistros projetos
+                            </small>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item @(currentPageL == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(1)"><i class="fa-solid fa-angles-left"></i></a>
+                                </li>
+                                <li class="page-item @(currentPageL == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPageL - 1))"><i class="fa-solid fa-angle-left"></i></a>
+                                </li>
+                                @for (var p = startPageL; p <= endPageL; p++)
+                                {
+                                    <li class="page-item @(p == currentPageL ? "active" : "")">
+                                        <a class="page-link" href="javascript:void(0)" onclick="goToPage(@p)">@p</a>
+                                    </li>
+                                }
+                                <li class="page-item @(currentPageL == totalPagesL ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPageL + 1))"><i class="fa-solid fa-angle-right"></i></a>
+                                </li>
+                                <li class="page-item @(currentPageL == totalPagesL ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(@totalPagesL)"><i class="fa-solid fa-angles-right"></i></a>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="projeto-empty">
+                        <i class="fa-duotone fa-list d-block"></i>
+                        <h5 class="text-muted">Nenhuma tarefa encontrada</h5>
+                        <p class="text-muted mb-0">Os projetos exibidos não possuem tarefas cadastradas.</p>
+                    </div>
+                }
+            </div>
+
+            @* ── Modo Kanban ── *@
+            <div id="viewKanban" class="@(modo != "kanban" ? "d-none" : "")">
+                @if (Model.ItensComTarefas.Count > 0 && Model.TarefaStatusDisponiveis.Count > 0)
+                {
+                    <partial name="_KanbanBoardGlobal" model="Model" />
+
+                    @if (Model.TotalPaginas > 1)
+                    {
+                        var totalPagesK = Model.TotalPaginas;
+                        var currentPageK = Model.PageNumber;
+                        var startPageK = Math.Max(1, currentPageK - 2);
+                        var endPageK = Math.Min(totalPagesK, currentPageK + 2);
+
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mt-4 gap-2">
+                            <small class="text-muted">
+                                Página <strong>@currentPageK</strong> de <strong>@totalPagesK</strong>
+                                — @Model.ItensComTarefas.Count de @Model.TotalRegistros projetos
+                            </small>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item @(currentPageK == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(1)"><i class="fa-solid fa-angles-left"></i></a>
+                                </li>
+                                <li class="page-item @(currentPageK == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPageK - 1))"><i class="fa-solid fa-angle-left"></i></a>
+                                </li>
+                                @for (var p = startPageK; p <= endPageK; p++)
+                                {
+                                    <li class="page-item @(p == currentPageK ? "active" : "")">
+                                        <a class="page-link" href="javascript:void(0)" onclick="goToPage(@p)">@p</a>
+                                    </li>
+                                }
+                                <li class="page-item @(currentPageK == totalPagesK ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPageK + 1))"><i class="fa-solid fa-angle-right"></i></a>
+                                </li>
+                                <li class="page-item @(currentPageK == totalPagesK ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(@totalPagesK)"><i class="fa-solid fa-angles-right"></i></a>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="projeto-empty">
+                        <i class="fa-duotone fa-columns d-block"></i>
+                        <h5 class="text-muted">Nenhuma tarefa encontrada</h5>
+                        <p class="text-muted mb-0">Os projetos exibidos não possuem tarefas cadastradas.</p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Novo Projeto -->
+<div class="modal fade" id="modalNovoProjeto" tabindex="-1" aria-labelledby="modalNovoProjetoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formNovoProjeto" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalNovoProjetoLabel">
+                        <i class="fa-duotone fa-thin fa-folder-plus me-2 text-br"></i>Novo Projeto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="npUsuarioCriadorID" value="@Model.UsuarioLogadoID" />
+
+                    <div class="mb-3">
+                        <label for="npNmProjeto" class="form-label">Nome do Projeto <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="npNmProjeto" maxlength="200" required />
+                        <div class="invalid-feedback">O nome do projeto é obrigatório.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="npDsProjeto" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="npDsProjeto" rows="3" maxlength="2000"></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="npDtInicio" class="form-label">Data de Início</label>
+                            <input type="date" class="form-control" id="npDtInicio" />
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="npDtPrevisaoFim" class="form-label">Previsão de Término</label>
+                            <input type="date" class="form-control" id="npDtPrevisaoFim" />
+                            <div class="invalid-feedback">A previsão de término não pode ser anterior à data de início.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarNovoProjeto">
+                        <i class="fa-solid fa-check me-1"></i>Criar Projeto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function goToPage(page) {
+            document.getElementById('inputPage').value = page;
+            document.getElementById('formFiltros').submit();
+        }
+    </script>
+    <script src="~/js/projetos/index.js" asp-append-version="true"></script>
+}

@@ -68,6 +68,14 @@ builder.Services.AddHttpClient<AdminApiClient>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+builder.Services.AddHttpClient<ProjetoApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 builder.Services
     .AddAuthentication(options =>
     {

@@ -1,10 +1,13 @@
 using SIC.Api.Services;
+using SIC.Api.Services.Admin;
 using SIC.Api.Services.PrePedidosPDF;
 using SIC.Domain.Abstractions;
+using SIC.Domain.Abstractions.Admin;
 using SIC.Domain.Abstractions.PrePedidosPDF;
 using SIC.Infrastructure.Integrations;
 using SIC.Infrastructure.Integrations.PrePedidosPDF;
 using SIC.Infrastructure.Repositories;
+using SIC.Infrastructure.Repositories.Admin;
 using SIC.Infrastructure.Repositories.PrePedidosPDF;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,18 +26,21 @@ builder.Services.AddScoped<IUserProfileRepository, SqlUserProfileRepository>();
 builder.Services.AddScoped<IOrderSearchRepository, SqlOrderSearchRepository>();
 builder.Services.AddScoped<IProductCatalogRepository, SqlProductCatalogRepository>();
 builder.Services.AddScoped<IClientRepository, SqlClientRepository>();
+builder.Services.AddScoped<IHomeRepository, SqlHomeRepository>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IOrderSearchService, OrderSearchService>();
 builder.Services.AddScoped<IProductCatalogService, ProductCatalogService>();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IPrePedidoPDFQueryRepository, SqlPrePedidoPDFQueryRepository>();
 builder.Services.AddScoped<IPrePedidoPDFCommandRepository, SqlPrePedidoPDFCommandRepository>();
 builder.Services.AddScoped<IPrePedidoPDFQueryService, PrePedidoPDFQueryService>();
 builder.Services.AddScoped<IPrePedidoPDFCommandService, PrePedidoPDFCommandService>();
 builder.Services.AddHttpClient<IPrePedidoPDFIntegrationService, PrePedidoPDFIntegrationService>();
-
 builder.Services.AddScoped<IProjetoRepository, SqlProjetoRepository>();
 builder.Services.AddScoped<IProjetoService, ProjetoService>();
+builder.Services.AddScoped<IAdminNoticeRepository, SqlAdminNoticeRepository>();
+builder.Services.AddScoped<IAdminNoticeService, AdminNoticeService>();
 
 var app = builder.Build();
 

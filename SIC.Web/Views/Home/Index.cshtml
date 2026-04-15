@@ -1,4 +1,5 @@
 @using System.Text;
+@using SIC.Web.Models.Home;
 @{
     ViewData["Title"] = "SIC - Portal Corporativo";
 
@@ -16,6 +17,15 @@
         < 18 => "Boa tarde",
         _ => "Boa noite"
     };
+
+    var atalhos = ViewBag.Atalhos as List<ShortcutVm> ?? new List<ShortcutVm>();
+    var usuarioId = (int)(ViewBag.UsuarioID ?? 0);
+    var sicLogin = User.FindFirst("sic_login")?.Value;
+    const int maxSlots = 8;
+
+    var cotacoes = ViewBag.Cotacoes as List<CurrencyQuoteVm> ?? new List<CurrencyQuoteVm>();
+    var clima = ViewBag.Clima as WeatherInfoVm;
+    var ptBR = new System.Globalization.CultureInfo("pt-BR");
 }
 
 <div class="container-fluid">
@@ -27,20 +37,7 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="card border-0 h-100">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #ec4899 15%, transparent);">
-                        <i class="fa-duotone fa-cake-candles fa-lg" style="color:#ec4899;"></i>
-                    </div>
-                    <div>
-                        <p class="text-muted mb-0" style="font-size:.8rem;">Aniversariantes</p>
-                        <h4 class="mb-0 fw-bold">3</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="row g-3 mb-4">        
         <div class="col-6 col-lg-3">
             <div class="card border-0 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -58,10 +55,10 @@
             <div class="card border-0 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #6366f1 15%, transparent);">
-                        <i class="fa-duotone fa-file-signature fa-lg" style="color:#6366f1;"></i>
+                        <i class="fa-duotone fa-diagram-project fa-lg" style="color:#6366f1;"></i>
                     </div>
                     <div>
-                        <p class="text-muted mb-0" style="font-size:.8rem;">Docs p/ Assinar</p>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Projetos Pendentes</p>
                         <h4 class="mb-0 fw-bold">2</h4>
                     </div>
                 </div>
@@ -71,15 +68,194 @@
             <div class="card border-0 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #10b981 15%, transparent);">
-                        <i class="fa-duotone fa-boxes-stacked fa-lg" style="color:#10b981;"></i>
+                        <i class="fa-duotone fa-file-signature fa-lg" style="color:#10b981;"></i>
                     </div>
                     <div>
-                        <p class="text-muted mb-0" style="font-size:.8rem;">Pedidos Hoje</p>
-                        <h4 class="mb-0 fw-bold">42</h4>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Documentos para Assinar</p>
+                        <h4 class="mb-0 fw-bold">0</h4>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:color-mix(in srgb, #ec4899 15%, transparent);">
+                        <i class="fa-duotone fa-cake-candles fa-lg" style="color:#ec4899;"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0" style="font-size:.8rem;">Aniversariantes</p>
+                        <h4 class="mb-0 fw-bold">3</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <div class="row g-3 mb-4">
+
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-rocket text-br"></i>
+                    <strong>Atalhos Rápidos</strong>
+                    <i class="fa-duotone fa-cog text-muted ms-auto" id="btnConfigAtalhos" role="button" title="Gerenciar atalhos" style="cursor:pointer;"></i>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2" id="atalhos-container">
+                        @for (var i = 0; i < maxSlots; i++)
+                        {
+                            if (i < atalhos.Count)
+                            {
+                                var atalho = atalhos[i];
+                                var url = atalho.FlagExterna == 1 ? atalho.Url : Url.Content("~/" + atalho.Url.TrimStart('/'));
+                                url = url.Replace("{userid}", usuarioId.ToString())                                         
+                                         .Replace("{user}", sicLogin)
+                                         .Replace("{hash}", base64);
+                                <div class="col-6 col-xl-3" data-slot="@i" data-atalho-id="@atalho.AtalhoID">
+                                    <div class="position-relative">
+                                        @{
+                                            var btnClass = string.IsNullOrWhiteSpace(atalho.Estilo) ? "btn-outline-br" : atalho.Estilo;
+                                        }
+                                        <a href="@url" target="@(atalho.FlagExterna == 1 ? "_blank" : "_self")" class="btn @btnClass w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
+                                            <i class="@atalho.Icone fa-lg fa-duotone mb-1"></i>
+                                            @atalho.Nome
+                                        </a>
+                                        <button type="button" class="btn btn-sm position-absolute top-0 end-0 p-1 m-1 text-muted btn-remover-atalho d-none" data-atalho-id="@atalho.AtalhoID" title="Remover atalho" style="line-height:1;font-size:.7rem;">
+                                            <i class="fa-duotone fa-trash-alt fa-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-6 col-xl-3" data-slot="@i">
+                                    <a href="#" class="btn btn-outline-secondary w-100 d-flex flex-column align-items-center gap-1 py-3 btn-escolher-atalho" style="font-size:.85rem;">
+                                        <i class="fa-duotone fa-plus fa-lg mb-1"></i>
+                                        Escolha
+                                    </a>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card border-0 h-100" id="cardPrevisaoTempo">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-sun text-br"></i>
+                    <strong>Clima</strong>
+                    @if (clima is not null)
+                    {
+                        <small class="text-muted ms-auto">@clima.Cidade, @clima.UF</small>
+                    }
+                </div>
+                @if (clima is not null)
+                {
+                    var desc = clima.Descricao.Trim().ToLowerInvariant();
+                    var isNoite = desc.Contains("noite") || hora >= 18 || hora < 6;                    
+                    var (weatherIcon, weatherColor, weatherSecondaryColor) = desc switch
+                    {
+                        _ when desc.Contains("trovoada")        => ("fa-cloud-bolt",           "#64748b", "#ffd53d"),
+                        _ when desc.Contains("neve")            => ("fa-snowflake",            "#38bdf8", "linear-gradient(135deg, rgba(56,189,248,.12), rgba(224,231,255,.10))"),
+                        _ when desc.Contains("chuva")           => ("fa-cloud-rain",           "#64748b", "#a3ddf7"),
+                        _ when desc.Contains("pancadas")        => ("fa-cloud-showers-heavy",  "#64748b", "#a3ddf7"),
+                        _ when desc.Contains("névoa") || desc.Contains("atmosfera")
+                                                                => ("fa-smog",                 "#94a3b8", "linear-gradient(135deg, rgba(148,163,184,.12), rgba(203,213,225,.08))"),
+                        _ when desc.Contains("muitas nuvens")   => ("fa-clouds",               "#64748b", "linear-gradient(135deg, rgba(100,116,139,.12), rgba(148,163,184,.08))"),
+                        _ when desc.Contains("nuvens dispersas")=> ("fa-cloud",                "#64748b", "#64748b"),
+                        _ when desc.Contains("poucas nuvens") && isNoite 
+                                                                => ("fa-moon-cloud",           "#64748b", "#f59e0b"),
+                        _ when desc.Contains("poucas nuvens")   => ("fa-sun-cloud",            "#64748b", "#f59e0b"),
+                        _ when desc.Contains("céu limpo") && isNoite => ("fa-moon-stars",      "#f59e0b", "#f7e283"),
+                        _ when desc.Contains("céu limpo")       => ("fa-sun",                  "#f7e283", "#f59e0b"),
+                        _ when desc.Contains("nublado")         => ("fa-cloud",                "#64748b", "#64748b"),
+                        _                                       => ("fa-cloud-sun",            "#64748b", "#f59e0b")
+                    };                                       
+                                        
+                    <div class="card-body text-center px-3 py-3">
+                        <div class="d-flex align-items-center justify-content-center gap-3 mb-2">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 me-2"
+                                 style="width:6px;height:56px;">
+                                <i class="fa-duotone @weatherIcon fa-2x" style="--fa-primary-color: @weatherColor; --fa-secondary-color: @weatherSecondaryColor; --fa-secondary-opacity: 1;"></i>
+                            </div>
+                            <div class="text-start">
+                                <h2 class="fw-bold mb-0 lh-1">@clima.Temperatura.ToString("N0")°</h2>
+                                <p class="mb-0 text-muted text-capitalize" style="font-size:.85rem;">@clima.Descricao</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-0 text-center rounded-3 py-2 mt-1">
+                            <div class="col-4 border-end" style="border-color:var(--bs-border-color)!important;">
+                                <i class="fa-duotone fa-temperature-half mb-1" style="color:@weatherColor;"></i>
+                                <div class="fw-semibold" style="font-size:.8rem;">@clima.Sensacao.ToString("N0")°C</div>
+                                <div class="text-muted" style="font-size:.65rem;">Sensação</div>
+                            </div>
+                            <div class="col-4 border-end" style="border-color:var(--bs-border-color)!important;">
+                                <i class="fa-duotone fa-droplet mb-1" style="color:@weatherColor;"></i>
+                                <div class="fw-semibold" style="font-size:.8rem;">@clima.Umidade.ToString("N0")%</div>
+                                <div class="text-muted" style="font-size:.65rem;">Umidade</div>
+                            </div>
+                            <div class="col-4">
+                                <i class="fa-duotone fa-wind mb-1" style="color:@weatherColor;"></i>
+                                <div class="fw-semibold" style="font-size:.8rem;">@clima.VelocidadeVento.ToString("N0") km/h</div>
+                                <div class="text-muted" style="font-size:.65rem;">Vento</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top text-muted text-center" style="font-size:.75rem;">
+                        <i class="fa-duotone fa-clock me-1"></i>Atualizado em @clima.DtUltimaAtualizacao.ToString("dd/MM/yyyy 'às' HH:mm", ptBR)
+                    </div>
+                }
+                else
+                {
+                    <div class="card-body text-center text-muted py-4">
+                        <i class="fa-duotone fa-cloud-question fa-2x mb-2"></i>
+                        <p class="mb-0" style="font-size:.85rem;">Dados indisponíveis</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card border-0 h-100">
+                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
+                    <i class="fa-duotone fa-dollar-sign text-br"></i>
+                    <strong>Cotações</strong>
+                </div>
+                <div class="card-body">
+                    @{ var flagMap = new Dictionary<string, string> { ["USD"] = "fi-us", ["EUR"] = "fi-eu" }; }
+                    @for (var i = 0; i < cotacoes.Count; i++)
+                    {
+                        var cotacao = cotacoes[i];
+                        var flagClass = flagMap.GetValueOrDefault(cotacao.Moeda, "fi-xx");
+                        var isNegative = cotacao.Variacao < 0;
+                        var colorClass = isNegative ? "text-success" : "text-danger";
+                        var caretIcon = isNegative ? "fa-caret-down" : "fa-caret-up";
+                        var sinal = isNegative ? "" : "+";
+                        var mbClass = i < cotacoes.Count - 1 ? "mb-3" : "";
+                        <div class="d-flex justify-content-between align-items-center @mbClass">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fi @flagClass rounded-1" style="font-size:1.1rem;"></span>
+                                <span class="fw-semibold">@cotacao.Nome (@cotacao.Moeda)</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold">@cotacao.Valor.ToString("C2", ptBR)</span>
+                                <br /><small class="@colorClass"><i class="fa-solid @caretIcon me-1"></i>@sinal@cotacao.Variacao.ToString("N2", ptBR)%</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (cotacoes.Count > 0)
+                {
+                    <div class="card-footer bg-transparent border-top text-muted text-center" style="font-size:.75rem;">
+                        <i class="fa-duotone fa-clock me-1"></i>Atualizado em @cotacoes[0].DataAtualizacao.ToString("dd/MM/yyyy 'às' HH:mm", ptBR)
+                    </div>
+                }
+            </div>
+        </div>        
     </div>
 
     <div class="row g-3 mb-4">
@@ -89,29 +265,21 @@
                 <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
                     <i class="fa-duotone fa-bullhorn text-br"></i>
                     <strong>Avisos Importantes</strong>
+                    <span id="avisos-counter" class="text-muted" style="font-size:.85rem;"></span>
+                    <span class="ms-auto d-none d-flex align-items-center gap-2" id="avisos-pagination">
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0" id="btnAvisosPrev" title="Anterior">
+                            <i class="fa-duotone fa-chevron-left"></i>
+                        </button>
+                        <small class="text-muted" id="avisos-page-info" style="font-size:.85rem;"></small>
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0" id="btnAvisosNext" title="Próximo">
+                            <i class="fa-duotone fa-chevron-right"></i>
+                        </button>
+                    </span>
                 </div>
                 <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex align-items-start gap-3 py-3">
-                            <span class="badge rounded-pill bg-danger mt-1">Urgente</span>
-                            <div>
-                                <p class="mb-1 fw-semibold">Manutenção programada no SAP — 21/06 das 22h às 02h</p>
-                                <small class="text-muted">Publicado em 18/06/2025 por TI Corporativa</small>
-                            </div>
-                        </div>
-                        <div class="list-group-item d-flex align-items-start gap-3 py-3">
-                            <span class="badge rounded-pill bg-warning text-dark mt-1">Atenção</span>
-                            <div>
-                                <p class="mb-1 fw-semibold">Novo procedimento para solicitação de crédito a partir de Julho</p>
-                                <small class="text-muted">Publicado em 15/06/2025 por Financeiro</small>
-                            </div>
-                        </div>
-                        <div class="list-group-item d-flex align-items-start gap-3 py-3">
-                            <span class="badge rounded-pill bg-info mt-1">Info</span>
-                            <div>
-                                <p class="mb-1 fw-semibold">Confraternização de meio de ano — 27/06 a partir das 17h</p>
-                                <small class="text-muted">Publicado em 12/06/2025 por RH</small>
-                            </div>
+                    <div class="list-group list-group-flush" id="avisos-container">
+                        <div class="list-group-item text-center text-muted py-3">
+                            <i class="fa-duotone fa-spinner-third fa-spin me-2"></i>Carregando avisos...
                         </div>
                     </div>
                 </div>
@@ -162,152 +330,40 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-
-        <div class="col-12 col-md-6 col-lg-3">
-            <div class="card border-0 h-100">
-                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
-                    <i class="fa-duotone fa-sun text-br"></i>
-                    <strong>Clima</strong>
-                </div>
-                <div class="card-body text-center">
-                    <div class="mb-2" style="font-size:2.5rem;">⛅</div>
-                    <h3 class="fw-bold mb-0">27°C</h3>
-                    <p class="text-muted mb-1">Parcialmente nublado</p>
-                    <small class="text-muted">São Paulo, SP</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-6 col-lg-3">
-            <div class="card border-0 h-100">
-                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
-                    <i class="fa-duotone fa-dollar-sign text-br"></i>
-                    <strong>Cotações</strong>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="fi fi-us rounded-1" style="font-size:1.1rem;"></span>
-                            <span class="fw-semibold">Dólar (USD)</span>
-                        </div>
-                        <div class="text-end">
-                            <span class="fw-bold">R$ 5,47</span>
-                            <br /><small class="text-success"><i class="fa-solid fa-caret-down me-1"></i>-0,32%</small>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="fi fi-eu rounded-1" style="font-size:1.1rem;"></span>
-                            <span class="fw-semibold">Euro (EUR)</span>
-                        </div>
-                        <div class="text-end">
-                            <span class="fw-bold">R$ 6,15</span>
-                            <br /><small class="text-danger"><i class="fa-solid fa-caret-up me-1"></i>+0,18%</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 h-100">
-                <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
-                    <i class="fa-duotone fa-rocket text-br"></i>
-                    <strong>Atalhos Rápidos</strong>
-                </div>
-                <div class="card-body">
-                    <div class="row g-2">
-                        <div class="col-6 col-md-4">
-                            <a asp-controller="Pedidos" asp-action="Busca" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-magnifying-glass fa-lg mb-1"></i>
-                                Consultar Pedido
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a asp-controller="Account" asp-action="MeusDados" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-id-card fa-lg mb-1"></i>
-                                Meus Dados
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a href="#" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-chart-mixed fa-lg mb-1"></i>
-                                Relatórios
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a href="#" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-user-tie fa-lg mb-1"></i>
-                                Clientes
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a href="#" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-truck-fast fa-lg mb-1"></i>
-                                Logística
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <a href="https://intranet.brsupply.com.br/intranet/html/valida_login.php?u=@User.FindFirst("sic_login")?.Value&h=@base64" target="_blank" class="btn btn-outline-br w-100 d-flex flex-column align-items-center gap-1 py-3" style="font-size:.85rem;">
-                                <i class="fa-duotone fa-globe fa-lg mb-1"></i>
-                                SIC Antigo
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+   
 
     <div class="row g-3 mb-4">
         <div class="col-12">
             <div class="card border-0">
                 <div class="card-header bg-transparent border-bottom d-flex align-items-center gap-2">
-                    <i class="fa-duotone fa-clock-rotate-left text-br"></i>
-                    <strong>Últimas Atividades</strong>
+                    <i class="fa-duotone fa-desktop text-br"></i>
+                    <strong>Monitor <span id="monitor-counter" class="text-muted ms-1" style="font-size:.85rem;"></span></strong>                    
+                    <span class="ms-auto dropdown">
+                        <i class="fa-duotone fa-cog text-muted" id="btnConfigMonitor" role="button" title="Gerenciar monitores" style="cursor:pointer;" data-bs-toggle="dropdown" aria-expanded="false"></i>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" role="button" id="btnNovoMonitor"><i class="fa-duotone fa-plus me-2 text-br"></i>Novo Monitor</a></li>
+                            <li><a class="dropdown-item" role="button" id="btnExcluirMonitor"><i class="fa-duotone fa-trash-alt me-2 text-danger"></i>Excluir Monitor</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" role="button" id="btnAtualizarMonitor"><i class="fa-duotone fa-refresh me-2 text-br"></i>Atualizar Dados</a></li>
+                        </ul>
+                    </span>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body p-0">                    
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead>
                                 <tr>
-                                    <th>Atividade</th>
-                                    <th>Módulo</th>
-                                    <th class="text-center">Status</th>
-                                    <th class="text-end">Data/Hora</th>
+                                    <th>Processo</th>
+                                    <th>Título</th>
+                                    <th>Monitorando</th>
+                                    <th>Resultado</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><i class="fa-duotone fa-box-open me-2 text-br"></i>Pedido #84521 aprovado</td>
-                                    <td>Comercial</td>
-                                    <td class="text-center"><span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Concluído</span></td>
-                                    <td class="text-end text-muted">Hoje, 09:32</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fa-duotone fa-file-signature me-2 text-br"></i>Contrato #1203 enviado para assinatura</td>
-                                    <td>Jurídico</td>
-                                    <td class="text-center"><span class="badge-status badge-status-info"><i class="fa-solid fa-clock me-1"></i>Pendente</span></td>
-                                    <td class="text-end text-muted">Hoje, 08:45</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fa-duotone fa-truck me-2 text-br"></i>Embarque NF 5892 confirmado</td>
-                                    <td>Logística</td>
-                                    <td class="text-center"><span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Concluído</span></td>
-                                    <td class="text-end text-muted">Ontem, 17:10</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fa-duotone fa-ticket me-2 text-br"></i>Chamado #TI-445 — Acesso VPN</td>
-                                    <td>TI</td>
-                                    <td class="text-center"><span class="badge-status badge-status-primary"><i class="fa-solid fa-chevron-right me-1"></i>Em andamento</span></td>
-                                    <td class="text-end text-muted">Ontem, 14:22</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fa-duotone fa-box-open me-2 text-br"></i>Pedido #84490 integrado no SAP</td>
-                                    <td>Comercial</td>
-                                    <td class="text-center"><span class="badge-status badge-status-success"><i class="fa-solid fa-check me-1"></i>Concluído</span></td>
-                                    <td class="text-end text-muted">Ontem, 11:03</td>
+                            <tbody id="monitor-tbody">
+                                <tr id="monitor-loading">
+                                    <td colspan="4" class="text-center text-muted py-3">
+                                        <i class="fa-duotone fa-spinner-third fa-spin me-2"></i>Carregando monitores...
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -318,3 +374,596 @@
     </div>
 
 </div>
+
+<div class="modal fade" id="modalEscolherAtalho" tabindex="-1" aria-labelledby="modalEscolherAtalhoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEscolherAtalhoLabel">
+                    <i class="fa-duotone fa-rocket text-br me-2"></i>Escolher Atalho
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="selectAtalho" class="form-label">Selecione um atalho disponível:</label>
+                    <select id="selectAtalho" class="form-select">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="selectEstilo" class="form-label">Estilo do botão:</label>
+                    <select id="selectEstilo" class="form-select">
+                        <option value="btn-info">Azul Claro</option>
+                        <option value="btn-primary">Azul</option>
+                        <option value="btn-success">Verde</option>
+                        <option value="btn-danger">Vermelho</option>
+                        <option value="btn-warning">Amarelo</option>
+                        <option value="btn-secondary">Cinza</option>
+                        <option value="btn-br">Laranja</option>
+                        <option value="btn-outline-info">Borda Azul Claro</option>
+                        <option value="btn-outline-primary">Borda Azul</option>
+                        <option value="btn-outline-success">Borda Verde</option>
+                        <option value="btn-outline-danger">Borda Vermelho</option>
+                        <option value="btn-outline-warning">Borda Amarelo</option>
+                        <option value="btn-outline-secondary">Borda Cinza</option>
+                        <option value="btn-outline-br" selected>Borda Laranja</option>
+                    </select>
+                </div>
+                <div id="previewEstiloContainer">
+                    <label class="form-label">Pré-visualização:</label>
+                    <div class="text-center">
+                        <button type="button" id="previewEstiloBtn" class="btn btn-outline-br d-inline-flex flex-column align-items-center gap-1 py-3 px-4" style="font-size:.85rem;">
+                            <i class="fa-duotone fa-rocket fa-lg mb-1"></i>
+                            Exemplo
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-br" id="btnSalvarAtalho">
+                    <i class="fa-solid fa-check me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNovoMonitor" tabindex="-1" aria-labelledby="modalNovoMonitorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNovoMonitorLabel">
+                    <i class="fa-duotone fa-desktop text-br me-2"></i>Novo Monitor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="selectMonitor" class="form-label">Selecione o monitor:</label>
+                    <select id="selectMonitor" class="form-select">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+                <div class="mb-0">
+                    <label for="inputValorMonitor" class="form-label">Valor do parâmetro:</label>
+                    <input type="text" id="inputValorMonitor" class="form-control" placeholder="Ex.: 8317013, ABC123, etc.">
+                    <div class="form-text" id="monitorTituloHint"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-br" id="btnSalvarMonitor">
+                    <i class="fa-solid fa-check me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDetalheAviso" tabindex="-1" aria-labelledby="modalDetalheAvisoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetalheAvisoLabel">
+                    <i class="fa-duotone fa-bullhorn text-br me-2"></i><span id="avisoModalTitulo"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span id="avisoModalBadge" class="badge rounded-pill"></span>
+                    <small class="text-muted" id="avisoModalData"></small>
+                </div>
+                <div id="avisoModalDescricao"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-br" id="btnConfirmarLeitura">
+                    <i class="fa-duotone fa-check me-1"></i>Marcar como lido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    (function () {
+        const container = document.getElementById('atalhos-container');
+        const btnConfig = document.getElementById('btnConfigAtalhos');
+        const modal = new bootstrap.Modal(document.getElementById('modalEscolherAtalho'));
+
+        btnConfig.addEventListener('click', function () {
+            const ativo = btnConfig.classList.toggle('text-br');
+            if (ativo) btnConfig.classList.remove('text-muted');
+            else btnConfig.classList.add('text-muted');
+
+            container.querySelectorAll('.btn-remover-atalho').forEach(btn => {
+                btn.classList.toggle('d-none', !ativo);
+            });
+        });
+        const selectAtalho = document.getElementById('selectAtalho');
+        const selectEstilo = document.getElementById('selectEstilo');
+        const previewBtn = document.getElementById('previewEstiloBtn');
+        const btnSalvar = document.getElementById('btnSalvarAtalho');
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (antiForgeryToken) headers['RequestVerificationToken'] = antiForgeryToken;
+
+        selectEstilo.addEventListener('change', function () {
+            previewBtn.className = 'btn ' + selectEstilo.value + ' d-inline-flex flex-column align-items-center gap-1 py-3 px-4';
+        });
+
+        container.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-escolher-atalho');
+            if (!btn) return;
+            e.preventDefault();
+
+            selectAtalho.innerHTML = '<option value="">Carregando...</option>';
+            selectEstilo.value = 'btn-outline-br';
+            previewBtn.className = 'btn btn-outline-br d-inline-flex flex-column align-items-center gap-1 py-3 px-4';
+            modal.show();
+
+            fetch('@Url.Action("GetAllShortcuts", "Home")')
+                .then(r => r.json())
+                .then(data => {
+                    const usados = [...container.querySelectorAll('[data-atalho-id]')]
+                        .map(el => parseInt(el.dataset.atalhoId));
+
+                    const disponiveis = data.filter(a => !usados.includes(a.atalhoID));
+
+                    selectAtalho.innerHTML = '<option value="">Selecione...</option>';
+                    disponiveis.forEach(a => {
+                        const opt = document.createElement('option');
+                        opt.value = a.atalhoID;
+                        opt.textContent = a.nome;
+                        selectAtalho.appendChild(opt);
+                    });
+                })
+                .catch(() => {
+                    selectAtalho.innerHTML = '<option value="">Erro ao carregar</option>';
+                });
+        });
+
+        btnSalvar.addEventListener('click', function () {
+            const atalhoId = parseInt(selectAtalho.value);
+            if (!atalhoId) return;
+
+            const estilo = selectEstilo.value;
+            btnSalvar.disabled = true;
+
+            fetch('@Url.Action("AddShortcut", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ atalhoID: atalhoId, estilo: estilo })
+            })
+                .then(r => {
+                    if (r.ok) {
+                        modal.hide();
+                        location.reload();
+                    } else {
+                        window.sicAlert('Erro', 'Erro ao salvar atalho.', 'error');
+                    }
+                })
+                .catch(() => window.sicAlert('Erro', 'Erro ao salvar atalho.', 'error'))
+                .finally(() => btnSalvar.disabled = false);
+        });
+
+        container.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.btn-remover-atalho');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const atalhoId = parseInt(btn.dataset.atalhoId);
+
+            const result = await Swal.fire({
+                title: 'Remover atalho?',
+                text: 'Deseja remover este atalho da sua lista?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, remover',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
+
+            fetch('@Url.Action("RemoveShortcut", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ atalhoID: atalhoId })
+            })
+                .then(r => {
+                    if (r.ok) location.reload();
+                    else window.sicAlert('Erro', 'Erro ao remover atalho.', 'error');
+                })
+                .catch(() => window.sicAlert('Erro', 'Erro ao remover atalho.', 'error'));
+        });
+    })();
+
+    // === Monitores (lazy load) ===
+    (function () {
+        const tbody = document.getElementById('monitor-tbody');
+        const btnNovo = document.getElementById('btnNovoMonitor');
+        const btnExcluir = document.getElementById('btnExcluirMonitor');
+        const btnAtualizar = document.getElementById('btnAtualizarMonitor');
+        const modalEl = document.getElementById('modalNovoMonitor');
+        const modal = new bootstrap.Modal(modalEl);
+        const selectMonitor = document.getElementById('selectMonitor');
+        const inputValor = document.getElementById('inputValorMonitor');
+        const tituloHint = document.getElementById('monitorTituloHint');
+        const btnSalvar = document.getElementById('btnSalvarMonitor');
+
+        const counterEl = document.getElementById('monitor-counter');
+        const MAX_MONITORS = 10;
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers = { 'Content-Type': 'application/json' };
+        if (antiForgeryToken) headers['RequestVerificationToken'] = antiForgeryToken;
+
+        let modoExcluir = false;
+        let monitorCount = 0;
+
+        function atualizarContador(count) {
+            monitorCount = count;
+            counterEl.textContent = `(${count} / ${MAX_MONITORS})`;
+            counterEl.classList.toggle('text-danger', count >= MAX_MONITORS);
+            counterEl.classList.toggle('text-muted', count < MAX_MONITORS);
+        }
+
+        function renderRows(data) {
+            atualizarContador(data.length);
+
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3"><i class="fa-duotone fa-inbox me-2"></i>Nenhum monitor cadastrado. Clique em <strong>⚙ → Novo Monitor</strong> para adicionar.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            let nivelAtual = '';
+
+            data.forEach(m => {
+                if (m.nivel !== nivelAtual) {
+                    nivelAtual = m.nivel;
+                    html += `<tr><td colspan="${modoExcluir ? 5 : 4}" class="fw-semibold text-br sic-bg" style="font-size:0.9rem;text-transform: uppercase;">${nivelAtual}</td></tr>`;
+                }
+
+                const partes = (m.resultado || '').split('|');
+
+                const parte1 = partes[0] || '';
+                const parte2 = partes[1] || '';
+
+                const deleteHtml = modoExcluir
+                    ? `<td class="text-center" style="width:1%;"><button class="btn btn-sm p-0 text-danger btn-remover-monitor" data-id="${m.usuarioMonitorID}" title="Remover monitor"><i class="fa-duotone fa-trash-alt"></i></button></td>`
+                    : '';
+
+                html += `<tr>
+                    <td><i class="fa-duotone fa-${m.icone} me-2 text-br"></i>${m.nome}</td>
+                    <td>${m.titulo}</td>
+                    <td>${parte1}</td>
+                    <td><strong><span class="text-br">${parte2}</span></strong></td>
+                    ${deleteHtml}
+                </tr>`;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function carregarResultados() {
+            tbody.innerHTML = '<tr id="monitor-loading"><td colspan="4" class="text-center text-muted py-3"><i class="fa-duotone fa-spinner-third fa-spin me-2"></i>Carregando monitores...</td></tr>';
+
+            fetch('@Url.Action("GetUserMonitorResults", "Home")')
+                .then(r => r.json())
+                .then(data => renderRows(data))
+                .catch(() => {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3"><i class="fa-duotone fa-triangle-exclamation me-2"></i>Erro ao carregar monitores.</td></tr>';
+                });
+        }
+
+        // Lazy load
+        carregarResultados();
+
+        // Excluir toggle
+        btnExcluir.addEventListener('click', function (e) {
+            e.preventDefault();
+            modoExcluir = !modoExcluir;
+            carregarResultados();
+        });
+
+        // Atualizar dados
+        btnAtualizar.addEventListener('click', function (e) {
+            e.preventDefault();
+            carregarResultados();
+        });
+
+        // Remover monitor
+        tbody.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.btn-remover-monitor');
+            if (!btn) return;
+            e.preventDefault();
+
+            const id = parseInt(btn.dataset.id);
+            const result = await Swal.fire({
+                title: 'Remover monitor?',
+                text: 'Deseja remover este monitor da sua lista?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, remover',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
+
+            fetch('@Url.Action("RemoveMonitor", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ usuarioMonitorID: id })
+            })
+                .then(r => {
+                    if (r.ok) carregarResultados();
+                    else window.sicAlert('Erro', 'Erro ao remover monitor.', 'error');
+                })
+                .catch(() => window.sicAlert('Erro', 'Erro ao remover monitor.', 'error'));
+        });
+
+        // Novo monitor
+        btnNovo.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            if (monitorCount >= MAX_MONITORS) {
+                window.sicAlert('Limite atingido', `Você já possui ${MAX_MONITORS} monitores. Remova um existente para adicionar outro.`, 'warning');
+                return;
+            }
+
+            inputValor.value = '';
+            tituloHint.textContent = '';
+            selectMonitor.innerHTML = '<option value="">Carregando...</option>';
+            modal.show();
+
+            fetch('@Url.Action("GetAllMonitors", "Home")')
+                .then(r => r.json())
+                .then(data => {
+                    selectMonitor.innerHTML = '<option value="">Selecione...</option>';
+
+                    const grupos = {};
+                    data.forEach(m => {
+                        if (!grupos[m.nivel]) grupos[m.nivel] = [];
+                        grupos[m.nivel].push(m);
+                    });
+
+                    Object.keys(grupos).sort().forEach(nivel => {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = nivel;
+                        grupos[nivel].forEach(m => {
+                            const opt = document.createElement('option');
+                            opt.value = m.monitorID;
+                            opt.textContent = m.nome;
+                            opt.dataset.titulo = m.titulo;
+                            opt.dataset.prompt = m.promptValor || '';
+                            optgroup.appendChild(opt);
+                        });
+                        selectMonitor.appendChild(optgroup);
+                    });
+                })
+                .catch(() => {
+                    selectMonitor.innerHTML = '<option value="">Erro ao carregar</option>';
+                });
+        });
+
+        selectMonitor.addEventListener('change', function () {
+            const opt = selectMonitor.selectedOptions[0];
+            tituloHint.textContent = opt?.dataset?.titulo || '';
+            const prompt = opt?.dataset?.prompt || '';
+            document.querySelector('label[for="inputValorMonitor"]').textContent = prompt || 'Valor do parâmetro:';
+            inputValor.placeholder = prompt || 'Ex.: 8317013, ABC123, etc.';
+        });
+
+        btnSalvar.addEventListener('click', function () {
+            const monitorId = parseInt(selectMonitor.value);
+            const valor = inputValor.value.trim();
+            if (!monitorId || !valor) {
+                window.sicAlert('Atenção', 'Selecione um monitor e informe o valor.', 'warning');
+                return;
+            }
+
+            btnSalvar.disabled = true;
+
+            fetch('@Url.Action("AddMonitor", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ monitorID: monitorId, valor: valor })
+            })
+                .then(r => {
+                    if (r.ok) {
+                        modal.hide();
+                        modoExcluir = false;
+                        carregarResultados();
+                    } else {
+                        window.sicAlert('Erro', 'Erro ao salvar monitor.', 'error');
+                    }
+                })
+                .catch(() => window.sicAlert('Erro', 'Erro ao salvar monitor.', 'error'))
+                .finally(() => btnSalvar.disabled = false);
+        });
+    })();
+
+    // === Avisos Importantes (lazy load + paginação) ===
+    (function () {
+        const container = document.getElementById('avisos-container');
+        const pagination = document.getElementById('avisos-pagination');
+        const btnPrev = document.getElementById('btnAvisosPrev');
+        const btnNext = document.getElementById('btnAvisosNext');
+        const pageInfo = document.getElementById('avisos-page-info');
+        const counterEl = document.getElementById('avisos-counter');
+
+        const modalEl = document.getElementById('modalDetalheAviso');
+        const modal = new bootstrap.Modal(modalEl);
+        const modalTitulo = document.getElementById('avisoModalTitulo');
+        const modalBadge = document.getElementById('avisoModalBadge');
+        const modalData = document.getElementById('avisoModalData');
+        const modalDescricao = document.getElementById('avisoModalDescricao');
+        const btnConfirmar = document.getElementById('btnConfirmarLeitura');
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const headers = { 'Content-Type': 'application/json' };
+        if (antiForgeryToken) headers['RequestVerificationToken'] = antiForgeryToken;
+
+        const PAGE_SIZE = 3;
+        let avisos = [];
+        let currentPage = 0;
+        let avisoAtual = null;
+
+        const prioridadeMap = {
+            1: { label: 'Urgente', bg: 'bg-danger', text: '' },
+            2: { label: 'Atenção', bg: 'bg-warning', text: 'text-dark' },
+            3: { label: 'Informação', bg: 'bg-info', text: '' }
+        };
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderPage() {
+            if (!avisos.length) {
+                container.innerHTML = '<div class="list-group-item text-center text-muted py-4"><i class="fa-duotone fa-bell-slash me-2"></i>Nenhum aviso no momento.</div>';
+                pagination.classList.add('d-none');
+                pagination.classList.remove('d-flex');
+                counterEl.textContent = '';
+                return;
+            }
+
+            const totalPages = Math.ceil(avisos.length / PAGE_SIZE);
+            const start = currentPage * PAGE_SIZE;
+            const pageItems = avisos.slice(start, start + PAGE_SIZE);
+
+            let html = '';
+            pageItems.forEach(a => {
+                const p = prioridadeMap[a.prioridade] || prioridadeMap[3];
+                html += `<a href="#" class="list-group-item list-group-item-action d-flex align-items-start gap-3 py-3 btn-ver-aviso"
+                            data-aviso-id="${a.avisoID}"
+                            data-titulo="${a.titulo.replace(/"/g, '&quot;')}"
+                            data-descricao="${encodeURIComponent(a.descricao)}"
+                            data-data="${a.dataHoraEnvio}"
+                            data-prioridade="${a.prioridade}">
+                    <span class="badge rounded-pill ${p.bg} ${p.text} mt-1">${p.label}</span>
+                    <div class="flex-grow-1">
+                        <p class="mb-1 fw-semibold">${a.titulo}</p>
+                        <small class="text-muted">Publicado em ${formatDate(a.dataHoraEnvio)}</small>
+                    </div>
+                    <i class="fa-duotone fa-chevron-right text-muted mt-1"></i>
+                </a>`;
+            });
+
+            container.innerHTML = html;
+            counterEl.textContent = `(${avisos.length})`;
+
+            if (totalPages > 1) {
+                pagination.classList.remove('d-none');
+                pagination.classList.add('d-flex');
+                pageInfo.textContent = `${currentPage + 1} / ${totalPages}`;
+                btnPrev.disabled = currentPage === 0;
+                btnNext.disabled = currentPage >= totalPages - 1;
+            } else {
+                pagination.classList.add('d-none');
+                pagination.classList.remove('d-flex');
+            }
+        }
+
+        function carregarAvisos() {
+            container.innerHTML = '<div class="list-group-item text-center text-muted py-3"><i class="fa-duotone fa-spinner-third fa-spin me-2"></i>Carregando avisos...</div>';
+            pagination.classList.add('d-none');
+            pagination.classList.remove('d-flex');
+
+            fetch('@Url.Action("GetUserNotices", "Home")')
+                .then(r => r.json())
+                .then(data => {
+                    avisos = data;
+                    currentPage = 0;
+                    renderPage();
+                })
+                .catch(() => {
+                    container.innerHTML = '<div class="list-group-item text-center text-danger py-3"><i class="fa-duotone fa-triangle-exclamation me-2"></i>Erro ao carregar avisos.</div>';
+                });
+        }
+
+        carregarAvisos();
+
+        btnPrev.addEventListener('click', () => { if (currentPage > 0) { currentPage--; renderPage(); } });
+        btnNext.addEventListener('click', () => { if (currentPage < Math.ceil(avisos.length / PAGE_SIZE) - 1) { currentPage++; renderPage(); } });
+
+        container.addEventListener('click', function (e) {
+            const item = e.target.closest('.btn-ver-aviso');
+            if (!item) return;
+            e.preventDefault();
+
+            const avisoId = parseInt(item.dataset.avisoId);
+            const titulo = item.dataset.titulo;
+            const descricao = decodeURIComponent(item.dataset.descricao);
+            const data = item.dataset.data;
+            const prioridade = parseInt(item.dataset.prioridade);
+            const p = prioridadeMap[prioridade] || prioridadeMap[3];
+
+            avisoAtual = avisoId;
+            modalTitulo.textContent = titulo;
+            modalBadge.className = `badge rounded-pill ${p.bg} ${p.text}`;
+            modalBadge.textContent = p.label;
+            modalData.textContent = `Publicado em ${formatDate(data)}`;
+            modalDescricao.innerHTML = descricao;
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerHTML = '<i class="fa-duotone fa-check me-1"></i>Marcar como lido';
+            modal.show();
+        });
+
+        btnConfirmar.addEventListener('click', function () {
+            if (!avisoAtual) return;
+            btnConfirmar.disabled = true;
+            btnConfirmar.innerHTML = '<i class="fa-duotone fa-spinner-third fa-spin me-1"></i>Processando...';
+
+            fetch('@Url.Action("ConfirmNoticeRead", "Home")', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ avisoID: avisoAtual })
+            })
+                .then(r => {
+                    if (r.ok) {
+                        modal.hide();
+                        carregarAvisos();
+                    } else {
+                        window.sicAlert('Erro', 'Erro ao confirmar leitura.', 'error');
+                        btnConfirmar.disabled = false;
+                        btnConfirmar.innerHTML = '<i class="fa-duotone fa-check me-1"></i>Marcar como lido';
+                    }
+                })
+                .catch(() => {
+                    window.sicAlert('Erro', 'Erro ao confirmar leitura.', 'error');
+                    btnConfirmar.disabled = false;
+                    btnConfirmar.innerHTML = '<i class="fa-duotone fa-check me-1"></i>Marcar como lido';
+                });
+        });
+    })();
+</script>
+}

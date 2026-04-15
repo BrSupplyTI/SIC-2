@@ -93,7 +93,7 @@ a {
 }
 
 [data-bs-theme="dark"] {
-    --sic-bg: #0f172a;
+    --sic-bg: #090d11;
     --sic-surface: #111827;
     --sic-surface-2: #1f2937;
     --sic-border: #334155;
@@ -102,6 +102,10 @@ a {
     --sic-brand: #FF782D;
     --sic-brand-2: #662000;
     --sic-shadow: 0 8px 20px rgba(2, 6, 23, 0.45);
+}
+
+.sic-bg {
+    background: var(--sic-bg) !important;
 }
 
 .sic-app {
@@ -988,8 +992,7 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
 .btn {
     padding: 11px 16px;
     cursor: pointer;
-    border-width: 1px;
-    border-radius: 3px;
+    border-width: 1px;    
     font-size: 14px;
     font-weight: 400;
     /*
@@ -1036,8 +1039,8 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
         }
 
     .btn.btn-primary {
-        background: #3e64ff;
-        border-color: #3e64ff !important;
+        /*background: #3e64ff;
+        border-color: #3e64ff !important;*/
         color: #fff !important;
     }
 
@@ -1072,8 +1075,8 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
 
     .btn.btn-secondary {
         color: #fff !important;
-        border-color: #6c757d !important;
-        background: #6c757d !important;
+        /*border-color: #6c757d !important;
+        background: #6c757d !important; */
     }
 
         .btn.btn-secondary:focus {
@@ -1088,8 +1091,8 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
 
     .btn.btn-success {
         color: #fff !important;
-        background: #94aa2a !important;
-        border-color: #94aa2a !important;
+        /*background: #94aa2a !important;
+        border-color: #94aa2a !important;*/
     }
 
         .btn.btn-success:focus {
@@ -1104,8 +1107,8 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
 
     .btn.btn-danger {
         color: #fff !important;
-        border-color: #f0134d !important;
-        background: #f0134d !important;
+        /*border-color: #f0134d !important;
+        background: #f0134d !important;*/
     }
 
         .btn.btn-danger:focus {
@@ -1120,8 +1123,8 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
 
     .btn.btn-warning {
         color: #fff !important;
-        border-color: #f1bc31 !important;
-        background: #f1bc31 !important;
+        /*border-color: #f1bc31 !important;
+        background: #f1bc31 !important;*/
     }
 
         .btn.btn-warning:focus {
@@ -1136,8 +1139,8 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
 
     .btn.btn-info {
         color: #fff !important;
-        border-color: #64c4ed !important;
-        background: #64c4ed !important;
+        /*border-color: #64c4ed !important;
+        background: #64c4ed !important;*/
     }
 
         .btn.btn-info:focus {
@@ -1284,161 +1287,157 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
         color: #4f69a2 !important;
     }
 /* FIM - Personalização de estilo botões Bootstrap */
-/* Layout Br SUpply*/
-.text-br {
-    color: var(--sic-brand) !important;
-}
+        /* Layout Br SUpply*/
+        .text-br {
+            color: var(--sic-brand) !important;
+        }
 
-.bg-br {
-    background-color: var(--sic-brand);
-}
+        .bg-br {
+            background-color: var(--sic-brand);
+        }
 
-.marcador-br {
-    border-left: 4px solid var(--sic-brand);
-}
+        .marcador-br {
+            border-left: 4px solid var(--sic-brand);
+        }
 
-.pagination {
-    --bs-pagination-active-bg: var(--sic-brand) !important;
-    --bs-pagination-active-border-color: var(--sic-brand) !important;
-}
+        .pagination {
+            --bs-pagination-active-bg: var(--sic-brand) !important;
+            --bs-pagination-active-border-color: var(--sic-brand) !important;
+        }
 
-.accordion {
-    --bs-accordion-active-color: #ffffff;
-    --bs-accordion-active-bg: var(--sic-brand);
-    --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgba(255, 120, 45, 0.25);
-}
+        .accordion {
+            --bs-accordion-active-color: #ffffff;
+            --bs-accordion-active-bg: var(--sic-brand);
+            --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgba(255, 120, 45, 0.25);
+        }
 
-.accordion-border {
-    border-left: 2px solid var(--sic-brand);
-}
+        .accordion-border {
+            border-left: 2px solid var(--sic-brand);
+        }
 
-.accordion button.collapsed:hover {
-    background-color: color-mix(in srgb, var(--sic-brand) 15%, transparent)
-}
+        .accordion button.collapsed:hover {
+            background-color: color-mix(in srgb, var(--sic-brand) 15%, transparent)
+        }
 
-[data-bs-theme="dark"] .accordion button.collapsed:hover {
-    background-color: color-mix(in srgb, var(--sic-brand) 15%, transparent)
-}
+        [data-bs-theme="dark"] .accordion button.collapsed:hover {
+            background-color: color-mix(in srgb, var(--sic-brand) 15%, transparent)
+        }
 
-.accordion-item button.collapsed i {
-    color: var(--sic-brand);
-}
+        .accordion-item button.collapsed i {
+            color: var(--sic-brand);
+        }
 
-.icone-produto {
-    width: 65px;
-    height: 65px;
-    border-radius: 10%;
-    object-fit: cover;
-    border: 2px solid var(--sic-border);
-    cursor: pointer;
-    transition: transform .2s ease, box-shadow .2s ease;
-}
+        .icone-produto {
+            width: 65px;
+            height: 65px;
+            border-radius: 10%;
+            object-fit: cover;
+            border: 2px solid var(--sic-border);
+            cursor: pointer;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
 
-    .icone-produto:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 0 4px color-mix(in srgb, var(--sic-brand) 20%, transparent);
-    }
+            .icone-produto:hover {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 4px color-mix(in srgb, var(--sic-brand) 20%, transparent);
+            }
 
-.text-ruptura {
-    color: var(--bs-text-danger)
-}
+        .text-ruptura {
+            color: var(--bs-text-danger)
+        }
+        /* INÍCIO - Tela de Detalhes do pedido */
+        .pedido-accordion-icon {
+            transition: transform .2s ease, color .2s ease;
+            transform-origin: center;
+        }
 
-/* INÍCIO - Tela de Detalhes do pedido */
-.pedido-accordion-icon {
-    transition: transform .2s ease, color .2s ease;
-    transform-origin: center;
-}
+        .accordion-button:not(.collapsed) .pedido-accordion-icon {
+            transform: scale(2);
+        }
 
-.accordion-button:not(.collapsed) .pedido-accordion-icon {
-    transform: scale(2);
-}
+        .log-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
 
-.log-filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-}
+        .log-filter-btn {
+            display: inline-flex;
+            gap: .4rem;
+            padding: .4rem .85rem;
+            font-size: .8rem;
+            font-weight: 600;
+            border-radius: 2rem;
+            border: 1.5px solid var(--sic-border);
+            background: var(--sic-surface);
+            color: var(--sic-muted);
+            cursor: pointer;
+            transition: all .2s ease;
+            white-space: nowrap;
+        }
 
-.log-filter-btn {
-    display: inline-flex;
-    gap: .4rem;
-    padding: .4rem .85rem;
-    font-size: .8rem;
-    font-weight: 600;
-    border-radius: 2rem;
-    border: 1.5px solid var(--sic-border);
-    background: var(--sic-surface);
-    color: var(--sic-muted);
-    cursor: pointer;
-    transition: all .2s ease;
-    white-space: nowrap;
-}
+            .log-filter-btn:hover {
+                border-color: color-mix(in srgb, var(--sic-brand) 50%, transparent);
+                color: var(--sic-brand);
+                background: color-mix(in srgb, var(--sic-brand) 6%, transparent);
+            }
 
-    .log-filter-btn:hover {
-        border-color: color-mix(in srgb, var(--sic-brand) 50%, transparent);
-        color: var(--sic-brand);
-        background: color-mix(in srgb, var(--sic-brand) 6%, transparent);
-    }
+            .log-filter-btn.active {
+                border-color: var(--sic-brand);
+                background: color-mix(in srgb, var(--sic-brand) 12%, transparent);
+                color: var(--sic-brand);
+            }
 
-    .log-filter-btn.active {
-        border-color: var(--sic-brand);
-        background: color-mix(in srgb, var(--sic-brand) 12%, transparent);
-        color: var(--sic-brand);
-    }
+            .log-filter-btn .log-filter-count {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 1.4rem;
+                height: 1.4rem;
+                padding: 0 .35rem;
+                font-size: .7rem;
+                font-weight: 700;
+                border-radius: 1rem;
+                background: var(--sic-border);
+                color: var(--sic-muted);
+                transition: all .2s ease;
+            }
 
-    .log-filter-btn .log-filter-count {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 1.4rem;
-        height: 1.4rem;
-        padding: 0 .35rem;
-        font-size: .7rem;
-        font-weight: 700;
-        border-radius: 1rem;
-        background: var(--sic-border);
-        color: var(--sic-muted);
-        transition: all .2s ease;
-    }
+            .log-filter-btn.active .log-filter-count {
+                background: var(--sic-brand);
+                color: #fff;
+            }
 
-    .log-filter-btn.active .log-filter-count {
-        background: var(--sic-brand);
-        color: #fff;
-    }
+            .log-filter-btn i {
+                padding-top: 3px;
+            }
+        /* FIM - Tela de Detalhes do pedido */
+        /* INÍCIO - Tela de Detalhes do produto */
 
-    .log-filter-btn i {
-        padding-top: 3px;
-    }
-/* FIM - Tela de Detalhes do pedido */
+        .produto-accordion-icon {
+            transition: transform .2s ease, color .2s ease;
+            transform-origin: center;
+        }
 
-/* INÍCIO - Tela de Detalhes do produto */
+        .accordion-button:not(.collapsed) .produto-accordion-icon {
+            transform: scale(2);
+        }
+        /* Property groups */
+        .pedido-prop-group {
+            margin-top: 1rem;
+        }
 
-.produto-accordion-icon {
-    transition: transform .2s ease, color .2s ease;
-    transform-origin: center;
-}
+            .pedido-prop-group:last-child {
+                margin-bottom: 1rem;
+            }
 
-.accordion-button:not(.collapsed) .produto-accordion-icon {
-    transform: scale(2);
-}
-
-/* Property groups */
-.pedido-prop-group {
-    margin-top: 1rem;
-}
-
-    .pedido-prop-group:last-child {
-        margin-bottom: 1rem;
-    }
-
-.pedido-prop-group-title {
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    color: var(--sic-brand);
-    padding: .5rem 0;
-    margin-bottom: 0;
-    border-bottom: 2px solid color-mix(in srgb, var(--sic-brand) 20%, transparent);
-}
-
-/* FIM  - Tela de Detalhes do produto */
+        .pedido-prop-group-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--sic-brand);
+            padding: .5rem 0;
+            margin-bottom: 0;
+            border-bottom: 2px solid color-mix(in srgb, var(--sic-brand) 20%, transparent);
+        }
+        /* FIM  - Tela de Detalhes do produto */

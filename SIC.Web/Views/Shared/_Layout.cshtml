@@ -54,9 +54,9 @@
         <div class="sic-app">
             <aside class="sic-sidebar" id="sicSidebar">
                 <div class="sidebar-brand">
-                    <a class="logo-dark" asp-controller="Home" asp-action="Index"><img class="logo-default ms-2" src="~/img/logo-light.png" /></a>
-                    <a class="logo-light" asp-controller="Home" asp-action="Index"><img class="logo-default ms-2" src="~/img/logo-dark.png" /></a>
-                    <a class="logo-icon-link" asp-controller="Home" asp-action="Index"><img class="logo-icon ms-2" src="~/img/logo-icon.png" /></a>
+                    <a class="logo-dark" asp-area="" asp-controller="Home" asp-action="Index"><img class="logo-default ms-2" src="~/img/logo-light.png" /></a>
+                    <a class="logo-light" asp-area="" asp-controller="Home" asp-action="Index"><img class="logo-default ms-2" src="~/img/logo-dark.png" /></a>
+                    <a class="logo-icon-link" asp-area="" asp-controller="Home" asp-action="Index"><img class="logo-icon ms-2" src="~/img/logo-icon.png" /></a>
                     <button class="btn btn-default sidebar-collapse-btn" id="sidebarCollapseToggle" type="button" title="Recolher menu">
                         <i class="fa-duotone fa-chevron-left fa-lg"></i>
                     </button>
@@ -65,14 +65,14 @@
                 <nav class="nav flex-column sidebar-nav">
                     <div class="sidebar-group">
                         <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuDashboard" aria-expanded="true" title="Dashboard">
-                            <span><i class="fa-solid fa-house me-2 sidebar-menu-icon"></i><span class="sidebar-label">Dashboard</span></span>
+                            <span><i class="fa-solid fa-house me-2 sidebar-menu-icon"></i><span class="sidebar-label">Início</span></span>
                             <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
                         </button>
                         <div class="sidebar-submenu open" id="sidebarMenuDashboard">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index" data-sic-nav><i class="fa-solid fa-chart-line me-2"></i>Visão geral</a>
-                            <a class="nav-link" asp-controller="Pedidos" asp-action="Busca" data-sic-nav><i class="fa-duotone fa-boxes me-2"></i>Consulta Pedido</a>
-                            <a class="nav-link" asp-controller="Produtos" asp-action="Catalogo" data-sic-nav><i class="fa-duotone fa-pump-soap me-2"></i>Consulta Produto</a>
-                            <a class="nav-link" asp-controller="Clientes" asp-action="Busca" data-sic-nav><i class="fa-duotone fa-user-tie me-2"></i>Consulta Cliente</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index" data-sic-nav><i class="fa-solid fa-chart-line me-2"></i>Dashboard</a>
+                            <a class="nav-link" asp-area="" asp-controller="Pedidos" asp-action="Busca" data-sic-nav><i class="fa-duotone fa-boxes me-2"></i>Consulta Pedido</a>
+                            <a class="nav-link" asp-area="" asp-controller="Produtos" asp-action="Catalogo" data-sic-nav><i class="fa-duotone fa-pump-soap me-2"></i>Consulta Produto</a>
+                            <a class="nav-link" asp-area="" asp-controller="Clientes" asp-action="Busca" data-sic-nav><i class="fa-duotone fa-user-tie me-2"></i>Consulta Cliente</a>
                             @{
                                 var dtNow = DateTime.Now;
                                 var dtFormatada = dtNow.ToString("dd/MM/yyyy HH:mm");
@@ -100,7 +100,7 @@
                             <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
                         </button>
                         <div class="sidebar-submenu" id="sidebarMenuComercial">
-                            <a class="nav-link" asp-controller="PrePedidosPDF" asp-action="List" data-sic-nav><i class="fa-duotone fa-file-lines me-2"></i>Pedidos ERP</a>
+                            <a class="nav-link" asp-area="" asp-controller="PrePedidosPDF" asp-action="List" data-sic-nav><i class="fa-duotone fa-file-lines me-2"></i>Pedidos ERP</a>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-box me-2"></i>Adm. de Pedidos<span class="badge-soon">Em breve</span></span>
                             <a class="nav-link" href="https://intranet.brsupply.com.br/intranet/html/valida_login.php?u=@User.FindFirst("sic_login")?.Value&h=@base64&redirect=comercial/gestao_adm_cad_clientes.php"><i class="fa-duotone fa-user-tie me-2"></i>Adm. de Clientes</a>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-plug me-2"></i>Integrações<span class="badge-soon">Em breve</span></span>
@@ -113,8 +113,8 @@
                             <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
                         </button>
                         <div class="sidebar-submenu" id="sidebarMenuNovosNegocios">
-                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-circle-plus me-2"></i>Codificar Nova Proposta<span class="badge-soon">Em breve</span></span>
-                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-box me-2"></i>Propostas<span class="badge-soon">Em breve</span></span>
+                            <a class="nav-link" asp-area="" asp-controller="Propostas" asp-action="CadastroProposta" data-sic-nav><i class="fa-duotone fa-circle-plus me-2"></i>Cadastro de Proposta</a>
+                            @* <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-box me-2"></i>Propostas<span class="badge-soon">Em breve</span></span>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-file-xls me-2"></i>Lista de Itens<span class="badge-soon">Em breve</span></span>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-circle-user me-2"></i>Consulta Cliente<span class="badge-soon">Em breve</span></span>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-diagram-project me-2"></i>Projetos<span class="badge-soon">Em breve</span></span>
@@ -122,7 +122,7 @@
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-plug me-2"></i>Grupos de Produtos<span class="badge-soon">Em breve</span></span>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-tag me-2"></i>Administracão de Tags<span class="badge-soon">Em breve</span></span>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-dollar-circle me-2"></i>Monitor de Preços<span class="badge-soon">Em breve</span></span>
-                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-brain me-2"></i>Inteligencia de Busca<span class="badge-soon">Em breve</span></span>
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-brain me-2"></i>Inteligencia de Busca<span class="badge-soon">Em breve</span></span> *@
                         </div>
                     </div>
 
@@ -153,6 +153,20 @@
                             <span class="badge-soon">Em breve</span>
                         </span>
                     </div>
+
+                    @if (isAdmin)
+                    {
+                        <div class="sidebar-group">
+                            <button class="nav-link sidebar-group-toggle" type="button" data-sidebar-toggle="sidebarMenuAdmin" aria-expanded="false" title="Administração">
+                                <span><i class="fa-duotone fa-shield-halved me-2 sidebar-menu-icon"></i><span class="sidebar-label">Administração</span></span>
+                                <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
+                            </button>
+                            <div class="sidebar-submenu" id="sidebarMenuAdmin">
+                                <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="Index" data-sic-nav><i class="fa-duotone fa-gauge-high me-2"></i>Painel</a>
+                                <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="MensagensImportantes" data-sic-nav><i class="fa-duotone fa-bullhorn me-2"></i>Mensagens</a>
+                            </div>
+                        </div>
+                    }
                 </nav>
 
                 <div class="sidebar-user-compact" id="sidebarUserCompact">
@@ -161,9 +175,9 @@
                         <i class="fa-solid fa-chevron-down user-menu-chevron"></i>
                     </button>
                     <div class="user-menu-items" id="sidebarUserMenu">
-                        <a class="nav-link" asp-controller="Account" asp-action="MeusDados"><i class="fa-solid fa-id-card me-2"></i>Minha conta</a>
+                        <a class="nav-link" asp-area="" asp-controller="Account" asp-action="MeusDados"><i class="fa-solid fa-id-card me-2"></i>Minha conta</a>
                         <a class="nav-link" href="javascript:void(0)" data-change-password-action="true"><i class="fa-solid fa-key me-2"></i>Alterar senha</a>
-                        <form method="post" asp-controller="Account" asp-action="Logout" class="m-0">
+                        <form method="post" asp-area="" asp-controller="Account" asp-action="Logout" class="m-0">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="nav-link nav-link-button w-100 text-start"><i class="fa-solid fa-right-from-bracket me-2"></i>Sair</button>
                         </form>
@@ -229,6 +243,7 @@
                                             else
                                             {
                                                 <a class="dropdown-item"
+                                                   asp-area=""
                                                    asp-controller="Account"
                                                    asp-action="ChangeEstabelecimento"
                                                    asp-route-estabelecimentoId="@item.EstabelecimentoId"
@@ -249,7 +264,7 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" asp-controller="Account" asp-action="MeusDados">
+                                    <a class="dropdown-item" asp-area="" asp-controller="Account" asp-action="MeusDados">
                                         <i class="fa-duotone fa-id-card me-2"></i>Meus Dados
                                     </a>
                                 </li>
@@ -260,7 +275,7 @@
                                 </li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li>
-                                    <form method="post" asp-controller="Account" asp-action="Logout" class="px-2">
+                                    <form method="post" asp-area="" asp-controller="Account" asp-action="Logout" class="px-2">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="dropdown-item">
                                             <i class="fa-duotone fa-right-from-bracket me-2"></i>Sair
@@ -287,11 +302,11 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <form id="avatarUploadForm" method="post" asp-controller="Account" asp-action="AvatarUpload" enctype="multipart/form-data" class="d-none">
+    <form id="avatarUploadForm" method="post" asp-area="" asp-controller="Account" asp-action="AvatarUpload" enctype="multipart/form-data" class="d-none">
         @Html.AntiForgeryToken()
         <input id="avatarFileInput" name="avatarFile" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
     </form>
-    <form id="changePasswordForm" method="post" asp-controller="Account" asp-action="ChangePassword" class="d-none">
+    <form id="changePasswordForm" method="post" asp-area="" asp-controller="Account" asp-action="ChangePassword" class="d-none">
         @Html.AntiForgeryToken()
     </form>
     <script src="~/js/site.js" asp-append-version="true"></script>

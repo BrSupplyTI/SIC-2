@@ -4,26 +4,24 @@ namespace SIC.Web.Models.Propostas;
 
 public sealed class CadastroPropostaViewModel
 {
+    public int? PropostaID { get; set; }
     public int? EstabelecimentoID { get; set; }
     public string? NomeProposta { get; set; }
-    public string? Qualidade { get; set; }
-    public string? Segmento { get; set; }
 
     public IReadOnlyList<CatalogEstablishmentVm> Estabelecimentos { get; set; } = [];
+    public IReadOnlyList<SegmentoVm> Segmentos { get; set; } = [];
+    public List<QualSegDetalheVm> QualSegCadastrados { get; set; } = [];
 
-    public IReadOnlyList<string> Qualidades { get; set; } =
+    public static IReadOnlyList<QualidadeOption> Qualidades { get; } =
     [
-        "Premium",
-        "Standard",
-        "Econômico"
+        new() { Value = "B", Desc = "Básico" },
+        new() { Value = "I", Desc = "Intermediário" },
+        new() { Value = "P", Desc = "Premium" },
     ];
+}
 
-    public IReadOnlyList<string> Segmentos { get; set; } =
-    [
-        "Alimentício",
-        "Higiene e Limpeza",
-        "Cosméticos",
-        "Farmacêutico",
-        "Industrial"
-    ];
+public sealed class QualidadeOption
+{
+    public string Value { get; set; } = string.Empty;
+    public string Desc { get; set; } = string.Empty;
 }

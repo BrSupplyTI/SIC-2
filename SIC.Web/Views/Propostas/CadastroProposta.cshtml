@@ -1,79 +1,155 @@
 @model SIC.Web.Models.Propostas.CadastroPropostaViewModel
 @{
-    ViewData["Title"] = "Cadastro de Proposta";
+    var isEdit = Model.PropostaID.HasValue;
+    ViewData["Title"] = isEdit ? "Editar Proposta" : "Cadastro de Nova Proposta";
+}
+
+@section Styles {
+    <style>
+        .qualseg-container {
+            border: 1px solid var(--sic-border);
+            border-radius: .5rem;
+            padding: .5rem;
+            min-height: 80px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--sic-surface-2);
+        }
+        .qualseg-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .35rem .75rem;
+            border-bottom: 1px solid var(--sic-border);
+            font-size: .85rem;
+        }
+        .qualseg-item:last-child {
+            border-bottom: none;
+        }
+        .qualseg-trash {
+            color: var(--bs-danger);
+            cursor: pointer;
+            font-size: .9rem;
+        }
+        .qualseg-trash:hover {
+            color: var(--bs-danger);
+            opacity: .7;
+        }
+        .qualseg-empty {
+            text-align: center;
+            color: var(--sic-muted);
+            padding: 1.5rem;
+            font-size: .85rem;
+        }
+    </style>
 }
 
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4 p-lg-5">
-        <div class="d-flex align-items-center justify-content-between mb-4">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
             <div>
-                <h2 class="h4 mb-1">Cadastro de Proposta</h2>
-                <p class="text-muted mb-0">Preencha os dados abaixo para cadastrar uma nova proposta.</p>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0">
+                        <i class="fa-duotone fa-thin @(isEdit ? "fa-file-pen" : "fa-file-circle-plus") me-2 text-br"></i>
+                        @(isEdit ? "Editar Proposta" : "Cadastro de Nova Proposta")
+                    </h2>
+                </div>
+                <p class="text-muted mt-1 mb-0">
+                    @(isEdit ? "Altere os dados da proposta e as combinações de qualidade e segmento." : "Preencha os dados abaixo e adicione as combinações de qualidade e segmento.")
+                </p>
             </div>
-            <i class="fa-solid fa-file-circle-plus fa-xl text-primary"></i>
+            <div class="d-flex gap-2">
+                <a asp-controller="Propostas" asp-action="Lista" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Voltar
+                </a>
+            </div>
         </div>
 
-        <form method="post" class="row g-4">
+        <form method="post" asp-controller="Propostas" asp-action="CadastroProposta" id="formCadastroProposta">
             @Html.AntiForgeryToken()
 
-            <div class="col-md-6">
-                <label for="selectEstabelecimento" class="form-label fw-semibold">
-                    <i class="fa-solid fa-warehouse me-1 text-muted"></i>Estabelecimento
-                </label>
-                <select class="form-select" id="selectEstabelecimento" name="EstabelecimentoID">
-                    <option value="">Selecione um estabelecimento</option>
-                    @foreach (var est in Model.Estabelecimentos)
-                    {
-                        <option value="@est.EstabelecimentoID" selected="@(Model.EstabelecimentoID == est.EstabelecimentoID)">@est.NmEstabelecimento</option>
-                    }
-                </select>
+            @if (isEdit)
+            {
+                <input type="hidden" name="PropostaID" value="@Model.PropostaID" />
+            }
+
+            <!-- Estabelecimento + Nome -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label for="selectEstabelecimento" class="form-label fw-semibold">
+                        <i class="fa-solid fa-warehouse me-1 text-muted"></i>Estabelecimento <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" id="selectEstabelecimento" name="EstabelecimentoID" required>
+                        <option value="">-- Selecione --</option>
+                        @foreach (var est in Model.Estabelecimentos)
+                        {
+                            <option value="@est.EstabelecimentoID" selected="@(Model.EstabelecimentoID == est.EstabelecimentoID)">@est.NmEstabelecimento</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-8">
+                    <label for="inputNomeProposta" class="form-label fw-semibold">
+                        <i class="fa-solid fa-file-signature me-1 text-muted"></i>Nome da Proposta <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="inputNomeProposta" name="NomeProposta"
+                           placeholder="Nome da Proposta" maxlength="100" autocomplete="off" autofocus required
+                           value="@Model.NomeProposta" />
+                </div>
             </div>
 
-            <div class="col-md-6">
-                <label for="inputNomeProposta" class="form-label fw-semibold">
-                    <i class="fa-solid fa-file-signature me-1 text-muted"></i>Nome da Proposta
-                </label>
-                <input type="text" class="form-control" id="inputNomeProposta" name="NomeProposta"
-                       placeholder="Digite o nome da proposta" value="@Model.NomeProposta" />
+            <!-- Qualidade + Segmento + Adicionar -->
+            <div class="row g-3 mb-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="selectQualidade" class="form-label fw-semibold">
+                        <i class="fa-solid fa-star me-1 text-muted"></i>Qualidade <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" id="selectQualidade">
+                        <option value="">-- Selecione --</option>
+                        @foreach (var q in SIC.Web.Models.Propostas.CadastroPropostaViewModel.Qualidades)
+                        {
+                            <option value="@q.Value" data-desc="@q.Desc">@q.Desc</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="selectSegmento" class="form-label fw-semibold">
+                        <i class="fa-solid fa-layer-group me-1 text-muted"></i>Segmento <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" id="selectSegmento">
+                        <option value="">-- Selecione --</option>
+                        @foreach (var s in Model.Segmentos)
+                        {
+                            <option value="@s.SegmentoID" data-desc="@s.NmSegmento">@s.NmSegmento</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-success w-100" id="btnAdicionar">
+                        <i class="fa-solid fa-plus me-1"></i>Adicionar
+                    </button>
+                </div>
             </div>
 
-            <div class="col-md-6">
-                <label for="selectQualidade" class="form-label fw-semibold">
-                    <i class="fa-solid fa-star me-1 text-muted"></i>Qualidade
+            <!-- Container Qualidades e Segmentos -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold">
+                    <i class="fa-solid fa-list-check me-1 text-muted"></i>Qualidades e Segmentos
                 </label>
-                <select class="form-select" id="selectQualidade" name="Qualidade">
-                    <option value="">Selecione a qualidade</option>
-                    @foreach (var q in Model.Qualidades)
-                    {
-                        <option value="@q" selected="@(Model.Qualidade == q)">@q</option>
-                    }
-                </select>
+                <div class="qualseg-container" id="qualSegContainer">
+                    <div class="qualseg-empty" id="qualSegEmpty">
+                        Nenhuma combinação adicionada. Selecione uma qualidade e um segmento e clique em "Adicionar".
+                    </div>
+                </div>
+                <div id="hiddenInputs"></div>
             </div>
 
-            <div class="col-md-6">
-                <label for="selectSegmento" class="form-label fw-semibold">
-                    <i class="fa-solid fa-layer-group me-1 text-muted"></i>Segmento
-                </label>
-                <select class="form-select" id="selectSegmento" name="Segmento">
-                    <option value="">Selecione o segmento</option>
-                    @foreach (var s in Model.Segmentos)
-                    {
-                        <option value="@s" selected="@(Model.Segmento == s)">@s</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-12">
-                <label for="txtResumo" class="form-label fw-semibold">
-                    <i class="fa-solid fa-align-left me-1 text-muted"></i>Resumo (Qualidade e Segmento)
-                </label>
-                <textarea class="form-control" id="txtResumo" rows="3" readonly
-                          placeholder="Selecione a qualidade e o segmento acima para visualizar o resumo aqui."></textarea>
-            </div>
-
-            <div class="col-12 d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fa-solid fa-check me-2"></i>Cadastrar Proposta
+            <!-- Campos obrigatórios + Botão -->
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted"><span class="text-danger">*</span> Campos obrigatórios</small>
+                <button type="submit" class="btn btn-primary" id="btnSalvar">
+                    <i class="fa-solid fa-floppy-disk me-1"></i>@(isEdit ? "Atualizar Proposta" : "Salvar Proposta")
                 </button>
             </div>
         </form>
@@ -82,26 +158,122 @@
 
 @section Scripts {
     <script>
-        (function () {
-            const selectQualidade = document.getElementById('selectQualidade');
-            const selectSegmento = document.getElementById('selectSegmento');
-            const txtResumo = document.getElementById('txtResumo');
+        (() => {
+            const qualidadeSelect = document.getElementById('selectQualidade');
+            const segmentoSelect = document.getElementById('selectSegmento');
+            const container = document.getElementById('qualSegContainer');
+            const hiddenContainer = document.getElementById('hiddenInputs');
+            const emptyMsg = document.getElementById('qualSegEmpty');
 
-            function atualizarResumo() {
-                const partes = [];
-                const qualidade = selectQualidade.options[selectQualidade.selectedIndex]?.text;
-                const segmento = selectSegmento.options[selectSegmento.selectedIndex]?.text;
-
-                if (selectQualidade.value) partes.push('Qualidade: ' + qualidade);
-                if (selectSegmento.value) partes.push('Segmento: ' + segmento);
-
-                txtResumo.value = partes.join('\n');
+            function updateEmpty() {
+                emptyMsg.style.display = container.querySelectorAll('.qualseg-item').length === 0 ? '' : 'none';
             }
 
-            selectQualidade.addEventListener('change', atualizarResumo);
-            selectSegmento.addEventListener('change', atualizarResumo);
+            function addQualSegItem(qualValue, qualDesc, segValue, segDesc) {
+                var index = hiddenContainer.querySelectorAll('input[name*="[SegmentoID]"]').length;
 
-            atualizarResumo();
+                var inputSeg = document.createElement('input');
+                inputSeg.type = 'hidden';
+                inputSeg.name = 'QualSeg[' + index + '].SegmentoID';
+                inputSeg.value = segValue;
+                inputSeg.dataset.index = index;
+                hiddenContainer.appendChild(inputSeg);
+
+                var inputQual = document.createElement('input');
+                inputQual.type = 'hidden';
+                inputQual.name = 'QualSeg[' + index + '].Qualidade';
+                inputQual.value = qualValue;
+                inputQual.dataset.index = index;
+                hiddenContainer.appendChild(inputQual);
+
+                var itemDiv = document.createElement('div');
+                itemDiv.className = 'qualseg-item';
+                itemDiv.dataset.index = index;
+                itemDiv.dataset.qualidade = qualValue;
+                itemDiv.dataset.segmento = segValue;
+                itemDiv.innerHTML = '<span><i class="fa-solid fa-circle-check text-success me-2"></i>' + qualDesc + ' \u2014 ' + segDesc + '</span>' +
+                    '<i class="fa-solid fa-trash qualseg-trash"></i>';
+
+                itemDiv.querySelector('.qualseg-trash').addEventListener('click', function () {
+                    hiddenContainer.querySelectorAll('[data-index="' + index + '"]').forEach(function (el) { el.remove(); });
+                    itemDiv.remove();
+                    updateEmpty();
+                });
+
+                container.appendChild(itemDiv);
+                updateEmpty();
+            }
+
+            // Pre-populate existing QualSeg items (edit mode)
+            @if (isEdit && Model.QualSegCadastrados.Count > 0)
+            {
+                @foreach (var qs in Model.QualSegCadastrados)
+                {
+                    var segName = qs.NmSegmento.Replace("'", @"\'");
+                    var qualDesc = qs.QualidadeDesc.Replace("'", @"\'");
+                    <text>addQualSegItem('@qs.Qualidade', '@Html.Raw(qualDesc)', '@qs.SegmentoID', '@Html.Raw(segName)');</text>
+                }
+            }
+
+            document.getElementById('btnAdicionar').addEventListener('click', function () {
+                var qualOpt = qualidadeSelect.options[qualidadeSelect.selectedIndex];
+                var segOpt = segmentoSelect.options[segmentoSelect.selectedIndex];
+
+                var qualValue = qualOpt.value;
+                var qualDesc = qualOpt.dataset.desc || qualOpt.text;
+                var segValue = segOpt.value;
+                var segDesc = segOpt.dataset.desc || segOpt.text;
+
+                if (!qualValue || !segValue) {
+                    Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione uma qualidade e um segmento!' });
+                    return;
+                }
+
+                var jaExiste = Array.from(container.querySelectorAll('.qualseg-item')).some(function (item) {
+                    return item.dataset.qualidade === qualValue && item.dataset.segmento === segValue;
+                });
+
+                if (jaExiste) {
+                    Swal.fire({ icon: 'info', title: 'Duplicado', text: 'Essa combinação já foi adicionada!' });
+                    return;
+                }
+
+                addQualSegItem(qualValue, qualDesc, segValue, segDesc);
+
+                qualidadeSelect.selectedIndex = 0;
+                segmentoSelect.selectedIndex = 0;
+            });
+
+            function reindexQualSeg() {
+                var items = container.querySelectorAll('.qualseg-item');
+                hiddenContainer.innerHTML = '';
+                items.forEach(function (item, i) {
+                    item.dataset.index = i;
+
+                    var inputSeg = document.createElement('input');
+                    inputSeg.type = 'hidden';
+                    inputSeg.name = 'QualSeg[' + i + '].SegmentoID';
+                    inputSeg.value = item.dataset.segmento;
+                    inputSeg.dataset.index = i;
+                    hiddenContainer.appendChild(inputSeg);
+
+                    var inputQual = document.createElement('input');
+                    inputQual.type = 'hidden';
+                    inputQual.name = 'QualSeg[' + i + '].Qualidade';
+                    inputQual.value = item.dataset.qualidade;
+                    inputQual.dataset.index = i;
+                    hiddenContainer.appendChild(inputQual);
+                });
+            }
+
+            document.getElementById('formCadastroProposta').addEventListener('submit', function (e) {
+                if (container.querySelectorAll('.qualseg-item').length === 0) {
+                    e.preventDefault();
+                    Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Adicione pelo menos uma combinação de qualidade e segmento!' });
+                    return;
+                }
+                reindexQualSeg();
+            });
         })();
     </script>
 }

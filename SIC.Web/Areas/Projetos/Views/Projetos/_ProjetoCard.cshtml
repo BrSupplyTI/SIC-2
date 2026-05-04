@@ -1,0 +1,76 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoItemVm
+@{
+    var avatarColors = new[] { "#0d6efd", "#198754", "#fd7e14", "#6f42c1", "#dc3545", "#20c997", "#0dcaf0", "#6c757d" };
+    var pct = Model.QtTarefas > 0 ? (int)Math.Round(Model.QtTarefasConcluidas * 100.0 / Model.QtTarefas) : 0;
+    var progressColor = pct == 100 ? "#198754" : pct >= 50 ? "#0d6efd" : "#ffc107";
+}
+
+<div class="card projeto-card position-relative"
+     data-url="@Url.Action("Detalhes", "Projetos", new { area = "Projetos", projetoId = Model.ProjetoID })">
+
+    <!-- Status bar lateral -->
+    <div class="projeto-card-status" style="background: @Model.CdCorStatus;"></div>
+
+    <div class="card-body ps-4">
+        <!-- Header do card -->
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+                <h6 class="mb-1 fw-semibold">@Model.NmProjeto</h6>
+                <span class="badge rounded-pill" style="background: @Model.CdCorStatus; font-size: 0.7rem;">
+                    @Model.NmStatus
+                </span>
+            </div>
+        </div>
+
+        <!-- Descrição -->
+        <p class="text-muted mb-3" style="font-size: 0.82rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            @Model.DsProjeto
+        </p>
+
+        <!-- Progresso -->
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <small class="text-muted">Progresso</small>
+                <small class="fw-semibold">@Model.QtTarefasConcluidas/@Model.QtTarefas tarefas · @pct%</small>
+            </div>
+            <div class="projeto-progress">
+                <div class="projeto-progress-bar" style="width: @pct%; background: @progressColor;"></div>
+            </div>
+        </div>
+
+        <!-- Datas -->
+        <div class="d-flex flex-wrap gap-3 mb-3" style="font-size: 0.78rem;">
+            @if (!string.IsNullOrWhiteSpace(Model.DtInicio))
+            {
+                <span class="text-muted"><i class="fa-solid fa-calendar-day me-1"></i>@Model.DtInicio</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.DtPrevisaoFim))
+            {
+                <span class="text-muted"><i class="fa-solid fa-calendar-check me-1"></i>@Model.DtPrevisaoFim</span>
+            }
+        </div>
+
+        <!-- Footer: Criador + Participantes -->
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted"><i class="fa-solid fa-user me-1"></i>@Model.NmCriador</small>
+
+            @if (Model.QtParticipantes > 0)
+            {
+                <div class="projeto-avatar-stack" title="@Model.QtParticipantes participante(s)">
+                    @for (var i = 0; i < Math.Min(Model.QtParticipantes, 3); i++)
+                    {
+                        <div class="avatar" style="background: @avatarColors[i % avatarColors.Length];">
+                            <i class="fa-solid fa-user" style="font-size: 0.55rem;"></i>
+                        </div>
+                    }
+                    @if (Model.QtParticipantes > 3)
+                    {
+                        <div class="avatar" style="background: var(--sic-muted);">
+                            +@(Model.QtParticipantes - 3)
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

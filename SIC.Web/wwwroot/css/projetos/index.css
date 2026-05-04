@@ -1,0 +1,3005 @@
+/* ============================================
+   Projetos – Lista (Index)
+   Alinhado com o design system SIC
+   ============================================ */
+
+/* ====== Stat cards (resumo) ====== */
+.projeto-stat-card {
+    min-height: 80px;
+    transition: border-color 0.2s ease;
+}
+
+.projeto-stat-card:hover {
+    border-color: var(--sic-brand) !important;
+}
+
+/* ====== Project Card ====== */
+.projeto-card {
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    height: 100%;
+}
+
+.projeto-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sic-shadow, 0 8px 20px rgba(15, 23, 42, 0.08));
+}
+
+.projeto-card .card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Status indicator (barra lateral esquerda) */
+.projeto-card-status {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0.75rem 0 0 0.75rem;
+}
+
+/* ====== Progress bar ====== */
+.projeto-progress {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--sic-border);
+}
+
+.projeto-progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+/* ====== Avatar stack (participantes) ====== */
+.projeto-avatar-stack {
+    display: flex;
+}
+
+.projeto-avatar-stack .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--sic-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #fff;
+    margin-left: -8px;
+}
+
+.projeto-avatar-stack .avatar:first-child {
+    margin-left: 0;
+}
+
+/* ====== Filter tag ====== */
+.projeto-filter-tag {
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.projeto-filter-tag:hover {
+    opacity: 0.85;
+    transform: scale(1.02);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.projeto-filter-tag .fa-xmark {
+    font-size: 0.65rem;
+    opacity: 0.5;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.projeto-filter-tag:hover .fa-xmark {
+    opacity: 1;
+    color: var(--sic-brand, #FF782D);
+}
+
+/* ====== View mode toggle ====== */
+.projeto-view-toggle {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.projeto-view-toggle .btn {
+    min-width: 36px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.82rem;
+    border-radius: 0 !important;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.projeto-view-toggle .btn:first-child {
+    border-radius: 0.5rem 0 0 0.5rem !important;
+}
+
+.projeto-view-toggle .btn:last-child {
+    border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+
+.projeto-view-toggle .btn.active {
+    background: var(--sic-brand, #FF782D);
+    border-color: var(--sic-brand, #FF782D);
+    color: #fff !important;
+    pointer-events: none;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.projeto-view-toggle .btn:not(.active) {
+    color: var(--sic-muted, #6c757d) !important;
+    border-color: var(--sic-border, #dee2e6) !important;
+    background: var(--sic-surface, #fff);
+}
+
+.projeto-view-toggle .btn:not(.active):hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 8%, transparent);
+    color: var(--sic-brand, #FF782D) !important;
+    border-color: color-mix(in srgb, var(--sic-brand, #FF782D) 25%, transparent) !important;
+}
+
+/* ====== Page header ====== */
+.projeto-page-header {
+    padding-bottom: 1.15rem;
+    margin-bottom: 1.15rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 60%, transparent);
+}
+
+.projeto-page-subtitle {
+    font-size: 0.82rem;
+    color: var(--sic-muted, #6c757d);
+    margin-top: 0.4rem;
+    margin-bottom: 0;
+    letter-spacing: 0.01em;
+}
+
+.projeto-page-subtitle strong {
+    color: var(--sic-brand, #FF782D);
+    font-weight: 700;
+}
+
+/* ====== Filters ====== */
+.projeto-filters {
+    background: var(--sic-surface-2, #f8fafc);
+    border: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 70%, transparent);
+    border-radius: 0.75rem;
+    padding: 1.1rem 1.15rem;
+    margin-bottom: 1.15rem;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.025);
+}
+
+.projeto-filters small {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.projeto-filters .form-control,
+.projeto-filters .form-select {
+    font-size: 0.85rem;
+    border-radius: 0.45rem;
+    border-color: var(--sic-border, #dee2e6);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.projeto-filters .form-control:focus,
+.projeto-filters .form-select:focus {
+    border-color: var(--sic-brand, #FF782D);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sic-brand, #FF782D) 12%, transparent);
+}
+
+.projeto-filters .input-group .btn {
+    border-radius: 0 0.45rem 0.45rem 0;
+}
+
+/* ====== Empty state ====== */
+.projeto-empty {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--sic-muted);
+}
+
+.projeto-empty i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+    color: var(--sic-brand, #FF782D);
+}
+
+/* ====== Inline edit: flash de confirmação ====== */
+@keyframes projeto-flash-success {
+    0%   { box-shadow: inset 0 0 0 0 transparent; }
+    30%  { box-shadow: inset 0 0 0 100px color-mix(in srgb, var(--sic-brand, #FF782D) 10%, transparent); }
+    100% { box-shadow: inset 0 0 0 0 transparent; }
+}
+
+.projeto-list-flash-success {
+    animation: projeto-flash-success 0.6s ease-out;
+}
+
+/* ====== Page loading overlay ====== */
+.projeto-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.projeto-loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.projeto-loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--sic-border, #dee2e6);
+    border-top-color: var(--sic-brand, #FF782D);
+    border-radius: 50%;
+    animation: projeto-spin 0.75s linear infinite;
+}
+
+@keyframes projeto-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ====== Responsivo ====== */
+@media (max-width: 575.98px) {
+    .projeto-card {
+        border-radius: 0.5rem;
+    }
+
+    .projeto-page-header {
+        padding-bottom: 0.85rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .projeto-filters {
+        padding: 0.85rem;
+        border-radius: 0.55rem;
+    }
+
+    .projeto-list-container {
+        border-radius: 0.5rem;
+    }
+
+    .projeto-list-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.5rem;
+        padding: 0.65rem 0.8rem;
+    }
+
+    .projeto-list-header-meta {
+        flex-wrap: wrap;
+        gap: 0.4rem !important;
+    }
+
+    .projeto-list-header-info {
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+
+    .projeto-list-header-people {
+        border-left: none;
+        padding-left: 0;
+    }
+
+    .projeto-list-progress {
+        min-width: 70px;
+    }
+
+    .projeto-list-tarefa {
+        padding-left: 1.5rem;
+        padding-right: 0.75rem;
+    }
+
+    .projeto-list-tarefa.expanded {
+        padding-left: calc(1.5rem - 3px);
+    }
+
+    .projeto-list-tarefa .projeto-list-tarefa-meta {
+        flex-wrap: wrap;
+        gap: 0.3rem !important;
+    }
+
+    .projeto-list-subtarefas {
+        padding-left: 0.75rem;
+        margin-left: 0.25rem;
+    }
+
+    .projeto-list-subtarefa-meta {
+        flex-wrap: wrap;
+        gap: 0.25rem !important;
+        border-left: none;
+        padding-left: 0;
+    }
+
+    .projeto-list-tarefa-info {
+        border-left: none;
+        padding-left: 0;
+    }
+
+    /* Touch: always show interactive triggers on mobile */
+    .projeto-list-btn-responsavel,
+    .projeto-list-subtarefa-btn-responsavel {
+        opacity: 1;
+    }
+
+    .projeto-list-btn-add-subtask {
+        opacity: 0.5;
+    }
+
+    .projeto-list-trigger-caret,
+    .projeto-list-subtarefa-status-trigger .fa-caret-down {
+        opacity: 1;
+    }
+
+    /* Mobile: always show date placeholder (no hover on touch) */
+    .projeto-list-date-placeholder {
+        opacity: 1;
+    }
+
+    /* Mobile: compact date input */
+    .projeto-list-date-input {
+        min-width: 100px;
+        height: 24px;
+        font-size: 0.75rem;
+    }
+
+    .projeto-list-date-input-sub {
+        min-width: 90px;
+        height: 22px;
+    }
+
+    /* Compact inline form on mobile */
+    .projeto-list-inline-form {
+        flex-wrap: wrap;
+    }
+
+    .projeto-list-inline-input {
+        font-size: 0.85rem;
+    }
+
+    .kanban-card-title {
+        font-size: 0.8rem;
+    }
+
+    .kanban-card-meta {
+        gap: 0.25rem;
+    }
+
+    .kanban-card-menu-trigger {
+        opacity: 1;
+    }
+
+    .kanban-card-prioridade-caret {
+        opacity: 1;
+    }
+
+    .kanban-card-btn-responsavel {
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   Modo Lista — Hierarquia de Projetos/Tarefas
+   ============================================ */
+
+/* Container principal */
+.projeto-list-container {
+    border: 1px solid color-mix(in srgb, var(--sic-border, var(--bs-border-color)) 80%, transparent);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.projeto-list-row {
+    border-left: 4px solid transparent;
+    transition: border-left-color 0.2s ease, background 0.15s ease;
+}
+
+.projeto-list-row + .projeto-list-row {
+    border-top: 1px solid color-mix(in srgb, var(--sic-border, var(--bs-border-color)) 60%, transparent);
+}
+
+/* Expanded state — project row */
+.projeto-list-row.expanded {
+    background: color-mix(in srgb, var(--sic-surface-2, #f8f9fa) 55%, var(--sic-surface, #fff));
+    border-left-width: 4px;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.projeto-list-row.expanded .projeto-list-header {
+    background: color-mix(in srgb, var(--sic-surface-2, #f8f9fa) 40%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 45%, transparent);
+}
+
+/* Header do projeto (linha principal) */
+.projeto-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.1rem;
+    gap: 0.75rem;
+    transition: background 0.18s ease, border-color 0.18s ease;
+    cursor: default;
+    border-bottom: 1px solid transparent;
+}
+
+.projeto-list-header:hover {
+    background: color-mix(in srgb, var(--sic-surface-2, #f8f9fa) 70%, transparent);
+}
+
+/* Toggle expand/collapse */
+.projeto-list-toggle {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 0.35rem;
+    transition: background 0.15s ease;
+}
+
+.projeto-list-toggle:hover {
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 40%, transparent);
+}
+
+.projeto-list-chevron {
+    font-size: 0.65rem;
+    color: var(--sic-muted, #6c757d);
+    transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.projeto-list-toggle:hover .projeto-list-chevron {
+    color: var(--sic-text, #212529);
+}
+
+.projeto-list-chevron.rotated {
+    transform: rotate(90deg);
+}
+
+.projeto-list-chevron-sm {
+    font-size: 0.55rem;
+}
+
+/* Espaçadores de alinhamento */
+.projeto-list-spacer {
+    display: inline-block;
+    width: 22px;
+    flex-shrink: 0;
+}
+
+.projeto-list-spacer-sm {
+    display: inline-block;
+    width: 18px;
+    flex-shrink: 0;
+}
+
+/* Contagem de tarefas inline */
+.projeto-list-task-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 0.4em;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 10%, var(--sic-surface-2, #e9ecef));
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.68rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    line-height: 1;
+    letter-spacing: -0.01em;
+}
+
+/* Avatar de iniciais (criador) */
+.projeto-list-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--sic-brand, #FF782D);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+    box-shadow: 0 0 0 2px var(--sic-surface, #fff), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Participantes compacto */
+.projeto-list-participants {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    font-size: 0.72rem;
+    color: var(--sic-muted, #6c757d);
+    white-space: nowrap;
+    padding: 0.15em 0.45em;
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 30%, transparent);
+}
+
+/* Nome do projeto (link) */
+.projeto-list-nome {
+    color: var(--sic-text, #212529);
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    transition: color 0.15s ease;
+}
+
+.projeto-list-nome:hover {
+    color: var(--sic-brand, #FF782D);
+    text-decoration: underline !important;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px !important;
+}
+
+/* Progresso inline */
+.projeto-list-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 110px;
+}
+
+.projeto-list-progress .projeto-progress {
+    height: 5px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 50%, transparent);
+}
+
+.projeto-list-progress .projeto-progress-bar {
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.projeto-list-progress small {
+    font-size: 0.7rem;
+    white-space: nowrap;
+    font-weight: 500;
+    color: var(--sic-muted, #6c757d);
+}
+
+/* ====== Metadata areas (aligned slots) ====== */
+
+/* Project header: right side */
+.projeto-list-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-shrink: 0;
+}
+
+/* Sub-group: status + progress + date */
+.projeto-list-header-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Sub-group: avatar + participants (with left separator) */
+.projeto-list-header-people {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding-left: 0.6rem;
+    border-left: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 45%, transparent);
+    min-height: 24px;
+}
+
+/* Header date — non-interactive variant of .projeto-list-date */
+.projeto-list-date-header {
+    cursor: default;
+}
+
+.projeto-list-date-header:hover {
+    background: transparent;
+}
+
+/* Task: right side metadata */
+.projeto-list-tarefa-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.projeto-list-tarefa-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.projeto-list-tarefa-info {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 40%, transparent);
+    min-height: 24px;
+}
+
+/* Subtask: right side metadata */
+.projeto-list-subtarefa-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    padding-left: 0.4rem;
+    border-left: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 25%, transparent);
+    min-height: 20px;
+}
+
+/* ====== Camada de Tarefas ====== */
+.projeto-list-tarefas {
+    border-top: 1px solid color-mix(in srgb, var(--sic-border, var(--bs-border-color)) 70%, transparent);
+    background: linear-gradient(180deg, var(--sic-surface-2, #f8f9fa) 0%, color-mix(in srgb, var(--sic-surface-2, #f8f9fa) 85%, #fff) 100%);
+    padding-bottom: 0.15rem;
+}
+
+.projeto-list-tarefa {
+    padding: 0.55rem 1.1rem 0.55rem 2.75rem;
+    border-bottom: 1px dashed color-mix(in srgb, var(--sic-border, var(--bs-border-color)) 30%, transparent);
+    transition: background 0.18s ease, box-shadow 0.18s ease, border-left 0.18s ease, border-bottom-color 0.18s ease;
+}
+
+.projeto-list-tarefa:hover {
+    background: color-mix(in srgb, var(--sic-surface, #fff) 60%, transparent);
+}
+
+.projeto-list-tarefa:last-child {
+    border-bottom: none;
+}
+
+.projeto-list-tarefa-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+/* Expanded state — task with subtasks visible */
+.projeto-list-tarefa.expanded {
+    background: color-mix(in srgb, var(--sic-surface, #fff) 50%, transparent);
+    border-left: 3px solid color-mix(in srgb, var(--sic-brand, #FF782D) 35%, transparent);
+    padding-left: calc(2.75rem - 3px);
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 35%, transparent);
+}
+
+.projeto-list-tarefa-nome {
+    flex: 1;
+    font-size: 0.84rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    color: var(--sic-text, #212529);
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    padding: 0.1em 0.25em;
+    margin: -0.1em -0.25em;
+    transition: background 0.15s ease;
+}
+
+.projeto-list-tarefa-nome:hover {
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 22%, transparent);
+}
+
+/* ====== Camada de Subtarefas ====== */
+.projeto-list-subtarefas {
+    position: relative;
+    margin-top: 0.35rem;
+    margin-bottom: 0.2rem;
+    margin-left: 0.75rem;
+    padding-left: 1.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    background: color-mix(in srgb, var(--sic-surface-2, #f8f9fa) 55%, transparent);
+    border-radius: 0.35rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 25%, transparent);
+}
+
+.projeto-list-subtarefa {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.25rem;
+    transition: background 0.15s ease;
+    min-width: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 18%, transparent);
+}
+
+.projeto-list-subtarefa:last-child {
+    border-bottom: none;
+}
+
+/* Tree connector: vertical segment per subtask */
+.projeto-list-subtarefa::before {
+    content: '';
+    position: absolute;
+    left: -1.5rem;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 30%, var(--sic-border, #dee2e6));
+    pointer-events: none;
+}
+
+.projeto-list-subtarefa:first-child::before {
+    top: 50%;
+}
+
+.projeto-list-subtarefa:last-child::before {
+    bottom: 50%;
+}
+
+/* Tree connector: horizontal dash to content */
+.projeto-list-subtarefa::after {
+    content: '';
+    position: absolute;
+    left: -1.5rem;
+    top: 50%;
+    width: 1.15rem;
+    height: 1.5px;
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 30%, var(--sic-border, #dee2e6));
+    pointer-events: none;
+}
+
+.projeto-list-subtarefa:hover {
+    background: color-mix(in srgb, var(--sic-surface, #fff) 70%, transparent);
+}
+
+.projeto-list-subtarefa-nome {
+    flex: 1;
+    font-size: 0.78rem;
+    color: var(--sic-muted, #6c757d);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    font-weight: 400;
+    cursor: pointer;
+    border-radius: 0.2rem;
+    padding: 0.08em 0.2em;
+    margin: -0.08em -0.2em;
+    transition: background 0.15s ease;
+}
+
+.projeto-list-subtarefa-nome:hover {
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 18%, transparent);
+}
+
+/* ====== Badges de tarefa (lista) ====== */
+.projeto-list-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.22em 0.6em;
+    border-radius: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+
+.projeto-list-badge-sm {
+    font-size: 0.65rem;
+    padding: 0.15em 0.45em;
+    border-radius: 0.35rem;
+}
+
+/* ====== Tarefa: Badges clicáveis (status/prioridade) ====== */
+.projeto-list-status-trigger,
+.projeto-list-prioridade-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.22em 0.6em;
+    border-radius: 0.4rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    white-space: nowrap;
+    position: relative;
+    letter-spacing: 0.01em;
+}
+
+.projeto-list-status-trigger:hover,
+.projeto-list-prioridade-trigger:hover {
+    border-color: color-mix(in srgb, var(--sic-border, #dee2e6) 60%, transparent);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.projeto-list-trigger-caret {
+    font-size: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    margin-left: 0.15em;
+}
+
+.projeto-list-status-trigger:hover .projeto-list-trigger-caret,
+.projeto-list-prioridade-trigger:hover .projeto-list-trigger-caret {
+    opacity: 1;
+}
+
+/* ====== Tarefa: Indicador de prazo ====== */
+.projeto-list-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    font-size: 0.7rem;
+    color: var(--sic-muted, #6c757d);
+    white-space: nowrap;
+    padding: 0.15em 0.35em;
+    border-radius: 0.3rem;
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.projeto-list-date:hover {
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 25%, transparent);
+}
+
+.projeto-list-date i {
+    font-size: 0.58rem;
+    opacity: 0.8;
+}
+
+.projeto-list-date-overdue {
+    color: #dc3545;
+    font-weight: 600;
+    background: color-mix(in srgb, #dc3545 6%, transparent);
+}
+
+.projeto-list-date-soon {
+    color: #d97706;
+    font-weight: 600;
+    background: color-mix(in srgb, #d97706 6%, transparent);
+}
+
+/* Subtask date — smaller variant */
+.projeto-list-date-sub {
+    font-size: 0.65rem;
+    padding: 0.1em 0.3em;
+}
+
+.projeto-list-date-sub i {
+    font-size: 0.52rem;
+}
+
+/* Placeholder for empty deadline */
+.projeto-list-date-placeholder {
+    color: color-mix(in srgb, var(--sic-muted, #6c757d) 55%, transparent);
+    font-weight: 400;
+    font-style: italic;
+    border: 1px dashed color-mix(in srgb, var(--sic-border, #dee2e6) 50%, transparent);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.projeto-list-tarefa:hover .projeto-list-date-placeholder,
+.projeto-list-subtarefa:hover .projeto-list-date-placeholder {
+    opacity: 1;
+}
+
+.projeto-list-date-placeholder:hover {
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 18%, transparent);
+    border-color: color-mix(in srgb, var(--sic-border, #dee2e6) 70%, transparent);
+    color: var(--sic-muted, #6c757d);
+}
+
+/* ====== Edição inline de nome ====== */
+.projeto-list-nome-editing {
+    display: inline-flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.projeto-list-nome-input {
+    font-size: 0.84rem;
+    font-weight: 500;
+    padding: 0.15em 0.35em;
+    border: 1px solid color-mix(in srgb, var(--sic-brand, #FF782D) 50%, var(--sic-border, #dee2e6));
+    border-radius: 0.3rem;
+    background: var(--sic-surface, #fff);
+    color: var(--sic-text, #212529);
+    outline: none;
+    width: 100%;
+    height: 24px;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand, #FF782D) 15%, transparent);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    letter-spacing: 0.005em;
+}
+
+.projeto-list-nome-input:focus {
+    border-color: var(--sic-brand, #FF782D);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sic-brand, #FF782D) 20%, transparent);
+}
+
+.projeto-list-nome-input-sub {
+    font-size: 0.78rem;
+    font-weight: 400;
+    height: 22px;
+    padding: 0.1em 0.3em;
+}
+
+/* ====== Edição inline de prazo ====== */
+.projeto-list-date-editing {
+    display: inline-flex;
+    align-items: center;
+}
+
+.projeto-list-date-input {
+    font-size: 0.7rem;
+    padding: 0.15em 0.35em;
+    border: 1px solid color-mix(in srgb, var(--sic-brand, #FF782D) 50%, var(--sic-border, #dee2e6));
+    border-radius: 0.3rem;
+    background: var(--sic-surface, #fff);
+    color: var(--sic-text, #212529);
+    outline: none;
+    height: 22px;
+    min-width: 110px;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand, #FF782D) 15%, transparent);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.projeto-list-date-input:focus {
+    border-color: var(--sic-brand, #FF782D);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sic-brand, #FF782D) 20%, transparent);
+}
+
+.projeto-list-date-input-sub {
+    font-size: 0.65rem;
+    height: 20px;
+    min-width: 100px;
+    padding: 0.1em 0.3em;
+}
+
+/* ====== Tarefa: Responsável (iniciais) ====== */
+.projeto-list-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 12%, transparent);
+    color: var(--sic-brand, #FF782D);
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    border: 1px solid transparent;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.projeto-list-responsavel:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 22%, transparent);
+    border-color: var(--sic-border, #dee2e6);
+}
+
+/* ====== Tarefa: Botão adicionar responsável ====== */
+.projeto-list-btn-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.55rem;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    flex-shrink: 0;
+    opacity: 0;
+}
+
+.projeto-list-tarefa:hover .projeto-list-btn-responsavel {
+    opacity: 1;
+}
+
+.projeto-list-btn-responsavel:hover {
+    color: var(--sic-brand, #FF782D);
+    border-color: var(--sic-border, #dee2e6);
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 8%, transparent);
+}
+
+/* ====== Subtarefa: Status clicável ====== */
+.projeto-list-subtarefa-status-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 0.12em 0.35em;
+    background: none;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+}
+
+.projeto-list-subtarefa-status-trigger:hover {
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 30%, transparent);
+}
+
+.projeto-list-subtarefa-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.projeto-list-subtarefa-status-trigger .fa-caret-down {
+    font-size: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.projeto-list-subtarefa:hover .projeto-list-subtarefa-status-trigger .fa-caret-down {
+    opacity: 1;
+}
+
+/* ====== Subtarefa: Responsável ====== */
+.projeto-list-subtarefa-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 12%, transparent);
+    color: var(--sic-brand, #FF782D);
+    font-size: 0.48rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid transparent;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.projeto-list-subtarefa-responsavel:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 22%, transparent);
+    border-color: var(--sic-border, #dee2e6);
+}
+
+.projeto-list-subtarefa-btn-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.5rem;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    flex-shrink: 0;
+    opacity: 0;
+}
+
+.projeto-list-subtarefa:hover .projeto-list-subtarefa-btn-responsavel {
+    opacity: 1;
+}
+
+.projeto-list-subtarefa-btn-responsavel:hover {
+    color: var(--sic-brand, #FF782D);
+    border-color: var(--sic-border, #dee2e6);
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 6%, transparent);
+}
+
+/* ====== Lista: Criação rápida de subtarefa ====== */
+
+.projeto-list-btn-add-subtask {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    background: none;
+    border: none;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 0.2rem 0;
+    margin-top: 0.25rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.projeto-list-btn-add-subtask:hover {
+    color: var(--sic-brand, #FF782D);
+    opacity: 1;
+}
+
+.projeto-list-btn-add-subtask i {
+    font-size: 0.55rem;
+}
+
+.projeto-list-tarefa:hover .projeto-list-btn-add-subtask {
+    opacity: 0.45;
+}
+
+/* Inline form (horizontal, compacto) */
+.projeto-list-inline-form {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0;
+    margin-top: 0.25rem;
+    animation: projetoListInlineFadeIn 0.15s ease;
+}
+
+@keyframes projetoListInlineFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.projeto-list-inline-input {
+    font-size: 0.82rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.3rem;
+    flex: 1;
+    min-width: 0;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.projeto-list-inline-input:focus {
+    border-color: var(--sic-brand, #FF782D);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand, #FF782D) 15%, transparent);
+}
+
+.projeto-list-inline-input.is-invalid {
+    border-color: var(--bs-danger, #dc3545);
+}
+
+.projeto-list-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+}
+
+.projeto-list-inline-btn-confirm {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    background: var(--sic-brand, #FF782D);
+    color: #fff;
+    border: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem 0.65rem;
+    border-radius: 0.35rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.projeto-list-inline-btn-confirm:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 85%, #000);
+}
+
+.projeto-list-inline-btn-confirm:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.projeto-list-inline-btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    background: none;
+    color: var(--sic-muted, #6c757d);
+    border: 1px solid var(--sic-border, #dee2e6);
+    font-size: 0.72rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.35rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.projeto-list-inline-btn-cancel:hover {
+    background: var(--sic-surface-2, #f8f9fa);
+    color: var(--sic-text, #212529);
+    border-color: color-mix(in srgb, var(--sic-border, #dee2e6) 80%, transparent);
+}
+
+/* ============================================
+   Modo Kanban — Board Global de Tarefas
+   ============================================ */
+
+/* Board container */
+.kanban-board {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding-bottom: 0.75rem;
+    min-height: 200px;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--sic-border, #dee2e6) 80%, transparent) transparent;
+}
+
+.kanban-board::-webkit-scrollbar {
+    height: 6px;
+}
+
+.kanban-board::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 70%, transparent);
+    border-radius: 3px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb:hover {
+    background: var(--sic-border, #dee2e6);
+}
+
+.kanban-column {
+    flex: 1 1 0;
+    min-width: 220px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    background: var(--sic-surface-2, #f8f9fa);
+    border-radius: 0.6rem;
+    border: 1px solid color-mix(in srgb, var(--sic-border) 75%, transparent);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border) 60%, transparent);
+    border-radius: calc(0.6rem - 1px) calc(0.6rem - 1px) 0 0;
+}
+
+.kanban-column-header .fw-semibold {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.72rem !important;
+}
+
+.kanban-column-body {
+    flex: 1;
+    padding: 0.45rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-height: 80px;
+    transition: background 0.15s ease;
+}
+
+.kanban-column-body.kanban-drag-over {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 6%, transparent);
+    border-radius: 0 0 0.6rem 0.6rem;
+}
+
+/* Cards */
+.kanban-card {
+    position: relative;
+    background: var(--sic-surface, #fff);
+    border: 1px solid var(--sic-border);
+    border-left: 3px solid var(--sic-border);
+    border-radius: 0.5rem;
+    padding: 0.65rem 0.8rem 0.55rem;
+    cursor: grab;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.03);
+    transition: box-shadow 0.2s ease, transform 0.2s ease, opacity 0.15s ease;
+}
+
+.kanban-card:active {
+    cursor: grabbing;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+    transform: translateY(-1px);
+}
+
+.kanban-card.kanban-dragging {
+    opacity: 0.5;
+    transform: scale(0.97);
+}
+
+.kanban-card-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    line-height: 1.35;
+    color: var(--sic-text, #212529);
+    word-break: break-word;
+}
+
+.kanban-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-top: 0.3rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid color-mix(in srgb, var(--sic-border) 60%, transparent);
+}
+
+.kanban-card-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15em 0.45em;
+    border-radius: 0.3rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+}
+
+.kanban-card-date {
+    font-size: 0.65rem;
+    color: var(--sic-muted, #6c757d);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    padding: 0.15em 0.4em;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--sic-muted, #6c757d) 6%, transparent);
+    white-space: nowrap;
+}
+
+.kanban-card-date i {
+    font-size: 0.55rem;
+    opacity: 0.75;
+}
+
+.kanban-card-date-overdue {
+    color: #dc3545;
+    font-weight: 600;
+    background: color-mix(in srgb, #dc3545 8%, transparent);
+}
+
+.kanban-card-date-overdue i {
+    color: #dc3545;
+    opacity: 1;
+}
+
+.kanban-card-date-soon {
+    color: #d97706;
+    font-weight: 600;
+    background: color-mix(in srgb, #d97706 8%, transparent);
+}
+
+.kanban-card-date-soon i {
+    color: #d97706;
+    opacity: 1;
+}
+
+.kanban-card-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 12%, transparent);
+    color: var(--sic-brand, #0d6efd);
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-left: auto;
+    cursor: pointer;
+    border: 1px solid transparent;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.kanban-card-responsavel:hover {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 22%, transparent);
+    border-color: var(--sic-border, #dee2e6);
+}
+
+.kanban-card-subtarefa-badge {
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: var(--sic-muted, #6c757d);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    margin-bottom: 0.2rem;
+}
+
+/* Projeto label no card (exclusivo do kanban global) */
+.kanban-card-projeto {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--sic-brand, #0d6efd);
+    margin-bottom: 0.3rem;
+    padding: 0.15em 0.45em;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 7%, transparent);
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    max-width: 100%;
+}
+
+.kanban-card-projeto i {
+    font-size: 0.5rem;
+    opacity: 0.65;
+    flex-shrink: 0;
+}
+
+/* Placeholder vazio */
+.kanban-empty-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 100px;
+    border: 1.5px dashed color-mix(in srgb, var(--sic-border) 70%, transparent);
+    border-radius: 0.5rem;
+    opacity: 0.45;
+    transition: opacity 0.2s ease;
+}
+
+.kanban-empty-placeholder:hover {
+    opacity: 0.65;
+}
+
+.kanban-empty-placeholder-icon {
+    font-size: 1.3rem;
+    color: var(--sic-muted, #6c757d);
+    opacity: 0.45;
+}
+
+.kanban-empty-placeholder small {
+    font-size: 0.7rem;
+    color: var(--sic-muted, #6c757d);
+}
+
+/* ====== Kanban Card: Menu de ações (⋮) ====== */
+
+/* Wrapper — posicionado no canto superior direito do card */
+.kanban-card-actions {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.25rem;
+    z-index: 2;
+}
+
+/* Botão trigger (⋮) — discreto, aparece no hover */
+.kanban-card-menu-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 0.3rem;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.7rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* Mostrar o trigger ao passar o mouse no card */
+.kanban-card:hover .kanban-card-menu-trigger {
+    opacity: 0.6;
+}
+
+.kanban-card:hover .kanban-card-menu-trigger:hover {
+    opacity: 1;
+}
+
+/* Manter visível enquanto o menu estiver aberto */
+.kanban-card-menu-trigger[aria-expanded="true"] {
+    opacity: 1;
+    background: var(--sic-surface-2, #f8f9fa);
+    border-color: var(--sic-border, #dee2e6);
+    color: var(--sic-text, #212529);
+}
+
+.kanban-card-menu-trigger:hover {
+    background: color-mix(in srgb, var(--sic-surface-2, #f8f9fa) 80%, transparent);
+    border-color: color-mix(in srgb, var(--sic-border, #dee2e6) 60%, transparent);
+    color: var(--sic-text, #212529);
+}
+
+/* Dropdown — segue o padrão visual do .kanban-subtask-status-menu */
+.kanban-card-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.2rem;
+    z-index: 1060;
+    background: var(--sic-surface, #fff);
+    border: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 80%, transparent);
+    border-radius: 0.4rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06);
+    padding: 0.2rem 0;
+    min-width: 185px;
+    display: none;
+    animation: kanbanCardMenuFadeIn 0.12s ease;
+}
+
+.kanban-card-menu.show {
+    display: block;
+}
+
+@keyframes kanbanCardMenuFadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Item do menu — segue o padrão do .kanban-subtask-status-option */
+.kanban-card-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45em;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.74rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    text-decoration: none;
+    color: var(--sic-text, #212529);
+    white-space: nowrap;
+    border-radius: 0.2rem;
+    margin: 0 0.15rem;
+    width: calc(100% - 0.3rem);
+}
+
+.kanban-card-menu-item:hover {
+    background: var(--sic-hover, #f0f4ff);
+    color: var(--sic-brand, #0d6efd);
+    text-decoration: none;
+}
+
+.kanban-card-menu-item i {
+    font-size: 0.65rem;
+    opacity: 0.6;
+    width: 14px;
+    text-align: center;
+}
+
+.kanban-card-menu-item:hover i {
+    opacity: 1;
+}
+
+/* ====== Kanban Card: Prioridade inline ====== */
+
+/* Trigger — herda visual do badge, mas é um botão clicável */
+.kanban-card-prioridade-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.18em 0.5em;
+    border-radius: 0.3rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s ease, filter 0.15s ease;
+    white-space: nowrap;
+    position: relative;
+}
+
+.kanban-card-prioridade-trigger:hover {
+    border-color: color-mix(in srgb, var(--sic-border, #dee2e6) 70%, transparent);
+    filter: brightness(0.96);
+}
+
+/* Seta — aparece apenas no hover */
+.kanban-card-prioridade-caret {
+    font-size: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    margin-left: 0.1em;
+}
+
+.kanban-card-prioridade-trigger:hover .kanban-card-prioridade-caret {
+    opacity: 1;
+}
+
+/* Dropdown de prioridade */
+.kanban-card-prioridade-menu {
+    position: absolute;
+    z-index: 1060;
+    background: var(--sic-surface, #fff);
+    border: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 80%, transparent);
+    border-radius: 0.4rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06);
+    padding: 0.2rem 0;
+    min-width: 130px;
+    display: none;
+    animation: kanbanCardMenuFadeIn 0.12s ease;
+}
+
+.kanban-card-prioridade-menu.show {
+    display: block;
+}
+
+.kanban-card-prioridade-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    color: var(--sic-text, #212529);
+    white-space: nowrap;
+}
+
+.kanban-card-prioridade-option:hover {
+    background: var(--sic-hover, #f0f4ff);
+}
+
+.kanban-card-prioridade-option.active {
+    font-weight: 600;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 8%, transparent);
+}
+
+.kanban-card-prioridade-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* ====== Kanban Card: Responsável — botão adicionar ====== */
+
+.kanban-card-btn-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.55rem;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    margin-left: auto;
+    flex-shrink: 0;
+    opacity: 0;
+}
+
+.kanban-card:hover .kanban-card-btn-responsavel {
+    opacity: 0.5;
+}
+
+.kanban-card:hover .kanban-card-btn-responsavel:hover {
+    opacity: 1;
+}
+
+.kanban-card-btn-responsavel:hover {
+    color: var(--sic-brand, #0d6efd);
+    border-color: color-mix(in srgb, var(--sic-brand, #0d6efd) 25%, transparent);
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 6%, transparent);
+}
+
+/* ====== Kanban Card: Popover de busca de responsável ====== */
+
+.kanban-card-search-popover {
+    position: absolute;
+    z-index: 1070;
+    background: var(--sic-surface, #fff);
+    border: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 80%, transparent);
+    border-radius: 0.4rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06);
+    padding: 0.4rem;
+    min-width: 200px;
+    max-width: 240px;
+    right: 0;
+    top: 100%;
+    margin-top: 0.25rem;
+    display: none;
+    animation: kanbanCardMenuFadeIn 0.12s ease;
+}
+
+.kanban-card-search-popover.show {
+    display: block;
+}
+
+/* ====== Kanban Global: Subtarefas embutidas no card ====== */
+
+/* Container da seção de subtarefas dentro do card */
+.kanban-subtask-section {
+    margin-top: 0.45rem;
+    border-top: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 65%, transparent);
+    padding-top: 0.3rem;
+}
+
+.kanban-subtask-list:not(.collapsed) {
+    background: color-mix(in srgb, var(--sic-surface-2, #f8f9fa) 50%, transparent);
+    border-radius: 0.35rem;
+    padding: 0.2rem 0.15rem;
+    margin-top: 0.2rem;
+}
+
+/* Header com toggle e progresso */
+.kanban-subtask-header {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    padding: 0.15rem 0.1rem;
+    border-radius: 0.25rem;
+    user-select: none;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.kanban-subtask-header:hover {
+    color: var(--sic-brand, #0d6efd);
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 4%, transparent);
+}
+
+.kanban-subtask-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+.kanban-subtask-toggle[aria-expanded="false"] {
+    transform: rotate(-90deg);
+}
+
+.kanban-subtask-progress {
+    font-size: 0.64rem;
+    font-weight: 600;
+    color: var(--sic-muted, #6c757d);
+    transition: color 0.15s ease;
+    white-space: nowrap;
+}
+
+.kanban-subtask-header:hover .kanban-subtask-progress {
+    color: var(--sic-brand, #0d6efd);
+}
+
+/* Barra de progresso compacta */
+.kanban-subtask-progress-bar {
+    flex: 1;
+    height: 3.5px;
+    background: color-mix(in srgb, var(--sic-border, #dee2e6) 80%, transparent);
+    border-radius: 3px;
+    overflow: hidden;
+    max-width: 100px;
+}
+
+.kanban-subtask-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--sic-brand, #0d6efd);
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+/* Lista de subtarefas */
+.kanban-subtask-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+.kanban-subtask-list:has(.kanban-subtask-status-menu.show),
+.kanban-subtask-list:has(.kanban-subtask-search-popover.show) {
+    overflow: visible;
+}
+
+.kanban-subtask-list.collapsed {
+    display: none;
+}
+
+/* Cada item de subtarefa */
+.kanban-subtask-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.3rem 0.15rem 0.3rem 0.55rem;
+    border-left: 2.5px solid var(--sic-border, #dee2e6);
+    border-radius: 0 0.2rem 0.2rem 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    position: relative;
+}
+
+.kanban-subtask-item + .kanban-subtask-item {
+    border-top: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 40%, transparent);
+}
+
+.kanban-subtask-item:hover {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 3%, transparent);
+}
+
+/* Título da subtarefa */
+.kanban-subtask-title {
+    font-size: 0.74rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--sic-text, #212529);
+    word-break: break-word;
+}
+
+/* Linha de ações: status + responsável */
+.kanban-subtask-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: nowrap;
+}
+
+/* Dropdown trigger de status */
+.kanban-subtask-status-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+}
+
+.kanban-subtask-status-trigger:hover {
+    border-color: var(--sic-border, #dee2e6);
+    background: var(--sic-surface-2, #f8f9fa);
+}
+
+.kanban-subtask-status-trigger .fa-caret-down {
+    font-size: 0.55rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.kanban-subtask-status-trigger:hover .fa-caret-down {
+    opacity: 1;
+}
+
+/* Menu de opções de status */
+.kanban-subtask-status-menu {
+    position: absolute;
+    z-index: 1060;
+    background: var(--sic-surface, #fff);
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.35rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    padding: 0.25rem 0;
+    min-width: 140px;
+    display: none;
+    animation: kanbanSubtaskMenuFadeIn 0.12s ease;
+}
+
+.kanban-subtask-status-menu.show {
+    display: block;
+}
+
+@keyframes kanbanSubtaskMenuFadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.kanban-subtask-status-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    color: var(--sic-text, #212529);
+}
+
+.kanban-subtask-status-option:hover {
+    background: var(--sic-hover, #f0f4ff);
+}
+
+.kanban-subtask-status-option.active {
+    font-weight: 600;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 8%, transparent);
+}
+
+.kanban-subtask-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Responsável da subtarefa */
+.kanban-subtask-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 10%, transparent);
+    color: var(--sic-brand, #0d6efd);
+    font-size: 0.5rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.kanban-subtask-responsavel:hover {
+    border-color: color-mix(in srgb, var(--sic-brand, #0d6efd) 25%, transparent);
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 18%, transparent);
+}
+
+/* Botão adicionar responsável (quando vazio) */
+.kanban-subtask-btn-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.58rem;
+    width: 19px;
+    height: 19px;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    margin-left: auto;
+    flex-shrink: 0;
+    opacity: 0;
+}
+
+.kanban-subtask-item:hover .kanban-subtask-btn-responsavel {
+    opacity: 1;
+}
+
+.kanban-subtask-btn-responsavel:hover {
+    color: var(--sic-brand, #0d6efd);
+    border-color: var(--sic-border, #dee2e6);
+    background: var(--sic-surface-2, #f8f9fa);
+}
+
+/* Popover de busca de responsável */
+.kanban-subtask-search-popover {
+    position: absolute;
+    z-index: 1070;
+    background: var(--sic-surface, #fff);
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.4rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+    padding: 0.4rem;
+    min-width: 180px;
+    max-width: 220px;
+    display: none;
+    animation: kanbanSubtaskMenuFadeIn 0.12s ease;
+}
+
+.kanban-subtask-search-popover.show {
+    display: block;
+}
+
+.kanban-subtask-search-input {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.25rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.kanban-subtask-search-input:focus {
+    border-color: var(--sic-brand, #0d6efd);
+}
+
+.kanban-subtask-search-results {
+    list-style: none;
+    margin: 0.3rem 0 0;
+    padding: 0;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.kanban-subtask-search-item {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+    border-radius: 0.2rem;
+    transition: background 0.12s ease;
+}
+
+.kanban-subtask-search-item:hover {
+    background: var(--sic-hover, #f0f4ff);
+}
+
+.kanban-subtask-search-item.text-muted {
+    cursor: default;
+    font-style: italic;
+}
+
+.kanban-subtask-search-btn-remove {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    width: 100%;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.68rem;
+    color: var(--bs-danger, #dc3545);
+    background: none;
+    border: none;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+    margin-top: 0.25rem;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+
+.kanban-subtask-search-btn-remove:hover {
+    background: color-mix(in srgb, var(--bs-danger, #dc3545) 8%, transparent);
+}
+
+/* ====== Kanban Global: Criação rápida inline ====== */
+
+/* Rodapé da coluna — botão "+ Tarefa" */
+.kanban-column-footer {
+    padding: 0.3rem 0.45rem 0.45rem;
+    border-top: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 60%, transparent);
+}
+
+.kanban-btn-add-task {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    background: none;
+    border: 1.5px dashed color-mix(in srgb, var(--sic-border, #dee2e6) 80%, transparent);
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.74rem;
+    font-weight: 500;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    width: 100%;
+    justify-content: center;
+}
+
+.kanban-btn-add-task:hover {
+    color: var(--sic-brand, #0d6efd);
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 10%, transparent);
+    border-color: color-mix(in srgb, var(--sic-brand, #0d6efd) 40%, transparent);
+}
+
+.kanban-btn-add-task i {
+    font-size: 0.65rem;
+}
+
+/* Link "+ Subitem" no rodapé do card */
+.kanban-btn-add-subtask {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    background: none;
+    border: none;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 0.15rem 0;
+    margin-top: 0.3rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.kanban-btn-add-subtask:hover {
+    color: var(--sic-brand, #0d6efd);
+    opacity: 1;
+}
+
+.kanban-btn-add-subtask i {
+    font-size: 0.5rem;
+}
+
+.kanban-card:hover .kanban-btn-add-subtask {
+    opacity: 0.4;
+}
+
+/* Form inline (usado na coluna e dentro do card) */
+.kanban-inline-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.35rem 0;
+    animation: kanbanInlineFadeIn 0.15s ease;
+}
+
+@keyframes kanbanInlineFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.kanban-inline-input {
+    font-size: 0.78rem;
+    padding: 0.3rem 0.45rem;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.3rem;
+    width: 100%;
+    outline: none;
+    background: var(--sic-surface, #fff);
+    color: var(--sic-text, #212529);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kanban-inline-input:focus {
+    border-color: var(--sic-brand, #0d6efd);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand, #0d6efd) 15%, transparent);
+}
+
+.kanban-inline-input.is-invalid {
+    border-color: var(--bs-danger, #dc3545);
+}
+
+.kanban-inline-input.is-invalid:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bs-danger, #dc3545) 15%, transparent);
+}
+
+/* Botões de ação do form inline */
+.kanban-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.kanban-inline-btn-confirm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2em;
+    background: var(--sic-brand, #0d6efd);
+    color: #fff;
+    border: none;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.28rem 0.55rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.kanban-inline-btn-confirm:hover {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 85%, #000);
+}
+
+.kanban-inline-btn-confirm:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.kanban-inline-btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    color: var(--sic-muted, #6c757d);
+    border: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 80%, transparent);
+    font-size: 0.7rem;
+    padding: 0.28rem 0.45rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.kanban-inline-btn-cancel:hover {
+    background: var(--sic-surface-2, #f8f9fa);
+    color: var(--sic-text, #212529);
+}
+
+/* Form inline dentro do card (subtarefa) */
+.kanban-card .kanban-inline-form {
+    padding: 0.25rem 0 0;
+    border-top: 1px dashed color-mix(in srgb, var(--sic-border, #dee2e6) 65%, transparent);
+    margin-top: 0.3rem;
+}
+
+/* Select compacto de projeto (exclusivo do kanban global) */
+.kanban-inline-select-projeto {
+    font-size: 0.78rem;
+    padding: 0.25rem 0.4rem;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.3rem;
+    width: 100%;
+    outline: none;
+    background: var(--sic-surface, #fff);
+    color: var(--sic-text, #212529);
+    transition: border-color 0.15s ease;
+}
+
+.kanban-inline-select-projeto:focus {
+    border-color: var(--sic-brand, #0d6efd);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand, #0d6efd) 15%, transparent);
+}
+
+.kanban-inline-select-projeto.is-invalid {
+    border-color: var(--bs-danger, #dc3545);
+}
+
+.kanban-inline-select-projeto.is-invalid:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bs-danger, #dc3545) 15%, transparent);
+}
+
+/* Responsivo — Kanban */
+@media (max-width: 767.98px) {
+    .kanban-board {
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .kanban-column {
+        max-width: none;
+        min-width: auto;
+    }
+
+    .kanban-column-body {
+        min-height: 40px;
+    }
+
+    /* Kanban inline: sempre visível no mobile (sem hover) */
+    .kanban-btn-add-subtask {
+        display: inline-flex;
+    }
+
+    .kanban-inline-input {
+        font-size: 0.85rem;
+    }
+
+    .kanban-inline-select-projeto {
+        font-size: 0.82rem;
+    }
+
+    /* Subtarefas embutidas: ajustes mobile */
+    .kanban-subtask-btn-responsavel {
+        opacity: 1;
+    }
+
+    .kanban-subtask-actions {
+        flex-wrap: wrap;
+    }
+
+    .kanban-subtask-responsavel {
+        max-width: none;
+    }
+
+    .kanban-subtask-status-trigger .fa-caret-down {
+        opacity: 1;
+    }
+
+    /* Menu de ações do card: sempre visível no mobile */
+    .kanban-card-menu-trigger {
+        opacity: 1;
+    }
+}
+
+/* Responsivo — lista row metadata */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .projeto-list-header-meta {
+        flex-wrap: wrap;
+        gap: 0.4rem !important;
+    }
+
+    .projeto-list-header-info {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .projeto-list-header-people {
+        border-left: none;
+        padding-left: 0;
+    }
+
+    .projeto-list-progress {
+        min-width: 90px;
+    }
+
+    /* Touch: show triggers on tablet */
+    .projeto-list-btn-responsavel,
+    .projeto-list-subtarefa-btn-responsavel {
+        opacity: 1;
+    }
+
+    .projeto-list-trigger-caret,
+    .projeto-list-subtarefa-status-trigger .fa-caret-down {
+        opacity: 1;
+    }
+
+    /* Tablet: always show date placeholder (no hover on touch) */
+    .projeto-list-date-placeholder {
+        opacity: 1;
+    }
+
+    .projeto-list-subtarefa-meta {
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+}
+
+/* ============================================
+   Dark Mode — Modo Lista + Shared
+   ============================================ */
+[data-bs-theme="dark"] {
+
+    /* Page header */
+    .projeto-page-header {
+        border-bottom-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+    }
+
+    /* Filters */
+    .projeto-filters {
+        background: var(--sic-surface);
+        border-color: var(--sic-border);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    .projeto-filters .form-control,
+    .projeto-filters .form-select {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-border);
+        color: var(--sic-text);
+    }
+
+    .projeto-filters .form-control:focus,
+    .projeto-filters .form-select:focus {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--sic-brand) 18%, transparent);
+    }
+
+    /* View toggle */
+    .projeto-view-toggle .btn:not(.active) {
+        background: var(--sic-surface) !important;
+        border-color: var(--sic-border) !important;
+        color: var(--sic-muted) !important;
+    }
+
+    .projeto-view-toggle .btn:not(.active):hover {
+        background: color-mix(in srgb, var(--sic-brand) 12%, var(--sic-surface)) !important;
+        color: var(--sic-brand) !important;
+    }
+
+    /* List container */
+    .projeto-list-container {
+        border-color: var(--sic-border);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+    }
+
+    .projeto-list-row + .projeto-list-row {
+        border-top-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+    }
+
+    /* Project header row */
+    .projeto-list-header {
+        background: var(--sic-surface);
+    }
+
+    .projeto-list-header:hover {
+        background: color-mix(in srgb, var(--sic-surface-2) 60%, var(--sic-surface));
+    }
+
+    /* Expanded states */
+    .projeto-list-row.expanded {
+        background: color-mix(in srgb, var(--sic-surface-2) 45%, var(--sic-surface));
+        box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .projeto-list-row.expanded .projeto-list-header {
+        background: color-mix(in srgb, var(--sic-surface-2) 30%, transparent);
+        border-bottom-color: color-mix(in srgb, var(--sic-border) 35%, transparent);
+    }
+
+    .projeto-list-tarefa.expanded {
+        background: color-mix(in srgb, var(--sic-surface) 35%, transparent);
+        border-left-color: color-mix(in srgb, var(--sic-brand) 40%, transparent);
+        border-bottom-color: color-mix(in srgb, var(--sic-border) 28%, transparent);
+    }
+
+    /* Toggle */
+    .projeto-list-toggle:hover {
+        background: color-mix(in srgb, var(--sic-border) 30%, transparent);
+    }
+
+    /* Task count */
+    .projeto-list-task-count {
+        background: color-mix(in srgb, var(--sic-brand) 12%, var(--sic-surface-2));
+        color: var(--sic-muted);
+    }
+
+    /* Avatar ring */
+    .projeto-list-avatar {
+        box-shadow: 0 0 0 2px var(--sic-surface), 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Participants */
+    .projeto-list-participants {
+        background: color-mix(in srgb, var(--sic-border) 25%, transparent);
+        color: var(--sic-muted);
+    }
+
+    /* Header people separator */
+    .projeto-list-header-people {
+        border-left-color: color-mix(in srgb, var(--sic-border) 35%, transparent);
+    }
+
+    /* Progress bar track */
+    .projeto-list-progress .projeto-progress {
+        background: color-mix(in srgb, var(--sic-border) 40%, transparent);
+    }
+
+    /* Tarefas layer */
+    .projeto-list-tarefas {
+        border-top-color: var(--sic-border);
+        background: linear-gradient(180deg, var(--sic-surface-2) 0%, color-mix(in srgb, var(--sic-surface-2) 80%, var(--sic-surface)) 100%);
+    }
+
+    .projeto-list-tarefa {
+        border-bottom-color: color-mix(in srgb, var(--sic-border) 35%, transparent);
+    }
+
+    .projeto-list-tarefa-info {
+        border-left-color: color-mix(in srgb, var(--sic-border) 30%, transparent);
+    }
+
+    .projeto-list-tarefa:hover {
+        background: color-mix(in srgb, var(--sic-surface) 40%, transparent);
+    }
+
+    .projeto-list-tarefa-nome {
+        color: var(--sic-text);
+    }
+
+    /* Subtarefas container */
+    .projeto-list-subtarefas {
+        background: color-mix(in srgb, var(--sic-surface-2) 35%, transparent);
+        border-bottom-color: color-mix(in srgb, var(--sic-border) 20%, transparent);
+    }
+
+    /* Subtarefas layer — tree connectors */
+    .projeto-list-subtarefa::before,
+    .projeto-list-subtarefa::after {
+        background: color-mix(in srgb, var(--sic-brand) 32%, var(--sic-border));
+    }
+
+    .projeto-list-subtarefa {
+        border-bottom-color: color-mix(in srgb, var(--sic-border) 12%, transparent);
+    }
+
+    .projeto-list-subtarefa:hover {
+        background: color-mix(in srgb, var(--sic-surface) 45%, transparent);
+    }
+
+    .projeto-list-subtarefa-nome {
+        color: var(--sic-muted);
+    }
+
+    .projeto-list-subtarefa-meta {
+        border-left-color: color-mix(in srgb, var(--sic-border) 20%, transparent);
+    }
+
+    /* Clickable triggers */
+    .projeto-list-status-trigger:hover,
+    .projeto-list-prioridade-trigger:hover {
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Subtarefa status trigger */
+    .projeto-list-subtarefa-status-trigger:hover {
+        background: color-mix(in srgb, var(--sic-border) 20%, transparent);
+    }
+
+    /* Date indicators */
+    .projeto-list-date:hover {
+        background: color-mix(in srgb, var(--sic-border) 20%, transparent);
+    }
+
+    .projeto-list-date-overdue {
+        background: color-mix(in srgb, #dc3545 10%, transparent);
+    }
+
+    .projeto-list-date-soon {
+        background: color-mix(in srgb, #d97706 10%, transparent);
+    }
+
+    /* Date placeholder */
+    .projeto-list-date-placeholder {
+        color: color-mix(in srgb, var(--sic-muted) 50%, transparent);
+        border-color: color-mix(in srgb, var(--sic-border) 35%, transparent);
+    }
+
+    .projeto-list-date-placeholder:hover {
+        background: color-mix(in srgb, var(--sic-border) 15%, transparent);
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+        color: var(--sic-muted);
+    }
+
+    /* Name input (inline edit) */
+    .projeto-list-nome-input {
+        background: var(--sic-surface-2);
+        border-color: color-mix(in srgb, var(--sic-brand) 40%, var(--sic-border));
+        color: var(--sic-text);
+    }
+
+    .projeto-list-nome-input:focus {
+        border-color: var(--sic-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--sic-brand) 25%, transparent);
+    }
+
+    /* Date input (inline edit) */
+    .projeto-list-date-input {
+        background: var(--sic-surface-2);
+        border-color: color-mix(in srgb, var(--sic-brand) 40%, var(--sic-border));
+        color: var(--sic-text);
+        color-scheme: dark;
+    }
+
+    .projeto-list-date-input:focus {
+        border-color: var(--sic-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--sic-brand) 25%, transparent);
+    }
+
+    /* Responsavel */
+    .projeto-list-responsavel {
+        background: color-mix(in srgb, var(--sic-brand) 15%, transparent);
+    }
+
+    .projeto-list-responsavel:hover {
+        background: color-mix(in srgb, var(--sic-brand) 25%, transparent);
+        border-color: var(--sic-border);
+    }
+
+    .projeto-list-subtarefa-responsavel {
+        background: color-mix(in srgb, var(--sic-brand) 15%, transparent);
+    }
+
+    .projeto-list-subtarefa-responsavel:hover {
+        background: color-mix(in srgb, var(--sic-brand) 25%, transparent);
+        border-color: var(--sic-border);
+    }
+
+    /* Add-responsavel buttons */
+    .projeto-list-btn-responsavel:hover {
+        background: color-mix(in srgb, var(--sic-brand) 10%, transparent);
+        border-color: var(--sic-border);
+    }
+
+    .projeto-list-subtarefa-btn-responsavel:hover {
+        background: color-mix(in srgb, var(--sic-brand) 8%, transparent);
+        border-color: var(--sic-border);
+    }
+
+    /* Inline form */
+    .projeto-list-inline-input {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-border);
+        color: var(--sic-text);
+    }
+
+    .projeto-list-inline-input:focus {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-brand);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand) 20%, transparent);
+    }
+
+    .projeto-list-inline-btn-cancel {
+        border-color: var(--sic-border);
+        color: var(--sic-muted);
+    }
+
+    .projeto-list-inline-btn-cancel:hover {
+        background: var(--sic-surface-2);
+        color: var(--sic-text);
+        border-color: color-mix(in srgb, var(--sic-border) 70%, transparent);
+    }
+
+    /* Loading overlay */
+    .projeto-loading-overlay {
+        background: rgba(15, 23, 42, 0.6);
+    }
+
+    /* Empty state */
+    .projeto-empty {
+        color: var(--sic-muted);
+    }
+
+    .projeto-empty i {
+        color: var(--sic-brand);
+        opacity: 0.25;
+    }
+
+    /* Filter tags */
+    .projeto-filter-tag:hover {
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Nome hover */
+    .projeto-list-nome {
+        color: var(--sic-text);
+    }
+}
+
+/* ============================================
+   Dark Mode — Modo Kanban
+   ============================================ */
+[data-bs-theme="dark"] {
+
+    /* Board — scrollbar escura */
+    .kanban-board {
+        scrollbar-color: color-mix(in srgb, var(--sic-border) 50%, transparent) transparent;
+    }
+
+    .kanban-board::-webkit-scrollbar-thumb {
+        background: color-mix(in srgb, var(--sic-border) 40%, transparent);
+    }
+
+    .kanban-board::-webkit-scrollbar-thumb:hover {
+        background: color-mix(in srgb, var(--sic-border) 60%, transparent);
+    }
+
+    /* Column */
+    .kanban-column {
+        background: var(--sic-surface);
+        border-color: color-mix(in srgb, var(--sic-border) 60%, transparent);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .kanban-column-header {
+        border-bottom-color: color-mix(in srgb, var(--sic-border) 45%, transparent);
+    }
+
+    .kanban-column-body.kanban-drag-over {
+        background: color-mix(in srgb, var(--sic-brand) 8%, transparent);
+    }
+
+    .kanban-column-footer {
+        border-top-color: color-mix(in srgb, var(--sic-border) 40%, transparent);
+    }
+
+    /* Empty placeholder */
+    .kanban-empty-placeholder {
+        border-color: color-mix(in srgb, var(--sic-border) 40%, transparent);
+    }
+
+    /* Card */
+    .kanban-card {
+        background: var(--sic-surface-2);
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    .kanban-card:hover {
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18), 0 1px 4px rgba(0, 0, 0, 0.10);
+    }
+
+    .kanban-card-title {
+        color: var(--sic-text);
+    }
+
+    .kanban-card-meta {
+        border-top-color: color-mix(in srgb, var(--sic-border) 40%, transparent);
+    }
+
+    /* Projeto label */
+    .kanban-card-projeto {
+        background: color-mix(in srgb, var(--sic-brand) 10%, transparent);
+    }
+
+    /* Date */
+    .kanban-card-date {
+        background: color-mix(in srgb, var(--sic-muted) 8%, transparent);
+    }
+
+    .kanban-card-date-overdue {
+        background: color-mix(in srgb, #dc3545 10%, transparent);
+    }
+
+    .kanban-card-date-soon {
+        background: color-mix(in srgb, #d97706 10%, transparent);
+    }
+
+    /* Responsavel */
+    .kanban-card-responsavel {
+        background: color-mix(in srgb, var(--sic-brand) 15%, transparent);
+    }
+
+    .kanban-card-responsavel:hover {
+        background: color-mix(in srgb, var(--sic-brand) 25%, transparent);
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+    }
+
+    .kanban-card-btn-responsavel:hover {
+        background: color-mix(in srgb, var(--sic-brand) 10%, transparent);
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+    }
+
+    /* Menu de ações (⋮) */
+    .kanban-card-menu-trigger:hover,
+    .kanban-card-menu-trigger[aria-expanded="true"] {
+        background: color-mix(in srgb, var(--sic-border) 25%, transparent);
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+    }
+
+    .kanban-card-menu {
+        background: var(--sic-surface);
+        border-color: color-mix(in srgb, var(--sic-border) 60%, transparent);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .kanban-card-menu-item {
+        color: var(--sic-text);
+    }
+
+    .kanban-card-menu-item:hover {
+        background: color-mix(in srgb, var(--sic-brand) 10%, transparent);
+        color: var(--sic-brand);
+    }
+
+    /* Prioridade dropdown */
+    .kanban-card-prioridade-trigger:hover {
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+    }
+
+    .kanban-card-prioridade-menu {
+        background: var(--sic-surface);
+        border-color: color-mix(in srgb, var(--sic-border) 60%, transparent);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .kanban-card-prioridade-option {
+        color: var(--sic-text);
+    }
+
+    .kanban-card-prioridade-option:hover {
+        background: color-mix(in srgb, var(--sic-brand) 10%, transparent);
+    }
+
+    .kanban-card-prioridade-option.active {
+        background: color-mix(in srgb, var(--sic-brand) 12%, transparent);
+    }
+
+    /* Search popover (responsável) */
+    .kanban-card-search-popover {
+        background: var(--sic-surface);
+        border-color: color-mix(in srgb, var(--sic-border) 60%, transparent);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Subtask section */
+    .kanban-subtask-section {
+        border-top-color: color-mix(in srgb, var(--sic-border) 40%, transparent);
+    }
+
+    .kanban-subtask-list:not(.collapsed) {
+        background: color-mix(in srgb, var(--sic-surface) 40%, transparent);
+    }
+
+    .kanban-subtask-header:hover {
+        background: color-mix(in srgb, var(--sic-brand) 6%, transparent);
+    }
+
+    .kanban-subtask-progress-bar {
+        background: color-mix(in srgb, var(--sic-border) 50%, transparent);
+    }
+
+    .kanban-subtask-item {
+        border-left-color: color-mix(in srgb, var(--sic-border) 60%, transparent);
+    }
+
+    .kanban-subtask-item + .kanban-subtask-item {
+        border-top-color: color-mix(in srgb, var(--sic-border) 25%, transparent);
+    }
+
+    .kanban-subtask-item:hover {
+        background: color-mix(in srgb, var(--sic-brand) 4%, transparent);
+    }
+
+    .kanban-subtask-title {
+        color: var(--sic-text);
+    }
+
+    .kanban-subtask-status-trigger:hover {
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+        background: color-mix(in srgb, var(--sic-border) 15%, transparent);
+    }
+
+    .kanban-subtask-status-menu {
+        background: var(--sic-surface);
+        border-color: color-mix(in srgb, var(--sic-border) 60%, transparent);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .kanban-subtask-status-option {
+        color: var(--sic-text);
+    }
+
+    .kanban-subtask-status-option:hover {
+        background: color-mix(in srgb, var(--sic-brand) 10%, transparent);
+    }
+
+    .kanban-subtask-status-option.active {
+        background: color-mix(in srgb, var(--sic-brand) 12%, transparent);
+    }
+
+    .kanban-subtask-responsavel {
+        background: color-mix(in srgb, var(--sic-brand) 15%, transparent);
+    }
+
+    .kanban-subtask-responsavel:hover {
+        background: color-mix(in srgb, var(--sic-brand) 25%, transparent);
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+    }
+
+    .kanban-subtask-btn-responsavel:hover {
+        background: color-mix(in srgb, var(--sic-brand) 8%, transparent);
+        border-color: color-mix(in srgb, var(--sic-border) 50%, transparent);
+    }
+
+    .kanban-subtask-search-popover {
+        background: var(--sic-surface);
+        border-color: color-mix(in srgb, var(--sic-border) 60%, transparent);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    .kanban-subtask-search-input {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-border);
+        color: var(--sic-text);
+    }
+
+    .kanban-subtask-search-input:focus {
+        border-color: var(--sic-brand);
+    }
+
+    .kanban-subtask-search-item {
+        color: var(--sic-text);
+    }
+
+    .kanban-subtask-search-item:hover {
+        background: color-mix(in srgb, var(--sic-brand) 10%, transparent);
+    }
+
+    .kanban-subtask-search-btn-remove {
+        border-top-color: color-mix(in srgb, var(--sic-border) 40%, transparent);
+    }
+
+    /* Add task / add subtask buttons */
+    .kanban-btn-add-task {
+        border-color: color-mix(in srgb, var(--sic-border) 45%, transparent);
+        color: var(--sic-muted);
+    }
+
+    .kanban-btn-add-task:hover {
+        background: color-mix(in srgb, var(--sic-brand) 12%, transparent);
+        border-color: color-mix(in srgb, var(--sic-brand) 35%, transparent);
+        color: var(--sic-brand);
+    }
+
+    /* Inline forms */
+    .kanban-inline-input {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-border);
+        color: var(--sic-text);
+    }
+
+    .kanban-inline-input:focus {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-brand);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand) 20%, transparent);
+    }
+
+    .kanban-inline-btn-cancel {
+        border-color: color-mix(in srgb, var(--sic-border) 60%, transparent);
+        color: var(--sic-muted);
+    }
+
+    .kanban-inline-btn-cancel:hover {
+        background: var(--sic-surface-2);
+        color: var(--sic-text);
+    }
+
+    .kanban-card .kanban-inline-form {
+        border-top-color: color-mix(in srgb, var(--sic-border) 35%, transparent);
+    }
+
+    .kanban-inline-select-projeto {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-border);
+        color: var(--sic-text);
+    }
+
+    .kanban-inline-select-projeto:focus {
+        border-color: var(--sic-brand);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand) 20%, transparent);
+    }
+}

@@ -414,6 +414,7 @@
         (() => {
             const propostaId = document.getElementById('inputPropostaID').value;
             const estabelecimentoId = document.getElementById('inputEstabelecimentoID').value;
+            const pathBase = document.querySelector('meta[name="pathbase"]')?.content || '';
 
             // DataTable principal
             if ($.fn.DataTable) {
@@ -471,7 +472,7 @@
                 }
 
                 $.ajax({
-                    url: '/Propostas/BuscarItens',
+                    url: pathBase + '/Propostas/BuscarItens',
                     type: 'GET',
                     dataType: 'json',
                     data: {
@@ -534,7 +535,7 @@
                 }
 
                 $.ajax({
-                    url: '/Propostas/AdicionarItem',
+                    url: pathBase + '/Propostas/AdicionarItem',
                     type: 'POST',
                     contentType: 'application/json',
                     dataType: 'json',
@@ -575,7 +576,7 @@
                     }).then(function (result) {
                         if (result.isConfirmed) {
                             $.ajax({
-                                url: '/Propostas/ExcluirItem/' + propostaId + '/' + propostaItemId,
+                                url: pathBase + '/Propostas/ExcluirItem/' + propostaId + '/' + propostaItemId,
                                 type: 'DELETE',
                                 dataType: 'json',
                                 success: function (data) {
@@ -645,7 +646,7 @@
                             $('#codifStatus').text('Codificando item #' + item.propostaItemId + '...');
 
                             $.ajax({
-                                url: '/Propostas/CodificarItem',
+                                url: pathBase + '/Propostas/CodificarItem',
                                 type: 'POST',
                                 data: { propostaItemId: item.propostaItemId, estabelecimentoId: estabelecimentoId },
                                 dataType: 'json',
@@ -689,7 +690,7 @@
                     if (!result.isConfirmed) return;
 
                     $.ajax({
-                        url: '/Propostas/CodificarSegundoPlano',
+                        url: pathBase + '/Propostas/CodificarSegundoPlano',
                         type: 'POST',
                         data: { propostaId: propostaId },
                         dataType: 'json',
@@ -827,7 +828,7 @@
                             Swal.fire({ title: 'Importando...', allowOutsideClick: false, didOpen: function () { Swal.showLoading(); } });
 
                             $.ajax({
-                                url: '/Propostas/ImportarItens',
+                                url: pathBase + '/Propostas/ImportarItens',
                                 type: 'POST',
                                 contentType: 'application/json',
                                 dataType: 'json',
@@ -908,7 +909,7 @@
                 }
 
                 $.ajax({
-                    url: '/Propostas/BuscarItens',
+                    url: pathBase + '/Propostas/BuscarItens',
                     type: 'GET',
                     dataType: 'json',
                     data: { estabelecimentoId: estabelecimentoId, filtro: filtro },
@@ -957,7 +958,7 @@
                 var custoAquisicao = $(this).data('custoacquisicao');
 
                 $.ajax({
-                    url: '/Propostas/VincularItemManual',
+                    url: pathBase + '/Propostas/VincularItemManual',
                     type: 'POST',
                     dataType: 'json',
                     data: { propostaItemId: manualPropostaItemId, itemId: itemId },

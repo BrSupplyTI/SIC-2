@@ -7,4 +7,5 @@ public sealed class ProjetoFilterDto
     public string? Texto { get; set; }
     public int ProjetoStatusID { get; set; }
     public string? OrderBy { get; set; } = "Recentes";
+    public bool ExcluirEncerrados { get; set; } = true;
 }

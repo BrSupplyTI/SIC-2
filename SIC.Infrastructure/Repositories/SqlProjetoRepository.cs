@@ -19,6 +19,7 @@ public sealed class SqlProjetoRepository(IConfiguration configuration) : IProjet
         string texto,
         int projetoStatusId,
         string orderBy,
+        bool excluirEncerrados = true,
         CancellationToken cancellationToken = default)
     {
         await using var connection = new SqlConnection(_connectionString);
@@ -35,6 +36,7 @@ public sealed class SqlProjetoRepository(IConfiguration configuration) : IProjet
         cmd.Parameters.Add("@Texto", SqlDbType.VarChar, 200).Value = texto;
         cmd.Parameters.Add("@ProjetoStatusID", SqlDbType.Int).Value = projetoStatusId;
         cmd.Parameters.Add("@OrderBy", SqlDbType.VarChar, 50).Value = orderBy;
+        cmd.Parameters.Add("@ExcluirEncerrados", SqlDbType.Bit).Value = excluirEncerrados;
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         var items = new List<ProjetoListItem>();
@@ -208,6 +210,37 @@ public sealed class SqlProjetoRepository(IConfiguration configuration) : IProjet
         return items;
     }
 
+    public async Task<IReadOnlyList<ProjetoCampoExtra>> ListarCamposExtrasAsync(int projetoId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand("BrWeb.dbo.SIC_ProjetoCamposExtrasListar", connection)
+        {
+            CommandType = CommandType.StoredProcedure,
+            CommandTimeout = 30
+        };
+
+        cmd.Parameters.Add("@ProjetoID", SqlDbType.Int).Value = projetoId;
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        var items = new List<ProjetoCampoExtra>();
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new ProjetoCampoExtra
+            {
+                ProjetoCampoExtraID = reader.GetInt32(reader.GetOrdinal("ProjetoCampoExtraID")),
+                ProjetoID = reader.GetInt32(reader.GetOrdinal("ProjetoID")),
+                Ordem = reader.GetByte(reader.GetOrdinal("Ordem")),
+                NmCampo = ReadString(reader, "NmCampo"),
+                VlCampo = ReadNullableString(reader, "VlCampo")
+            });
+        }
+
+        return items;
+    }
+
     // ── Lookups ──────────────────────────────────────────────
 
     public async Task<IReadOnlyList<ProjetoStatus>> ObterStatusListAsync(CancellationToken cancellationToken = default)
@@ -362,6 +395,7 @@ public sealed class SqlProjetoRepository(IConfiguration configuration) : IProjet
         DateTime? dtInicio,
         DateTime? dtPrevisaoFim,
         int usuarioCriadorId,
+        string? camposExtrasJson,
         CancellationToken cancellationToken = default)
     {
         await using var connection = new SqlConnection(_connectionString);
@@ -379,6 +413,7 @@ public sealed class SqlProjetoRepository(IConfiguration configuration) : IProjet
         cmd.Parameters.Add("@DtInicio", SqlDbType.Date).Value = (object?)dtInicio ?? DBNull.Value;
         cmd.Parameters.Add("@DtPrevisaoFim", SqlDbType.Date).Value = (object?)dtPrevisaoFim ?? DBNull.Value;
         cmd.Parameters.Add("@UsuarioCriadorID", SqlDbType.Int).Value = usuarioCriadorId;
+        cmd.Parameters.Add("@CamposExtrasJson", SqlDbType.NVarChar, -1).Value = (object?)camposExtrasJson ?? DBNull.Value;
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         await reader.ReadAsync(cancellationToken);
@@ -394,6 +429,7 @@ public sealed class SqlProjetoRepository(IConfiguration configuration) : IProjet
         DateTime? dtPrevisaoFim,
         DateTime? dtFimReal,
         int usuarioId,
+        string? camposExtrasJson,
         CancellationToken cancellationToken = default)
     {
         await using var connection = new SqlConnection(_connectionString);
@@ -413,6 +449,7 @@ public sealed class SqlProjetoRepository(IConfiguration configuration) : IProjet
         cmd.Parameters.Add("@DtPrevisaoFim", SqlDbType.Date).Value = (object?)dtPrevisaoFim ?? DBNull.Value;
         cmd.Parameters.Add("@DtFimReal", SqlDbType.Date).Value = (object?)dtFimReal ?? DBNull.Value;
         cmd.Parameters.Add("@UsuarioID", SqlDbType.Int).Value = usuarioId;
+        cmd.Parameters.Add("@CamposExtrasJson", SqlDbType.NVarChar, -1).Value = (object?)camposExtrasJson ?? DBNull.Value;
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         await reader.ReadAsync(cancellationToken);

@@ -12,6 +12,7 @@ public interface IProjetoRepository
         string texto,
         int projetoStatusId,
         string orderBy,
+        bool excluirEncerrados = true,
         CancellationToken cancellationToken = default);
 
     Task<ProjetoDetail?> ObterDetalhesAsync(int projetoId, CancellationToken cancellationToken = default);
@@ -21,6 +22,8 @@ public interface IProjetoRepository
     Task<IReadOnlyList<ProjetoParticipante>> ListarParticipantesAsync(int projetoId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ProjetoHistorico>> ListarHistoricoAsync(int projetoId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ProjetoCampoExtra>> ListarCamposExtrasAsync(int projetoId, CancellationToken cancellationToken = default);
 
     // ── Lookups ──────────────────────────────────────────────
 
@@ -43,6 +46,7 @@ public interface IProjetoRepository
         DateTime? dtInicio,
         DateTime? dtPrevisaoFim,
         int usuarioCriadorId,
+        string? camposExtrasJson,
         CancellationToken cancellationToken = default);
 
     Task<int> AtualizarProjetoAsync(
@@ -54,6 +58,7 @@ public interface IProjetoRepository
         DateTime? dtPrevisaoFim,
         DateTime? dtFimReal,
         int usuarioId,
+        string? camposExtrasJson,
         CancellationToken cancellationToken = default);
 
     // ── Escrita — Tarefa ─────────────────────────────────────

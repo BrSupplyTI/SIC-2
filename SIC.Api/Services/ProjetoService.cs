@@ -17,6 +17,7 @@ public sealed class ProjetoService(IProjetoRepository repository) : IProjetoServ
             filter.Texto ?? string.Empty,
             filter.ProjetoStatusID,
             filter.OrderBy ?? "Recentes",
+            filter.ExcluirEncerrados,
             cancellationToken);
 
         var totalRegistros = items.Count > 0 ? items[0].TotalRegistros : 0;
@@ -58,12 +59,19 @@ public sealed class ProjetoService(IProjetoRepository repository) : IProjetoServ
             filter.Texto ?? string.Empty,
             filter.ProjetoStatusID,
             filter.OrderBy ?? "Recentes",
+            filter.ExcluirEncerrados,
             cancellationToken);
 
         var totalRegistros = items.Count > 0 ? items[0].TotalRegistros : 0;
 
         var tarefasTasks = items.Select(i => repository.ListarTarefasAsync(i.ProjetoID, cancellationToken)).ToArray();
+        var statusListTask = repository.ObterTarefaStatusListAsync(cancellationToken);
+
+        await Task.WhenAll([.. tarefasTasks, statusListTask]);
+
         var tarefasResults = await Task.WhenAll(tarefasTasks);
+        var statusList = await statusListTask;
+        var concluidoStatusId = statusList.FirstOrDefault(s => s.NmStatus.Equals("Concluído", StringComparison.OrdinalIgnoreCase))?.ProjetoTarefaStatusID ?? 0;
 
         var projetosComTarefas = new List<ProjetoComTarefasItemDto>(items.Count);
 
@@ -93,6 +101,10 @@ public sealed class ProjetoService(IProjetoRepository repository) : IProjetoServ
                 ProjetoTarefaPaiID = t.ProjetoTarefaPaiID
             }).ToList();
 
+            // Recalculate from actual task data (includes subtasks)
+            var qtTarefas = tarefas.Count;
+            var qtConcluidas = tarefas.Count(t => t.ProjetoTarefaStatusID == concluidoStatusId);
+
             projetosComTarefas.Add(new ProjetoComTarefasItemDto
             {
                 ProjetoID = i.ProjetoID,
@@ -107,8 +119,8 @@ public sealed class ProjetoService(IProjetoRepository repository) : IProjetoServ
                 UsuarioCriadorID = i.UsuarioCriadorID,
                 NmCriador = i.NmCriador,
                 DtCriacao = i.DtCriacao.ToString(DateFormat),
-                QtTarefas = i.QtTarefas,
-                QtTarefasConcluidas = i.QtTarefasConcluidas,
+                QtTarefas = qtTarefas,
+                QtTarefasConcluidas = qtConcluidas,
                 QtParticipantes = i.QtParticipantes,
                 Tarefas = tarefaDtos
             });
@@ -129,6 +141,8 @@ public sealed class ProjetoService(IProjetoRepository repository) : IProjetoServ
         var entity = await repository.ObterDetalhesAsync(projetoId, cancellationToken);
         if (entity is null) return null;
 
+        var extras = await repository.ListarCamposExtrasAsync(projetoId, cancellationToken);
+
         return new ProjetoDetailDto
         {
             ProjetoID = entity.ProjetoID,
@@ -145,7 +159,13 @@ public sealed class ProjetoService(IProjetoRepository repository) : IProjetoServ
             DtCriacao = entity.DtCriacao.ToString(DateFormat),
             DtUltimaAtualizacao = entity.DtUltimaAtualizacao?.ToString(DateFormat),
             QtTarefas = entity.QtTarefas,
-            QtTarefasConcluidas = entity.QtTarefasConcluidas
+            QtTarefasConcluidas = entity.QtTarefasConcluidas,
+            CamposExtras = extras.Select(c => new ProjetoCampoExtraDto
+            {
+                Ordem = c.Ordem,
+                NmCampo = c.NmCampo,
+                VlCampo = c.VlCampo
+            }).ToList()
         };
     }
 
@@ -269,6 +289,7 @@ public sealed class ProjetoService(IProjetoRepository repository) : IProjetoServ
             ParseDate(dto.DtInicio),
             ParseDate(dto.DtPrevisaoFim),
             dto.UsuarioCriadorID,
+            SerializeCamposExtras(dto.CamposExtras),
             cancellationToken);
     }
 
@@ -283,6 +304,7 @@ public sealed class ProjetoService(IProjetoRepository repository) : IProjetoServ
             ParseDate(dto.DtPrevisaoFim),
             ParseDate(dto.DtFimReal),
             dto.UsuarioID,
+            SerializeCamposExtras(dto.CamposExtras),
             cancellationToken);
     }
 
@@ -355,4 +377,28 @@ public sealed class ProjetoService(IProjetoRepository repository) : IProjetoServ
 
     private static DateTime? ParseDate(string? value)
         => DateTime.TryParse(value, out var dt) ? dt : null;
+
+    private static string? SerializeCamposExtras(IReadOnlyList<ProjetoCampoExtraDto>? itens)
+    {
+        if (itens is null) return null;
+
+        var normalizados = itens
+            .Where(c => c.Ordem >= 1 && c.Ordem <= 4)
+            .Select(c => new
+            {
+                Ordem = (int)c.Ordem,
+                NmCampo = (c.NmCampo ?? string.Empty).Trim(),
+                VlCampo = c.VlCampo?.Trim()
+            })
+            .Where(c => !string.IsNullOrWhiteSpace(c.NmCampo))
+            .GroupBy(c => c.Ordem)
+            .Select(g => g.Last())
+            .OrderBy(c => c.Ordem)
+            .ToList();
+
+        return System.Text.Json.JsonSerializer.Serialize(normalizados, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null
+        });
+    }
 }

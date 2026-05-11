@@ -6,17 +6,185 @@
 }
 else
 {
-    <div class="historico-timeline">
-        @foreach (var h in Model.OrderByDescending(x => x.ProjetoHistoricoID))
+    var itens = Model.OrderByDescending(x => x.ProjetoHistoricoID).ToList();
+    const int pageSize = 10;
+
+    string GetDia(string? data)
+    {
+        if (string.IsNullOrWhiteSpace(data)) return "Sem data";
+        return data.Length >= 10 ? data.Substring(0, 10) : data;
+    }
+
+    string GetHora(string? data)
+    {
+        if (string.IsNullOrWhiteSpace(data)) return string.Empty;
+        return data.Length > 10 ? data.Substring(10).Trim() : string.Empty;
+    }
+
+    var grupos = itens
+        .Select((h, idx) => new { Item = h, Index = idx })
+        .GroupBy(x => GetDia(x.Item.DtAcao))
+        .ToList();
+
+    <div class="historico-wrapper" data-page-size="@pageSize" data-total="@itens.Count">
+        <div class="historico-toolbar">
+            <div class="historico-search">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" class="form-control form-control-sm" id="historicoBusca"
+                       placeholder="Buscar no histórico..." autocomplete="off" />
+                <button type="button" class="historico-search-clear d-none" id="historicoBuscaLimpar" title="Limpar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="historico-info">
+                <span id="historicoContador">@itens.Count</span>
+                <span class="text-muted">registros</span>
+            </div>
+        </div>
+
+        <div class="historico-timeline">
+            @foreach (var grupo in grupos)
+            {
+                <div class="historico-grupo" data-dia="@grupo.Key">
+                    <div class="historico-grupo-header">
+                        <i class="fa-solid fa-calendar-day"></i>
+                        <span>@grupo.Key</span>
+                        <span class="historico-grupo-count">@grupo.Count()</span>
+                    </div>
+                    @foreach (var x in grupo)
+                    {
+                        var hora = GetHora(x.Item.DtAcao);
+                        var hidden = x.Index >= pageSize ? "historico-item-hidden" : "";
+                        <div class="historico-item @hidden" data-search="@($"{x.Item.NmUsuario} {x.Item.DsAcao} {x.Item.DtAcao}".ToLower())">
+                            <div class="historico-item-content">
+                                <div class="historico-acao">
+                                    <span class="historico-usuario">@x.Item.NmUsuario</span> @x.Item.DsAcao
+                                </div>
+                                @if (!string.IsNullOrEmpty(hora))
+                                {
+                                    <div class="historico-data">
+                                        <i class="fa-solid fa-clock"></i>@hora
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (itens.Count > pageSize)
         {
-            <div class="historico-item">
-                <div class="historico-acao">
-                    <span class="historico-usuario">@h.NmUsuario</span> @h.DsAcao
-                </div>
-                <div class="historico-data">
-                    <i class="fa-solid fa-clock me-1"></i>@h.DtAcao
-                </div>
+            <div class="historico-footer">
+                <button type="button" class="btn btn-sm projeto-btn-ghost" id="historicoMostrarMais">
+                    <i class="fa-solid fa-chevron-down me-1"></i>
+                    Mostrar mais
+                    <span class="historico-mostrar-mais-count">(+@Math.Min(pageSize, itens.Count - pageSize))</span>
+                </button>
+                <span class="historico-footer-info text-muted">
+                    Exibindo <span id="historicoExibindo">@Math.Min(pageSize, itens.Count)</span> de @itens.Count
+                </span>
             </div>
         }
+        <div class="historico-vazio d-none" id="historicoVazio">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Nenhum registro encontrado.</span>
+        </div>
     </div>
+
+    <script>
+        (function () {
+            const wrapper = document.currentScript.previousElementSibling;
+            if (!wrapper || !wrapper.classList.contains('historico-wrapper')) return;
+
+            const pageSize = parseInt(wrapper.dataset.pageSize, 10) || 10;
+            const total = parseInt(wrapper.dataset.total, 10) || 0;
+            const items = Array.from(wrapper.querySelectorAll('.historico-item'));
+            const grupos = Array.from(wrapper.querySelectorAll('.historico-grupo'));
+            const btnMais = wrapper.querySelector('#historicoMostrarMais');
+            const btnMaisCount = wrapper.querySelector('.historico-mostrar-mais-count');
+            const exibindo = wrapper.querySelector('#historicoExibindo');
+            const busca = wrapper.querySelector('#historicoBusca');
+            const buscaLimpar = wrapper.querySelector('#historicoBuscaLimpar');
+            const contador = wrapper.querySelector('#historicoContador');
+            const vazio = wrapper.querySelector('#historicoVazio');
+
+            let visiveis = Math.min(pageSize, total);
+            let filtro = '';
+
+            function aplicar() {
+                let mostrados = 0;
+                let totalFiltrado = 0;
+
+                items.forEach(it => {
+                    const match = !filtro || (it.dataset.search || '').includes(filtro);
+                    if (!match) {
+                        it.classList.add('historico-item-hidden');
+                        return;
+                    }
+                    totalFiltrado++;
+                    if (filtro || mostrados < visiveis) {
+                        it.classList.remove('historico-item-hidden');
+                        mostrados++;
+                    } else {
+                        it.classList.add('historico-item-hidden');
+                    }
+                });
+
+                grupos.forEach(g => {
+                    const algum = g.querySelector('.historico-item:not(.historico-item-hidden)');
+                    g.classList.toggle('d-none', !algum);
+                });
+
+                if (contador) contador.textContent = filtro ? totalFiltrado : total;
+                if (vazio) vazio.classList.toggle('d-none', totalFiltrado > 0);
+
+                if (btnMais) {
+                    if (filtro) {
+                        btnMais.parentElement.classList.add('d-none');
+                    } else {
+                        btnMais.parentElement.classList.remove('d-none');
+                        const restantes = total - visiveis;
+                        if (restantes <= 0) {
+                            btnMais.classList.add('d-none');
+                            if (exibindo) exibindo.textContent = total;
+                        } else {
+                            btnMais.classList.remove('d-none');
+                            if (btnMaisCount) btnMaisCount.textContent = '(+' + Math.min(pageSize, restantes) + ')';
+                            if (exibindo) exibindo.textContent = visiveis;
+                        }
+                    }
+                }
+            }
+
+            if (btnMais) {
+                btnMais.addEventListener('click', () => {
+                    visiveis = Math.min(total, visiveis + pageSize);
+                    aplicar();
+                });
+            }
+
+            if (busca) {
+                busca.addEventListener('input', () => {
+                    filtro = busca.value.trim().toLowerCase();
+                    if (buscaLimpar) buscaLimpar.classList.toggle('d-none', !filtro);
+                    aplicar();
+                });
+            }
+
+            if (buscaLimpar) {
+                buscaLimpar.addEventListener('click', () => {
+                    if (busca) {
+                        busca.value = '';
+                        filtro = '';
+                        buscaLimpar.classList.add('d-none');
+                        aplicar();
+                        busca.focus();
+                    }
+                });
+            }
+
+            aplicar();
+        })();
+    </script>
 }

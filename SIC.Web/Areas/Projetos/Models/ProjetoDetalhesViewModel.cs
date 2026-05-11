@@ -29,4 +29,13 @@ public sealed class ProjetoDetalhesViewModel
     public int UsuarioLogadoID { get; set; }
     public string NmUsuarioLogado { get; set; } = string.Empty;
     public bool IsAdmin { get; set; }
+
+    public IReadOnlyList<ProjetoCampoExtraItemVm> CamposExtras { get; set; } = [];
+}
+
+public sealed class ProjetoCampoExtraItemVm
+{
+    public byte Ordem { get; set; }
+    public string NmCampo { get; set; } = string.Empty;
+    public string? VlCampo { get; set; }
 }

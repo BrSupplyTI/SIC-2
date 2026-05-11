@@ -19,4 +19,6 @@ public sealed class ProjetoCriarDto
 
     [Range(1, int.MaxValue, ErrorMessage = "Usuário criador inválido.")]
     public int UsuarioCriadorID { get; set; }
+
+    public IReadOnlyList<ProjetoCampoExtraDto>? CamposExtras { get; set; }
 }

@@ -179,7 +179,7 @@
             didOpen: function () { Swal.showLoading(); }
         });
 
-        fetch('/Projetos/ExcluirTarefa', {
+        fetch(window.sicUrl('/Projetos/ExcluirTarefa'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ProjetoTarefaID: tarefaId, ProjetoID: getProjetoId() })
@@ -218,7 +218,7 @@
         var btnK = document.getElementById('btnViewKanban');
         if (btnK && btnK.classList.contains('active')) kanbanActive = true;
 
-        fetch('/Projetos/' + projetoId + '/Partial', {
+        fetch(window.sicUrl('/Projetos/' + projetoId + '/Partial'), {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(function (res) {
@@ -779,7 +779,7 @@
             };
 
             dateInput.disabled = true;
-            fetch('/Projetos/EditarTarefa', {
+            fetch(window.sicUrl('/Projetos/EditarTarefa'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dtPayload)
@@ -976,7 +976,7 @@
                 var stOriginal = stTrigger ? stTrigger.innerHTML : '';
                 if (stTrigger) stTrigger.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size: 0.65rem;"></i>';
 
-                fetch('/Projetos/EditarTarefa', {
+                fetch(window.sicUrl('/Projetos/EditarTarefa'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(stPayload)
@@ -1045,7 +1045,7 @@
                 DtFimReal: brDateToIso(prioSrc.dataset.dtFimReal) || null
             };
 
-            fetch('/Projetos/EditarTarefa', {
+            fetch(window.sicUrl('/Projetos/EditarTarefa'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(prioPayload)
@@ -1095,7 +1095,7 @@
                 UsuarioResponsavelID: newRespId
             };
 
-            fetch('/Projetos/EditarTarefa', {
+            fetch(window.sicUrl('/Projetos/EditarTarefa'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(respPayload)
@@ -1134,7 +1134,7 @@
             }).then(function (result) {
                 if (!result.isConfirmed) return;
 
-                fetch('/Projetos/RemoverParticipante', {
+                fetch(window.sicUrl('/Projetos/RemoverParticipante'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ProjetoParticipanteID: rpId, ProjetoID: getProjetoId() })
@@ -1451,7 +1451,7 @@
         if (input) input.readOnly = true;
         kanbanInlineSubmitting = true;
 
-        fetch('/Projetos/CriarTarefa', {
+        fetch(window.sicUrl('/Projetos/CriarTarefa'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -1535,7 +1535,7 @@
         draggedCard.dataset.statusId = newStatusId;
         updateKanbanCounters();
 
-        fetch('/Projetos/EditarTarefa', {
+        fetch(window.sicUrl('/Projetos/EditarTarefa'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -1715,7 +1715,7 @@
                 statusPayload.DtFimReal = null;
             }
 
-            fetch('/Projetos/EditarTarefa', {
+            fetch(window.sicUrl('/Projetos/EditarTarefa'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(statusPayload)
@@ -1819,7 +1819,7 @@
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Salvando...';
 
-            fetch('/Projetos/Editar', {
+            fetch(window.sicUrl('/Projetos/Editar'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1874,7 +1874,7 @@
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Criando...';
 
-            fetch('/Projetos/CriarTarefa', {
+            fetch(window.sicUrl('/Projetos/CriarTarefa'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1935,7 +1935,7 @@
                 btnSalvar.disabled = true;
                 btnSalvar.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Salvando...';
 
-                fetch('/Projetos/EditarTarefa', {
+                fetch(window.sicUrl('/Projetos/EditarTarefa'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -2052,7 +2052,7 @@
 
             clearTimeout(apDebounceTimer);
             apDebounceTimer = setTimeout(function () {
-                fetch('/Projetos/BuscarUsuarios?texto=' + encodeURIComponent(texto))
+                fetch(window.sicUrl('/Projetos/BuscarUsuarios?texto=' + encodeURIComponent(texto)))
                     .then(function (res) { return res.json(); })
                     .then(function (data) {
                         apResultados.innerHTML = '';
@@ -2101,7 +2101,7 @@
             };
 
             btnSalvarParticipante.disabled = true;
-            fetch('/Projetos/AdicionarParticipante', {
+            fetch(window.sicUrl('/Projetos/AdicionarParticipante'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -2217,7 +2217,7 @@
                 DtFimReal: brDateToIso(row.dataset.dtFimReal) || null
             };
 
-            fetch('/Projetos/EditarTarefa', {
+            fetch(window.sicUrl('/Projetos/EditarTarefa'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

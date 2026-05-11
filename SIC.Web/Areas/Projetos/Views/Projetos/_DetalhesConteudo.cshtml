@@ -1,0 +1,429 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoDetalhesViewModel
+@{
+    var pct = Model.QtTarefas > 0 ? (int)Math.Round(Model.QtTarefasConcluidas * 100.0 / Model.QtTarefas) : 0;
+    var progressColor = pct == 100 ? "#10b981" : pct >= 50 ? "var(--sic-brand, #6366f1)" : "#f59e0b";
+    var podeEditar = Model.IsAdmin || Model.UsuarioCriadorID == Model.UsuarioLogadoID;
+    var tarefasAtrasadas = Model.Tarefas.Count(t => !string.IsNullOrWhiteSpace(t.DtPrevisaoFim)
+        && string.IsNullOrWhiteSpace(t.DtFimReal)
+        && DateTime.TryParseExact(t.DtPrevisaoFim, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var dt)
+        && dt.Date < DateTime.Today
+        && !t.NmStatus.Equals("Concluído", StringComparison.OrdinalIgnoreCase));
+}
+
+<!-- ===== Hero header do projeto ===== -->
+<div class="projeto-hero mb-4">
+    <div class="projeto-hero-accent" style="background: @Model.CdCorStatus;"></div>
+    <div class="projeto-hero-content">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+            <div class="projeto-hero-title-area">
+                <div class="d-flex align-items-center gap-3 flex-wrap mb-1">
+                    <h1 class="projeto-hero-title mb-0">
+                        <span class="projeto-hero-id">#@Model.ProjetoID</span>
+                        @Model.NmProjeto
+                    </h1>
+                    <span class="projeto-hero-status-pill" style="--status-color: @Model.CdCorStatus;">
+                        <span class="projeto-hero-status-dot"></span>@Model.NmStatus
+                    </span>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.DsProjeto))
+                {
+                    <p class="projeto-hero-description mb-0">@Model.DsProjeto</p>
+                }
+            </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+                @if (podeEditar)
+                {
+                    <button type="button" class="btn btn-sm projeto-btn-ghost" data-bs-toggle="modal" data-bs-target="#modalEditarProjeto" title="Editar projeto">
+                        <i class="fa-solid fa-pen"></i><span class="d-none d-sm-inline ms-1">Editar</span>
+                    </button>
+                }
+                <a asp-area="Projetos" asp-controller="Projetos" asp-action="Index" class="btn btn-sm projeto-btn-ghost" title="Voltar">
+                    <i class="fa-solid fa-arrow-left"></i><span class="d-none d-sm-inline ms-1">Voltar</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Métricas modernas em cards ===== -->
+<div class="projeto-metrics-grid mb-4">
+    <div class="projeto-metric-card">
+        <div class="projeto-metric-icon projeto-metric-icon--brand">
+            <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div class="projeto-metric-body">
+            <div class="projeto-metric-label">Tarefas</div>
+            <div class="projeto-metric-value">
+                @Model.QtTarefasConcluidas<span class="projeto-metric-value-suffix">/@Model.QtTarefas</span>
+            </div>
+            <div class="projeto-metric-sub">
+                @if (Model.QtTarefas > 0)
+                {
+                    <span>@(Model.QtTarefas - Model.QtTarefasConcluidas) em aberto</span>
+                }
+                else
+                {
+                    <span>Nenhuma cadastrada</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="projeto-metric-card">
+        <div class="projeto-metric-icon projeto-metric-icon--success">
+            <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div class="projeto-metric-body">
+            <div class="projeto-metric-label">Progresso</div>
+            <div class="projeto-metric-value">@pct<span class="projeto-metric-value-suffix">%</span></div>
+            <div class="projeto-metric-progress-inline">
+                <div class="projeto-metric-progress-bar" style="width: @pct%; background: @progressColor;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="projeto-metric-card">
+        <div class="projeto-metric-icon projeto-metric-icon--info">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="projeto-metric-body">
+            <div class="projeto-metric-label">Participantes</div>
+            <div class="projeto-metric-value">@Model.Participantes.Count</div>
+            <div class="projeto-metric-sub">
+                @if (Model.Participantes.Count > 0)
+                {
+                    <div class="projeto-metric-avatars">
+                        @foreach (var p in Model.Participantes.Take(4))
+                        {
+                            <span class="projeto-metric-avatar" title="@p.NmUsuario">@(string.IsNullOrWhiteSpace(p.NmUsuario) ? "?" : p.NmUsuario[..1].ToUpper())</span>
+                        }
+                        @if (Model.Participantes.Count > 4)
+                        {
+                            <span class="projeto-metric-avatar projeto-metric-avatar-more">+@(Model.Participantes.Count - 4)</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <span>Nenhum adicionado</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="projeto-metric-card @(tarefasAtrasadas > 0 ? "projeto-metric-alert" : "")">
+        <div class="projeto-metric-icon @(tarefasAtrasadas > 0 ? "projeto-metric-icon--danger" : "projeto-metric-icon--muted")">
+            <i class="fa-solid @(tarefasAtrasadas > 0 ? "fa-triangle-exclamation" : "fa-calendar-check")"></i>
+        </div>
+        <div class="projeto-metric-body">
+            <div class="projeto-metric-label">@(tarefasAtrasadas > 0 ? "Atrasadas" : "Prazo")</div>
+            @if (tarefasAtrasadas > 0)
+            {
+                <div class="projeto-metric-value projeto-metric-value--danger">@tarefasAtrasadas</div>
+                <div class="projeto-metric-sub projeto-metric-sub--danger">
+                    <i class="fa-solid fa-clock me-1"></i>Requer atenção
+                </div>
+            }
+            else
+            {
+                <div class="projeto-metric-value-sm">
+                    @(Model.DtPrevisaoFim ?? "—")
+                </div>
+                <div class="projeto-metric-sub">
+                    @if (!string.IsNullOrWhiteSpace(Model.DtInicio))
+                    {
+                        <span>Início: @Model.DtInicio</span>
+                    }
+                    else
+                    {
+                        <span>Sem data definida</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- ===== Tabs modernos ===== -->
+<div class="projeto-tabs-wrapper mb-0">
+    <ul class="nav projeto-tabs-modern" id="projetoTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="projeto-tab-btn active" id="tab-tarefas" data-bs-toggle="tab" data-bs-target="#pane-tarefas" type="button" role="tab" aria-controls="pane-tarefas" aria-selected="true">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Tarefas</span>
+                <span class="projeto-tab-badge">@Model.Tarefas.Count</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="projeto-tab-btn" id="tab-participantes" data-bs-toggle="tab" data-bs-target="#pane-participantes" type="button" role="tab" aria-controls="pane-participantes" aria-selected="false">
+                <i class="fa-solid fa-users"></i>
+                <span>Participantes</span>
+                <span class="projeto-tab-badge">@Model.Participantes.Count</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="projeto-tab-btn" id="tab-historico" data-bs-toggle="tab" data-bs-target="#pane-historico" type="button" role="tab" aria-controls="pane-historico" aria-selected="false">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Histórico</span>
+                <span class="projeto-tab-badge">@Model.Historico.Count</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="projeto-tab-btn" id="tab-info" data-bs-toggle="tab" data-bs-target="#pane-info" type="button" role="tab" aria-controls="pane-info" aria-selected="false">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Informações</span>
+            </button>
+        </li>
+    </ul>
+</div>
+
+<div class="tab-content projeto-tab-content" id="projetoTabContent">
+
+    <!-- ===== TAREFAS ===== -->
+    <div class="tab-pane fade show active" id="pane-tarefas" role="tabpanel" aria-labelledby="tab-tarefas">
+        <div class="projeto-toolbar mb-3">
+            <div class="projeto-toolbar-left">
+                @if (podeEditar)
+                {
+                    <button type="button" class="btn projeto-btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaTarefa">
+                        <i class="fa-solid fa-plus"></i><span>Nova Tarefa</span>
+                    </button>
+                }
+            </div>
+            @if (Model.Tarefas.Count > 0)
+            {
+                <div class="projeto-toolbar-right">
+                    <div class="btn-group btn-group-sm view-toggle-group" role="group" aria-label="Visualização de tarefas">
+                        <button type="button" class="btn btn-outline-secondary active" id="btnViewLista" title="Visualização em lista">
+                            <i class="fa-solid fa-bars-staggered"></i><span class="view-toggle-label">Lista</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnViewKanban" title="Visualização Kanban">
+                            <i class="fa-solid fa-chart-simple fa-rotate-90"></i><span class="view-toggle-label">Quadro</span>
+                        </button>
+                    </div>
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnColumnToggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Configurar colunas">
+                            <i class="fa-solid fa-sliders"></i><span class="view-toggle-label">Colunas</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end tarefa-col-toggle-menu" aria-labelledby="btnColumnToggle">
+                            <h6 class="dropdown-header">Colunas visíveis</h6>
+                            <label class="dropdown-item tarefa-col-toggle-item">
+                                <input type="checkbox" class="form-check-input me-2 tarefa-col-toggle" data-col="status" checked /> Status
+                            </label>
+                            <label class="dropdown-item tarefa-col-toggle-item">
+                                <input type="checkbox" class="form-check-input me-2 tarefa-col-toggle" data-col="prioridade" checked /> Prioridade
+                            </label>
+                            <label class="dropdown-item tarefa-col-toggle-item">
+                                <input type="checkbox" class="form-check-input me-2 tarefa-col-toggle" data-col="responsavel" checked /> Responsável
+                            </label>
+                            <label class="dropdown-item tarefa-col-toggle-item">
+                                <input type="checkbox" class="form-check-input me-2 tarefa-col-toggle" data-col="prazo" checked /> Prazo
+                            </label>
+                            <label class="dropdown-item tarefa-col-toggle-item">
+                                <input type="checkbox" class="form-check-input me-2 tarefa-col-toggle" data-col="progresso" checked /> Progresso
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (Model.Tarefas.Count > 0)
+        {
+            var allTasks = Model.Tarefas;
+            var prioridades = Model.TarefaPrioridadesDisponiveis;
+            var responsaveis = allTasks.Where(t => !string.IsNullOrWhiteSpace(t.NmResponsavel))
+                .Select(t => new { t.UsuarioResponsavelID, t.NmResponsavel })
+                .DistinctBy(r => r.UsuarioResponsavelID).ToList();
+            var statusFiltro = Model.TarefaStatusDisponiveis;
+            <div class="tarefa-filters mb-3">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="input-group input-group-sm" style="max-width: 220px;">
+                        <span class="input-group-text"><i class="fa-solid fa-search" style="font-size: 0.7rem;"></i></span>
+                        <input type="text" class="form-control" id="tarefaFilterSearch" placeholder="Buscar tarefa... (Ctrl+K)" title="Ctrl+K para focar · Esc para limpar" />
+                    </div>
+                    <select class="form-select form-select-sm" id="tarefaFilterStatus" style="max-width: 150px;">
+                        <option value="">Todos status</option>
+                        @foreach (var s in statusFiltro)
+                        {
+                            <option value="@s.ProjetoTarefaStatusID">@s.NmStatus</option>
+                        }
+                    </select>
+                    <select class="form-select form-select-sm" id="tarefaFilterPrioridade" style="max-width: 150px;">
+                        <option value="">Todas prioridades</option>
+                        @foreach (var p in prioridades)
+                        {
+                            <option value="@p.ProjetoTarefaPrioridadeID">@p.NmPrioridade</option>
+                        }
+                    </select>
+                    <select class="form-select form-select-sm" id="tarefaFilterResponsavel" style="max-width: 170px;">
+                        <option value="">Todos responsáveis</option>
+                        @foreach (var r in responsaveis)
+                        {
+                            <option value="@r.UsuarioResponsavelID">@r.NmResponsavel</option>
+                        }
+                    </select>
+                    <button type="button" class="btn btn-sm btn-link text-muted p-0 d-none" id="tarefaFilterClear" title="Limpar filtros">
+                        <i class="fa-solid fa-xmark me-1"></i>Limpar
+                    </button>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                    <span class="text-muted" style="font-size: 0.75rem;">Rápidos:</span>
+                    <button type="button" class="btn btn-sm tarefa-quick-filter" data-quick-filter="atrasadas" title="Tarefas com prazo vencido">
+                        <i class="fa-solid fa-clock text-danger me-1" style="font-size: 0.65rem;"></i>Atrasadas
+                    </button>
+                    <button type="button" class="btn btn-sm tarefa-quick-filter" data-quick-filter="sem-prazo" title="Tarefas sem data de previsão">
+                        <i class="fa-solid fa-calendar-xmark me-1" style="font-size: 0.65rem;"></i>Sem prazo
+                    </button>
+                    <button type="button" class="btn btn-sm tarefa-quick-filter" data-quick-filter="sem-responsavel" title="Tarefas sem responsável">
+                        <i class="fa-solid fa-user-slash me-1" style="font-size: 0.65rem;"></i>Sem responsável
+                    </button>
+                    <button type="button" class="btn btn-sm tarefa-quick-filter" data-quick-filter="minhas" title="Tarefas atribuídas a mim">
+                        <i class="fa-solid fa-user-check me-1" style="font-size: 0.65rem;"></i>Minhas tarefas
+                    </button>
+                </div>
+            </div>
+        }
+
+        @* ── Vista Lista (tabela agrupada por status) ── *@
+        <div id="tarefasViewLista">
+            @if (Model.Tarefas.Count == 0)
+            {
+                <p class="text-muted mb-0">Nenhuma tarefa cadastrada.</p>
+            }
+            else
+            {
+                var listaViewData = new ViewDataDictionary(ViewData);
+                listaViewData["PodeEditar"] = podeEditar;
+                <partial name="_TarefaListaAvancada" model="Model" view-data="listaViewData" />
+            }
+        </div>
+
+        @* ── Vista Kanban ── *@
+        <div id="tarefasViewKanban" class="d-none">
+            @{
+                var kanbanViewData = new ViewDataDictionary(ViewData);
+                kanbanViewData["PodeEditar"] = podeEditar;
+            }
+            <partial name="_KanbanBoard" model="Model" view-data="kanbanViewData" />
+        </div>
+    </div>
+
+    <!-- ===== PARTICIPANTES ===== -->
+    <div class="tab-pane fade" id="pane-participantes" role="tabpanel" aria-labelledby="tab-participantes">
+        @if (podeEditar)
+        {
+            <div class="projeto-toolbar mb-3">
+                <div class="projeto-toolbar-left">
+                    <button type="button" class="btn projeto-btn-primary" data-bs-toggle="modal" data-bs-target="#modalAdicionarParticipante">
+                        <i class="fa-solid fa-user-plus"></i><span>Adicionar Participante</span>
+                    </button>
+                </div>
+            </div>
+        }
+        @if (Model.Participantes.Count == 0)
+        {
+            <div class="projeto-empty-state">
+                <i class="fa-solid fa-users projeto-empty-icon"></i>
+                <h5 class="projeto-empty-title">Nenhum participante</h5>
+                <p class="projeto-empty-text">Adicione colaboradores ao projeto para designar responsáveis pelas tarefas.</p>
+            </div>
+        }
+        else
+        {
+            <div class="projeto-participantes-grid">
+                @for (var i = 0; i < Model.Participantes.Count; i++)
+                {
+                    var partViewData = new ViewDataDictionary(ViewData);
+                    partViewData["Index"] = i;
+                    partViewData["PodeEditar"] = podeEditar;
+                    partViewData["UsuarioCriadorID"] = Model.UsuarioCriadorID;
+                    <partial name="_ParticipanteRow" model="Model.Participantes[i]" view-data="partViewData" />
+                }
+            </div>
+        }
+    </div>
+
+    <!-- ===== HISTÓRICO ===== -->
+    <div class="tab-pane fade" id="pane-historico" role="tabpanel" aria-labelledby="tab-historico">
+        @if (Model.Historico.Count == 0)
+        {
+            <div class="projeto-empty-state">
+                <i class="fa-solid fa-clock-rotate-left projeto-empty-icon"></i>
+                <h5 class="projeto-empty-title">Sem histórico ainda</h5>
+                <p class="projeto-empty-text">As alterações no projeto e tarefas aparecerão aqui em ordem cronológica.</p>
+            </div>
+        }
+        else
+        {
+            <partial name="_HistoricoTimeline" model="Model.Historico" />
+        }
+    </div>
+
+    <!-- ===== INFORMAÇÕES DO PROJETO ===== -->
+    <div class="tab-pane fade" id="pane-info" role="tabpanel" aria-labelledby="tab-info">
+        <div class="projeto-info-grid">
+            <div class="projeto-info-item">
+                <div class="projeto-info-icon"><i class="fa-solid fa-user"></i></div>
+                <div class="projeto-info-body">
+                    <div class="projeto-info-label">Criado por</div>
+                    <div class="projeto-info-value">@Model.NmCriador</div>
+                </div>
+            </div>
+            <div class="projeto-info-item">
+                <div class="projeto-info-icon"><i class="fa-solid fa-calendar-plus"></i></div>
+                <div class="projeto-info-body">
+                    <div class="projeto-info-label">Data de criação</div>
+                    <div class="projeto-info-value">@(Model.DtCriacao ?? "—")</div>
+                </div>
+            </div>
+            <div class="projeto-info-item">
+                <div class="projeto-info-icon"><i class="fa-solid fa-play"></i></div>
+                <div class="projeto-info-body">
+                    <div class="projeto-info-label">Início</div>
+                    <div class="projeto-info-value">@(Model.DtInicio ?? "—")</div>
+                </div>
+            </div>
+            <div class="projeto-info-item">
+                <div class="projeto-info-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+                <div class="projeto-info-body">
+                    <div class="projeto-info-label">Previsão de término</div>
+                    <div class="projeto-info-value">@(Model.DtPrevisaoFim ?? "—")</div>
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.DtFimReal))
+            {
+                <div class="projeto-info-item">
+                    <div class="projeto-info-icon projeto-info-icon-success"><i class="fa-solid fa-check"></i></div>
+                    <div class="projeto-info-body">
+                        <div class="projeto-info-label">Término real</div>
+                        <div class="projeto-info-value">@Model.DtFimReal</div>
+                    </div>
+                </div>
+            }
+            <div class="projeto-info-item">
+                <div class="projeto-info-icon"><i class="fa-solid fa-rotate"></i></div>
+                <div class="projeto-info-body">
+                    <div class="projeto-info-label">Última atualização</div>
+                    <div class="projeto-info-value">@(Model.DtUltimaAtualizacao ?? "—")</div>
+                </div>
+            </div>
+            @foreach (var campo in Model.CamposExtras.OrderBy(c => c.Ordem))
+            {
+                <div class="projeto-info-item">
+                    <div class="projeto-info-icon"><i class="fa-solid fa-tag"></i></div>
+                    <div class="projeto-info-body">
+                        <div class="projeto-info-label">@campo.NmCampo</div>
+                        <div class="projeto-info-value">@(string.IsNullOrWhiteSpace(campo.VlCampo) ? "—" : campo.VlCampo)</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+<!-- Hidden data for JS: tarefa list for "Tarefa Pai" dropdown sync -->
+<script type="application/json" id="tarefasDataJson">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Tarefas.Where(t => t.ProjetoTarefaPaiID == null).Select(t => new { id = t.ProjetoTarefaID, nome = t.NmTarefa })))</script>
+<script type="application/json" id="participantesDataJson">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Participantes.Select(p => new { id = p.UsuarioID, nome = p.NmUsuario })))</script>
+<script type="application/json" id="historicoDataJson">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Historico.Select(h => new { id = h.ProjetoHistoricoID, usuario = h.NmUsuario, acao = h.DsAcao, data = h.DtAcao })))</script>

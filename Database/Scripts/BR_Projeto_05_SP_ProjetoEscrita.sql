@@ -112,6 +112,18 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
+        -- Regra automática: se mudou para Concluído e DtFimReal não foi informado, preencher com hoje
+        IF @ProjetoStatusID = 3 AND @DtFimReal IS NULL
+        BEGIN
+            SET @DtFimReal = CAST(@Agora AS DATE);
+        END
+
+        -- Regra automática: se saiu do status Concluído, limpar DtFimReal
+        IF @OldProjetoStatusID = 3 AND @ProjetoStatusID <> 3
+        BEGIN
+            SET @DtFimReal = NULL;
+        END
+
         -- 1. Atualizar o projeto
         UPDATE BR_Projeto
         SET NmProjeto           = @NmProjeto,
@@ -182,6 +194,19 @@ END
 GO
 
 PRINT 'Stored Procedure SIC_ProjetoAtualizar criada com sucesso.';
+GO
+
+-- ************************************************************
+-- 3. Backfill: projetos já Concluídos sem DtFimReal
+--    Preenche com a última atualização (ou DtCriacao).
+-- ************************************************************
+UPDATE BR_Projeto
+SET DtFimReal = CAST(ISNULL(DtUltimaAtualizacao, DtCriacao) AS DATE)
+WHERE ProjetoStatusID = 3
+  AND DtFimReal IS NULL
+  AND FlagAtivo = 1;
+
+PRINT 'Backfill DtFimReal aplicado em projetos Concluídos.';
 GO
 
 PRINT '============================================================';

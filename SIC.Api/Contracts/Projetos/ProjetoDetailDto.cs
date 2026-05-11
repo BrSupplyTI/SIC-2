@@ -17,4 +17,5 @@ public sealed class ProjetoDetailDto
     public string? DtUltimaAtualizacao { get; set; }
     public int QtTarefas { get; set; }
     public int QtTarefasConcluidas { get; set; }
+    public IReadOnlyList<ProjetoCampoExtraDto> CamposExtras { get; set; } = [];
 }

@@ -11,11 +11,12 @@ IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'SIC_ProjetosL
 GO
 
 CREATE PROCEDURE SIC_ProjetosListar
-    @PageNumber         INT = 1,
-    @PageSize           INT = 12,
-    @Texto              VARCHAR(200) = '',
-    @ProjetoStatusID    INT = 0,
-    @OrderBy            VARCHAR(50) = 'Recentes'
+    @PageNumber             INT = 1,
+    @PageSize               INT = 12,
+    @Texto                  VARCHAR(200) = '',
+    @ProjetoStatusID        INT = 0,
+    @OrderBy                VARCHAR(50) = 'Recentes',
+    @ExcluirEncerrados      BIT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -75,6 +76,7 @@ BEGIN
         WHERE P.FlagAtivo = 1
           AND (@Texto = '' OR P.NmProjeto LIKE '%' + @Texto + '%')
           AND (@ProjetoStatusID = 0 OR P.ProjetoStatusID = @ProjetoStatusID)
+          AND (@ExcluirEncerrados = 0 OR @ProjetoStatusID <> 0 OR P.ProjetoStatusID NOT IN (3, 4))
     )
 
     -- --------------------------------------------------------

@@ -5,6 +5,7 @@ public sealed class ProjetoListaViewModel
     public string? Texto { get; set; }
     public int ProjetoStatusID { get; set; }
     public string OrderBy { get; set; } = "Recentes";
+    public bool ExcluirEncerrados { get; set; } = true;
 
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 12;
@@ -15,10 +16,4 @@ public sealed class ProjetoListaViewModel
 
     public int UsuarioLogadoID { get; set; }
     public string NmUsuarioLogado { get; set; } = string.Empty;
-    public string ModoVisualizacao { get; set; } = "quadro";
-
-    // Dados extras para os modos Lista e Kanban
-    public IReadOnlyList<ProjetoItemComTarefasVm> ItensComTarefas { get; set; } = [];
-    public IReadOnlyList<ProjetoTarefaStatusItemVm> TarefaStatusDisponiveis { get; set; } = [];
-    public IReadOnlyList<ProjetoTarefaPrioridadeItemVm> TarefaPrioridadesDisponiveis { get; set; } = [];
-}
+    }

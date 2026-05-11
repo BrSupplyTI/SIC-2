@@ -1,0 +1,47 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoDetalhesViewModel
+@{
+    var podeEditar = ViewData["PodeEditar"] is true;
+    var statusColumns = Model.TarefaStatusDisponiveis.OrderBy(s => s.NrOrdem).ToList();
+    var rootTasks = Model.Tarefas.Where(t => t.ProjetoTarefaPaiID is null).ToList();
+}
+
+@foreach (var status in statusColumns)
+{
+    var groupTasks = rootTasks.Where(t => t.ProjetoTarefaStatusID == status.ProjetoTarefaStatusID).ToList();
+    var groupCount = groupTasks.Count;
+
+    <div class="tarefa-group" data-status-id="@status.ProjetoTarefaStatusID">
+        <div class="tarefa-group-header" data-status-id="@status.ProjetoTarefaStatusID" role="button" tabindex="0" aria-expanded="true">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-chevron-down tarefa-group-chevron"></i>
+                <span class="tarefa-group-color-dot" style="background: @status.CdCor; box-shadow: 0 0 0 3px color-mix(in srgb, @status.CdCor 20%, transparent);"></span>
+                <span class="tarefa-group-title">@status.NmStatus</span>
+                <span class="tarefa-group-count" style="background: color-mix(in srgb, @status.CdCor 14%, transparent); color: @status.CdCor; border-color: color-mix(in srgb, @status.CdCor 25%, transparent);">
+                    @groupCount
+                </span>
+            </div>
+        </div>
+        <div class="tarefa-group-body">
+            @if (groupCount == 0)
+            {
+                <div class="tarefa-group-empty">
+                    <small class="text-muted">Nenhuma tarefa</small>
+                </div>
+            }
+            else
+            {
+                <div class="tarefa-table">
+                    @foreach (var tarefa in groupTasks)
+                    {
+                        var itemViewData = new ViewDataDictionary(ViewData);
+                        itemViewData["PodeEditar"] = podeEditar;
+                        itemViewData["TarefaStatusDisponiveis"] = Model.TarefaStatusDisponiveis;
+                        itemViewData["TarefaPrioridadesDisponiveis"] = Model.TarefaPrioridadesDisponiveis;
+                        itemViewData["Participantes"] = Model.Participantes;
+                        <partial name="_TarefaItem" model="tarefa" view-data="itemViewData" />
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}

@@ -79,12 +79,14 @@ public sealed class ProjetoApiClient(HttpClient httpClient)
     public async Task<ProjetoListaViewModel> GetProjetosAsync(
         string? texto, int projetoStatusId, string orderBy,
         int pageNumber, int pageSize,
+        bool excluirEncerrados,
         CancellationToken cancellationToken = default)
     {
         try
         {
             var qs = $"api/projetos?PageNumber={pageNumber}&PageSize={pageSize}"
-                   + $"&ProjetoStatusID={projetoStatusId}";
+                   + $"&ProjetoStatusID={projetoStatusId}"
+                   + $"&ExcluirEncerrados={excluirEncerrados}";
 
             if (!string.IsNullOrWhiteSpace(texto))
                 qs += $"&Texto={Uri.EscapeDataString(texto)}";
@@ -94,17 +96,18 @@ public sealed class ProjetoApiClient(HttpClient httpClient)
             var result = await httpClient.GetFromJsonAsync<ProjetoListaViewModel>(qs, cancellationToken);
 
             if (result is null)
-                return new ProjetoListaViewModel { Texto = texto, ProjetoStatusID = projetoStatusId, OrderBy = orderBy };
+                return new ProjetoListaViewModel { Texto = texto, ProjetoStatusID = projetoStatusId, OrderBy = orderBy, ExcluirEncerrados = excluirEncerrados };
 
             result.Texto = texto;
             result.ProjetoStatusID = projetoStatusId;
             result.OrderBy = orderBy;
+            result.ExcluirEncerrados = excluirEncerrados;
 
             return result;
         }
         catch
         {
-            return new ProjetoListaViewModel { Texto = texto, ProjetoStatusID = projetoStatusId, OrderBy = orderBy };
+            return new ProjetoListaViewModel { Texto = texto, ProjetoStatusID = projetoStatusId, OrderBy = orderBy, ExcluirEncerrados = excluirEncerrados };
         }
     }
 
@@ -155,8 +158,13 @@ public sealed class ProjetoApiClient(HttpClient httpClient)
             var vm = await httpClient.GetFromJsonAsync<ProjetoDetalhesViewModel>($"api/projetos/{projetoId}", cancellationToken);
             if (vm is null) return null;
 
-            var tarefasFlat = await httpClient.GetFromJsonAsync<List<ProjetoTarefaItemVm>>($"api/projetos/{projetoId}/tarefas", cancellationToken);
-            vm.Tarefas = MontarHierarquia(tarefasFlat ?? []);
+            var tarefasFlat = await httpClient.GetFromJsonAsync<List<ProjetoTarefaItemVm>>($"api/projetos/{projetoId}/tarefas", cancellationToken) ?? [];
+            vm.Tarefas = MontarHierarquia(tarefasFlat);
+
+            // Recalculate counters from actual task list (includes subtasks)
+            vm.QtTarefas = tarefasFlat.Count;
+            vm.QtTarefasConcluidas = tarefasFlat.Count(t =>
+                t.NmStatus.Equals("Concluído", StringComparison.OrdinalIgnoreCase));
 
             var participantes = await httpClient.GetFromJsonAsync<List<ProjetoParticipanteItemVm>>($"api/projetos/{projetoId}/participantes", cancellationToken);
             vm.Participantes = participantes ?? [];

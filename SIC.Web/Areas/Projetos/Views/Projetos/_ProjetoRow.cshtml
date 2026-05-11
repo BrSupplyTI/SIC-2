@@ -1,0 +1,58 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoItemVm
+@{
+    var pct = Model.QtTarefas > 0 ? (int)Math.Round(Model.QtTarefasConcluidas * 100.0 / Model.QtTarefas) : 0;
+    var progressColor = pct == 100 ? "#198754" : pct >= 50 ? "#0d6efd" : "#ffc107";
+}
+
+<tr class="projeto-list-row align-middle"
+    style="cursor:pointer;"
+    onclick="window.location='@Url.Action("Detalhes", "Projetos", new { area = "Projetos", projetoId = Model.ProjetoID })'">
+    <td style="width: 4px; padding: 0;">
+        <div style="width: 4px; min-height: 48px; background: @Model.CdCorStatus; border-radius: 2px 0 0 2px;"></div>
+    </td>
+    <td class="ps-3">
+        <div class="fw-semibold" style="font-size: 0.9rem;">@Model.NmProjeto</div>
+        <div class="text-muted" style="font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px;">
+            @Model.DsProjeto
+        </div>
+    </td>
+    <td class="d-none d-md-table-cell">
+        <span class="badge rounded-pill" style="background: @Model.CdCorStatus; font-size: 0.7rem;">
+            @Model.NmStatus
+        </span>
+    </td>
+    <td class="d-none d-lg-table-cell" style="min-width: 160px;">
+        <div class="d-flex align-items-center gap-2">
+            <div class="flex-grow-1" style="height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden;">
+                <div style="width: @pct%; height: 100%; background: @progressColor; border-radius: 3px;"></div>
+            </div>
+            <small class="text-muted" style="white-space: nowrap;">@Model.QtTarefasConcluidas/@Model.QtTarefas</small>
+        </div>
+    </td>
+    <td class="d-none d-lg-table-cell text-muted" style="font-size: 0.8rem; white-space: nowrap;">
+        @if (!string.IsNullOrWhiteSpace(Model.DtInicio))
+        {
+            <span title="Data de Início">
+                <i class="fa-solid fa-calendar-day me-1 text-primary"></i>
+                <small class="text-muted">Início:</small> @Model.DtInicio
+            </span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.DtFimReal))
+        {
+            <span class="ms-2" title="Data de Conclusão">
+                <i class="fa-solid fa-flag-checkered me-1 text-success"></i>
+                <small class="text-muted">Conclusão:</small> @Model.DtFimReal
+            </span>
+        }
+        else if (!string.IsNullOrWhiteSpace(Model.DtPrevisaoFim))
+        {
+            <span class="ms-2" title="Previsão de Término">
+                <i class="fa-solid fa-calendar-check me-1 text-warning"></i>
+                <small class="text-muted">Previsão:</small> @Model.DtPrevisaoFim
+            </span>
+        }
+    </td>
+    <td class="d-none d-xl-table-cell text-muted" style="font-size: 0.8rem; white-space: nowrap;">
+        <i class="fa-solid fa-user me-1"></i>@Model.NmCriador
+    </td>
+</tr>

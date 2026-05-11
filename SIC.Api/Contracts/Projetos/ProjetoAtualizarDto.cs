@@ -23,4 +23,6 @@ public sealed class ProjetoAtualizarDto
 
     [Range(1, int.MaxValue, ErrorMessage = "Usuário inválido.")]
     public int UsuarioID { get; set; }
+
+    public IReadOnlyList<ProjetoCampoExtraDto>? CamposExtras { get; set; }
 }

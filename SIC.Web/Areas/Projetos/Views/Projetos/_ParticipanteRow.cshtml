@@ -7,6 +7,11 @@
     var usuarioCriadorID = (int)(ViewData["UsuarioCriadorID"] ?? 0);
     var isCriador = Model.UsuarioID == usuarioCriadorID;
 
+    // Busca o ícone do papel do catálogo
+    var papelItem = SIC.Web.Areas.Projetos.Models.ProjetoPapeisDisponiveis.Todos
+        .FirstOrDefault(p => string.Equals(p.Nome, Model.NmPapel, StringComparison.OrdinalIgnoreCase));
+    var papelIcone = papelItem?.Icone ?? "fa-solid fa-user-tag";
+
     string GetInitials(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "?";
@@ -17,31 +22,51 @@
     }
 }
 
-<div class="participante-row">
-    <div class="participante-avatar" style="background: @color;">
-        @GetInitials(Model.NmUsuario)
-    </div>
-    <div class="flex-grow-1">
-        <div class="fw-semibold" style="font-size: 0.88rem;">@Model.NmUsuario</div>
-        <small class="text-muted">@Model.NmPapel</small>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <small class="text-muted"><i class="fa-solid fa-calendar-day me-1"></i>@Model.DtEntrada</small>
-        @if (podeEditar)
-        {
-            <button type="button" class="btn btn-sm btn-link p-0 btn-editar-papel" title="Editar papel"
-                    data-participante-id="@Model.ProjetoParticipanteID"
-                    data-nm-papel="@Model.NmPapel">
-                <i class="fa-solid fa-pen text-muted" style="font-size: 0.75rem;"></i>
-            </button>
-            @if (!isCriador)
+<div class="participante-card @(isCriador ? "participante-card--criador" : "")">
+    <div class="participante-card-main">
+        <div class="participante-avatar" style="background: linear-gradient(135deg, @color, color-mix(in srgb, @color 70%, #000));">
+            @GetInitials(Model.NmUsuario)
+        </div>
+        <div class="participante-info">
+            <div class="participante-nome">
+                <span class="participante-nome-text" title="@Model.NmUsuario">@Model.NmUsuario</span>
+                @if (isCriador)
+                {
+                    <span class="participante-badge-criador" title="Criador do projeto">
+                        <i class="fa-solid fa-crown"></i>
+                    </span>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.NmPapel))
             {
-                <button type="button" class="btn btn-sm btn-link p-0 btn-remover-participante" title="Remover participante"
+                <div class="participante-papel">
+                    <i class="@papelIcone participante-papel-icon"></i>
+                    <span>@Model.NmPapel</span>
+                </div>
+            }
+            else
+            {
+                <div class="participante-papel participante-papel--empty">
+                    <i class="fa-solid fa-user-tag participante-papel-icon"></i>
+                    <span>Sem papel definido</span>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="participante-card-meta">
+        <div class="participante-data" title="Data de entrada no projeto">
+            <i class="fa-solid fa-calendar-day"></i>
+            <span>@Model.DtEntrada</span>
+        </div>
+        @if (podeEditar && !isCriador)
+        {
+            <div class="participante-actions">
+                <button type="button" class="participante-action-btn participante-action-btn--danger btn-remover-participante" title="Remover participante"
                         data-participante-id="@Model.ProjetoParticipanteID"
                         data-nm-usuario="@Model.NmUsuario">
-                    <i class="fa-solid fa-trash-can text-danger" style="font-size: 0.75rem;"></i>
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
-            }
+            </div>
         }
     </div>
 </div>

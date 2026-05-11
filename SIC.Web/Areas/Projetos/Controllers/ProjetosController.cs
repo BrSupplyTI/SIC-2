@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SIC.Web.Areas.Projetos.Models;
 using SIC.Web.Services;
 
 namespace SIC.Web.Areas.Projetos.Controllers;
@@ -25,14 +26,12 @@ public sealed class ProjetosController(ProjetoApiClient apiClient) : Controller
         string orderBy = "Recentes",
         int page = 1,
         int pageSize = 12,
+        bool excluirEncerrados = true,
         CancellationToken cancellationToken = default)
     {
-        var modo = Request.Cookies["sic_projetos_view"];
-        var modoAtivo = modo is "quadro" or "lista" or "kanban" ? modo : "quadro";
-
         var statusListTask = apiClient.GetStatusListAsync(cancellationToken);
         var projetosTask = apiClient.GetProjetosAsync(
-            texto, projetoStatusId, orderBy, page, pageSize, cancellationToken);
+            texto, projetoStatusId, orderBy, page, pageSize, excluirEncerrados, cancellationToken);
 
         await Task.WhenAll(statusListTask, projetosTask);
 
@@ -40,22 +39,6 @@ public sealed class ProjetosController(ProjetoApiClient apiClient) : Controller
         result.StatusDisponiveis = statusListTask.Result;
         result.UsuarioLogadoID = UsuarioLogadoID;
         result.NmUsuarioLogado = NmUsuarioLogado;
-        result.ModoVisualizacao = modoAtivo;
-
-        // Carregar dados extras para modos Lista e Kanban
-        if (modoAtivo is "lista" or "kanban" && result.Itens.Count > 0)
-        {
-            var comTarefasTask = apiClient.GetProjetosComTarefasAsync(
-                texto, projetoStatusId, orderBy, page, pageSize, cancellationToken);
-            var tarefaStatusTask = apiClient.GetTarefaStatusListAsync(cancellationToken);
-            var prioridadeTask = apiClient.GetPrioridadeListAsync(cancellationToken);
-
-            await Task.WhenAll(comTarefasTask, tarefaStatusTask, prioridadeTask);
-
-            result.ItensComTarefas = comTarefasTask.Result.Itens;
-            result.TarefaStatusDisponiveis = tarefaStatusTask.Result;
-            result.TarefaPrioridadesDisponiveis = prioridadeTask.Result;
-        }
 
         return View(result);
     }
@@ -84,7 +67,8 @@ public sealed class ProjetosController(ProjetoApiClient apiClient) : Controller
             ProjetoStatusID = 1,
             request.DtInicio,
             request.DtPrevisaoFim,
-            UsuarioCriadorID = UsuarioLogadoID
+            UsuarioCriadorID = UsuarioLogadoID,
+            CamposExtras = NormalizarCamposExtras(request.CamposExtras)
         };
 
         try
@@ -108,13 +92,38 @@ public sealed class ProjetosController(ProjetoApiClient apiClient) : Controller
         public string DsProjeto { get; set; } = string.Empty;
         public string? DtInicio { get; set; }
         public string? DtPrevisaoFim { get; set; }
+        public List<CampoExtraRequest>? CamposExtras { get; set; }
+    }
+
+    public sealed class CampoExtraRequest
+    {
+        public byte Ordem { get; set; }
+        public string? NmCampo { get; set; }
+        public string? VlCampo { get; set; }
     }
 
     [HttpGet("{projetoId:int}")]
     public async Task<IActionResult> Detalhes(int projetoId, CancellationToken cancellationToken = default)
     {
-        var vm = await apiClient.GetProjetoDetalhesAsync(projetoId, cancellationToken);
+        var vm = await CarregarDetalhesAsync(projetoId, cancellationToken);
         if (vm is null) return NotFound();
+
+        return View(vm);
+    }
+
+    [HttpGet("{projetoId:int}/Partial")]
+    public async Task<IActionResult> DetalhesPartial(int projetoId, CancellationToken cancellationToken = default)
+    {
+        var vm = await CarregarDetalhesAsync(projetoId, cancellationToken);
+        if (vm is null) return NotFound();
+
+        return PartialView("_DetalhesConteudo", vm);
+    }
+
+    private async Task<ProjetoDetalhesViewModel?> CarregarDetalhesAsync(int projetoId, CancellationToken cancellationToken)
+    {
+        var vm = await apiClient.GetProjetoDetalhesAsync(projetoId, cancellationToken);
+        if (vm is null) return null;
 
         vm.StatusDisponiveis = await apiClient.GetStatusListAsync(cancellationToken);
         vm.TarefaStatusDisponiveis = await apiClient.GetTarefaStatusListAsync(cancellationToken);
@@ -123,7 +132,7 @@ public sealed class ProjetosController(ProjetoApiClient apiClient) : Controller
         vm.NmUsuarioLogado = NmUsuarioLogado;
         vm.IsAdmin = IsAdmin;
 
-        return View(vm);
+        return vm;
     }
 
     [HttpPost("Editar")]
@@ -161,7 +170,8 @@ public sealed class ProjetosController(ProjetoApiClient apiClient) : Controller
             request.DtInicio,
             request.DtPrevisaoFim,
             request.DtFimReal,
-            UsuarioID = UsuarioLogadoID
+            UsuarioID = UsuarioLogadoID,
+            CamposExtras = NormalizarCamposExtras(request.CamposExtras)
         };
 
         try
@@ -188,6 +198,22 @@ public sealed class ProjetosController(ProjetoApiClient apiClient) : Controller
         public string? DtInicio { get; set; }
         public string? DtPrevisaoFim { get; set; }
         public string? DtFimReal { get; set; }
+        public List<CampoExtraRequest>? CamposExtras { get; set; }
+    }
+
+    private static List<object> NormalizarCamposExtras(List<CampoExtraRequest>? campos)
+    {
+        if (campos is null) return [];
+        return campos
+            .Where(c => !string.IsNullOrWhiteSpace(c.NmCampo))
+            .Take(4)
+            .Select(c => (object)new
+            {
+                Ordem = c.Ordem is >= 1 and <= 4 ? c.Ordem : (byte)1,
+                NmCampo = c.NmCampo!.Trim(),
+                VlCampo = string.IsNullOrWhiteSpace(c.VlCampo) ? null : c.VlCampo.Trim()
+            })
+            .ToList();
     }
 
     [HttpPost("CriarTarefa")]

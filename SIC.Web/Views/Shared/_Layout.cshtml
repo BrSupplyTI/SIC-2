@@ -306,6 +306,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.SIC_BASE_URL = '@(Context.Request.PathBase.HasValue ? Context.Request.PathBase.Value : "")';
+        window.sicUrl = function (path) {
+            if (!path) return window.SIC_BASE_URL;
+            return window.SIC_BASE_URL + (path.charAt(0) === '/' ? path : '/' + path);
+        };
+    </script>
     <form id="avatarUploadForm" method="post" asp-area="" asp-controller="Account" asp-action="AvatarUpload" enctype="multipart/form-data" class="d-none">
         @Html.AntiForgeryToken()
         <input id="avatarFileInput" name="avatarFile" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />

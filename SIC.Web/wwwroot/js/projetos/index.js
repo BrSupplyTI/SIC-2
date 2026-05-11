@@ -117,7 +117,7 @@
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Criando...';
 
-            fetch('/Projetos/Criar', {
+            fetch(window.sicUrl('/Projetos/Criar'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -137,7 +137,7 @@
                     timer: 1500,
                     showConfirmButton: false
                 }).then(function () {
-                    window.location.href = '/Projetos/' + data.projetoId;
+                    window.location.href = window.sicUrl('/Projetos/' + data.projetoId);
                 });
             })
             .catch(function (err) {

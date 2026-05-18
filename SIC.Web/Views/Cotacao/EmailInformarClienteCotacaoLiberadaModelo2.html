@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>{{EMAIL_TITULO}}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #333; background: #f5f5f5; margin: 0; padding: 0; }
+  .wrapper { max-width: 820px; margin: 0 auto; background: #fff; border: 1px solid #ddd; }
+  .header { background: {{EMAIL_EST_COR}}; padding: 16px 24px; }
+  .header img { height: 70px; }
+  .section { padding: 16px 24px; border-bottom: 1px solid #eee; }
+  .section h3 { color: {{EMAIL_EST_COR}}; margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid {{EMAIL_EST_COR}}; padding-bottom: 4px; }
+  .info-table { width: 100%; border-collapse: collapse; }
+  .info-table td { padding: 4px 6px; font-size: 12px; vertical-align: top; }
+  .info-table td strong { color: #555; }
+  .my-text-center { text-align: center; }
+  .my-text-right  { text-align: right; }
+  .my-text-left   { text-align: left; }
+  .my-cinza       { color: #888; font-size: 11px; }
+  table.itens { width: 100%; border-collapse: collapse; }
+  table.itens th { background: {{EMAIL_EST_COR}}; color: #fff; padding: 7px 8px; font-size: 11px; text-align: center; }
+  table.itens tbody tr:nth-child(even) { background: #fafafa; }
+  table.itens td { padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: middle; }
+  .mensagem { background: #fffbe6; border-left: 4px solid {{EMAIL_EST_COR}}; padding: 12px 16px; font-size: 13px; margin-bottom: 0; }
+  .footer { background: #f0f0f0; padding: 10px 24px; font-size: 11px; color: #999; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- CABEÇALHO -->
+  <div class="header">
+    <img src="{{EMAIL_EST_LOGO}}" alt="{{EMAIL_EST_RAZAO}}">
+  </div>
+
+  <!-- SAUDAÇÃO / MENSAGEM -->
+  <div class="section">
+    <p style="margin:0 0 6px;"><strong>{{EMAIL_SAUDACAO}},</strong></p>
+    <div class="mensagem">{{EMAIL_MENSAGEM}}</div>
+  </div>
+
+  <!-- DADOS DA COTAÇÃO -->
+  <div class="section">
+    <h3>Dados da Cotação</h3>
+    <table class="info-table">
+      <tr>
+        <td width="15%"><strong>Proposta:</strong></td><td width="35%">{{EMAIL_COT_ID}} / {{EMAIL_COT_ANO}}</td>
+        <td width="15%"><strong>Status:</strong></td><td>{{EMAIL_COT_STATUS}}</td>
+      </tr>
+      <tr>
+        <td><strong>Data:</strong></td><td>{{EMAIL_COT_DATA}}</td>
+        <td><strong>Validade:</strong></td><td>{{EMAIL_COT_DATAVAL}}</td>
+      </tr>
+      <tr>
+        <td><strong>Cond. Pagamento:</strong></td><td>{{EMAIL_COT_CONDPAG}}</td>
+        <td><strong>Ordem de Compra:</strong></td><td>{{EMAIL_COT_OC}}</td>
+      </tr>
+      <tr>
+        <td><strong>Contato:</strong></td><td>{{EMAIL_CONT_NOME}}</td>
+        <td><strong>E-mail contato:</strong></td><td>{{EMAIL_CONT_EMAIL}}</td>
+      </tr>
+      <tr>
+        <td><strong>Observações:</strong></td><td colspan="3">{{EMAIL_COT_OBS}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ITENS -->
+  <div class="section">
+    <h3>Itens da Cotação</h3>
+    <table class="itens">
+      <thead>
+        <tr>
+          <th class="my-text-center" style="width:60px;">Foto</th>
+          <th class="my-text-center">Código</th>
+          <th class="my-text-left">Descrição</th>
+          <th class="my-text-center">NCM</th>
+          <th class="my-text-right">Preço</th>
+          <th class="my-text-right">IPI</th>
+          <th class="my-text-right">ST</th>
+          <th class="my-text-center">Qtd</th>
+          <th class="my-text-right">Vlr. Unit.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{EMAIL_ITENS}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FRETE E TOTAIS -->
+  <div class="section">
+    <h3>Frete e Totais</h3>
+    <table class="info-table">
+      <tr>
+        <td width="20%"><strong>Prazo de entrega:</strong></td><td width="30%">{{EMAIL_COT_PRAZOENT}}</td>
+        <td width="20%"><strong>Transportadora:</strong></td><td>{{EMAIL_COT_TRANSP}}</td>
+      </tr>
+      <tr>
+        <td><strong>Tipo de frete:</strong></td><td>{{EMAIL_COT_TIPOFRETE}}</td>
+        <td><strong>Valor do frete:</strong></td><td>{{EMAIL_COT_VLRFRETE}}</td>
+      </tr>
+      <tr>
+        <td><strong>Total s/ frete:</strong></td><td>{{EMAIL_COT_VLRTOTAL}}</td>
+        <td><strong>Total c/ frete:</strong></td><td><strong>{{EMAIL_COT_VLRTOTALFRETE}}</strong></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- DADOS DO FORNECEDOR -->
+  <div class="section">
+    <h3>Dados do Fornecedor</h3>
+    <table class="info-table">
+      <tr>
+        <td width="20%"><strong>Razão Social:</strong></td><td width="30%">{{EMAIL_EST_RAZAO}}</td>
+        <td width="20%"><strong>CNPJ:</strong></td><td>{{EMAIL_EST_CNPJ}}</td>
+      </tr>
+      <tr>
+        <td><strong>Insc. Estadual:</strong></td><td>{{EMAIL_EST_INSCREST}}</td>
+        <td><strong>Telefone:</strong></td><td>{{EMAIL_EST_TELEFONE}}</td>
+      </tr>
+      <tr>
+        <td><strong>Endereço:</strong></td>
+        <td colspan="3">{{EMAIL_EST_ENDERECO}}, {{EMAIL_EST_NUMERO}} {{EMAIL_EST_COMP}} — {{EMAIL_EST_BAIRRO}}, {{EMAIL_EST_CIDADE}}/{{EMAIL_EST_UF}} — CEP {{EMAIL_EST_CEP}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- CONSULTOR RESPONSÁVEL -->
+  <div class="section">
+    <h3>Consultor Responsável</h3>
+    <table class="info-table">
+      <tr>
+        <td width="15%"><strong>Nome:</strong></td><td width="35%">{{EMAIL_CONSULTOR_NOME}}</td>
+        <td width="15%"><strong>E-mail:</strong></td><td width="35%">{{EMAIL_CONSULTOR_EMAIL}}</td>
+      </tr>
+      <tr>
+        <td><strong>Telefone:</strong></td><td colspan="3">{{EMAIL_CONSULTOR_TELEFONE}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- DADOS DO CLIENTE -->
+  <div class="section">
+    <h3>Dados do Cliente</h3>
+    <table class="info-table">
+      <tr>
+        <td width="20%"><strong>Razão Social:</strong></td><td width="30%">{{EMAIL_CLI_RAZAO}}</td>
+        <td width="20%"><strong>CNPJ:</strong></td><td>{{EMAIL_CLI_CNPJ}}</td>
+      </tr>
+      <tr>
+        <td><strong>Telefone:</strong></td><td colspan="3">{{EMAIL_CLI_TELEFONE}}</td>
+      </tr>
+      <tr>
+        <td><strong>Endereço:</strong></td>
+        <td colspan="3">{{EMAIL_CLI_ENDERECO}}, {{EMAIL_CLI_NUMERO}} {{EMAIL_CLI_COMP}} — {{EMAIL_CLI_BAIRRO}}, {{EMAIL_CLI_CIDADE}}/{{EMAIL_CLI_UF}} — CEP {{EMAIL_CLI_CEP}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- RODAPÉ -->
+  <div class="footer">
+    Referência interna: {{EMAIL_HASH}} &nbsp;|&nbsp; {{EMAIL_EST_RAZAO}}
+  </div>
+
+</div>
+</body>
+</html>

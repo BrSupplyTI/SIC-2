@@ -1,15 +1,18 @@
 using SIC.Api.Services;
 using SIC.Api.Services.Admin;
+using SIC.Api.Services.Cotacao;
 using SIC.Api.Services.PrePedidosPDF;
 using SIC.Api.Services.Propostas;
 using SIC.Domain.Abstractions;
 using SIC.Domain.Abstractions.Admin;
+using SIC.Domain.Abstractions.Cotacao;
 using SIC.Domain.Abstractions.PrePedidosPDF;
 using SIC.Domain.Abstractions.Propostas;
 using SIC.Infrastructure.Integrations;
 using SIC.Infrastructure.Integrations.PrePedidosPDF;
 using SIC.Infrastructure.Repositories;
 using SIC.Infrastructure.Repositories.Admin;
+using SIC.Infrastructure.Repositories.Cotacao;
 using SIC.Infrastructure.Repositories.PrePedidosPDF;
 using SIC.Infrastructure.Repositories.Propostas;
 
@@ -47,6 +50,10 @@ builder.Services.AddScoped<IAdminNoticeService, AdminNoticeService>();
 builder.Services.AddScoped<IPropostaQueryRepository, SqlPropostaQueryRepository>();
 builder.Services.AddScoped<IPropostaQueryService, PropostaQueryService>();
 builder.Services.AddHostedService<CodificacaoBackgroundService>();
+builder.Services.AddScoped<ICotacaoQueryRepository, SqlCotacaoQueryRepository>();
+builder.Services.AddScoped<ICotacaoQueryService, CotacaoQueryService>();
+builder.Services.AddScoped<ICotacaoCommandRepository, SqlCotacaoCommandRepository>();
+builder.Services.AddScoped<ICotacaoCommandService, CotacaoCommandService>();
 
 var app = builder.Build();
 

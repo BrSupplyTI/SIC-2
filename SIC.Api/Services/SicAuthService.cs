@@ -387,6 +387,7 @@ public sealed class SicAuthService : ISicAuthService
                 Nome = user.Nome,
                 Email = user.Email,
                 FlagAdmin = user.FlagAdmin,
+                FlagBackOffice = user.FlagBackOffice,
                 EstabelecimentoId = user.EstabelecimentoId,
                 NmEstabelecimento = user.NmEstabelecimento,
                 ApelidoEstabelecimento = user.ApelidoEstabelecimento,

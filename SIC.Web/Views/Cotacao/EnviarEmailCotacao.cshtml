@@ -1,0 +1,324 @@
+@model SIC.Web.Models.Cotacao.EnviarEmailCotacaoViewModel
+@{
+    ViewData["Title"] = "Enviar E-mail da Cotação";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Cotacao/cotacao-view.css" asp-append-version="true" />
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        @* ══════════ HEADER ══════════ *@
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0">
+                        <i class="fa-duotone fa-thin fa-paper-plane me-2 text-br"></i>Enviar E-mail da Cotação
+                    </h2>
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <a asp-controller="Cotacao" asp-action="Cotacao" asp-route-propostaId="@Model.PropostaId" class="btn btn-outline-dark">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Voltar
+                </a>
+            </div>
+        </div>
+
+        @* ══════════ DETALHES DA COTAÇÃO ══════════ *@
+        <div class="cotacao-section-title">
+            <i class="fa-duotone fa-file-invoice-dollar me-1 text-br"></i>Detalhes da Cotação
+        </div>
+
+        <div class="row g-2 mb-4">
+            <div class="col-md-6 col-xl-4">
+                <div class="cotacao-quick-card h-100">
+                    <i class="fa-duotone fa-hashtag text-br"></i>
+                    <div>
+                        <small class="text-muted">Número Cotação</small>
+                        <div class="fw-semibold">@Model.CdProposta</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="cotacao-quick-card h-100">
+                    <i class="fa-duotone fa-warehouse text-br"></i>
+                    <div>
+                        <small class="text-muted">Estabelecimento</small>
+                        <div class="fw-semibold">@Model.EstabelecimentoNome</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="cotacao-quick-card h-100">
+                    <i class="fa-duotone fa-building text-br"></i>
+                    <div>
+                        <small class="text-muted">Cliente</small>
+                        <div class="fw-semibold">@Model.ClienteNome</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="cotacao-quick-card h-100">
+                    <i class="fa-duotone fa-location-dot text-br"></i>
+                    <div>
+                        <small class="text-muted">Cidade Destino</small>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.ClienteCidadeEstado) ? "—" : Model.ClienteCidadeEstado)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="cotacao-quick-card h-100">
+                    <i class="fa-duotone fa-address-card text-br"></i>
+                    <div>
+                        <small class="text-muted">Nome Contato (Externo)</small>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.ContatoNome) ? "—" : Model.ContatoNome)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="cotacao-quick-card h-100">
+                    <i class="fa-duotone fa-envelope text-br"></i>
+                    <div>
+                        <small class="text-muted">E-mail Contato (Externo)</small>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.ContatoEmail) ? "—" : Model.ContatoEmail)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="cotacao-quick-card h-100">
+                    <i class="fa-duotone fa-user text-br"></i>
+                    <div>
+                        <small class="text-muted">Consultor</small>
+                        <div class="fw-semibold">@Model.ConsultorNome</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="cotacao-quick-card h-100">
+                    <i class="fa-duotone fa-circle-dollar-to-slot text-br"></i>
+                    <div>
+                        <small class="text-muted">Valor Total</small>
+                        <div class="fw-semibold">@Model.TotalVenda + Frete @Model.Frete</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ══════════ DADOS DO DESTINATÁRIO ══════════ *@
+        <div class="cotacao-section-title d-flex align-items-center justify-content-between">
+            <span><i class="fa-duotone fa-user-plus me-1 text-br"></i>Dados do Destinatário</span>
+            <a href="https://intranet.brsupply.com.br/Intranet/html/crm/cadastro_contato.php?cliente=@Model.ClienteId&redirectTo=../../../NewSIC/Comercial/Cliente/@Model.ClienteId"
+               target="_blank"
+               class="btn btn-success btn-sm">
+                <i class="fa-solid fa-plus me-1"></i>Adicionar Contato
+            </a>
+        </div>
+
+        <form asp-controller="Cotacao"
+              asp-action="Enviar"
+              asp-route-propostaId="@Model.PropostaId"
+              method="post">
+
+            @* DEBUG TEMPORÁRIO - remover após testar *@
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <div>@error.ErrorMessage</div>
+                    }
+                </div>
+            }
+
+            @* Campos ocultos de controle *@
+            <input type="hidden" asp-for="PropostaId" />
+            <input type="hidden" asp-for="CotacaoID" />
+            <input type="hidden" asp-for="EstabelecimentoID" />
+            <input type="hidden" asp-for="ConsultorEmail" />
+            <input type="hidden" asp-for="ExecutivoEmail" />
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <p class="fw-semibold mb-4" style="font-size:1.15rem;">
+                        Informe abaixo os dados para envio do e-mail da cotação:
+                    </p>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label asp-for="Saudacao" class="form-label fw-semibold">
+                                Saudação <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Saudacao" class="form-control"
+                                   placeholder="Bom dia Sr. João," />
+                            <span asp-validation-for="Saudacao" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="EmailDestinatario" class="form-label fw-semibold">
+                                E-mail do Destinatário <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="EmailDestinatario" class="form-control"
+                                   type="email" placeholder="nome@empresa.com" />
+                            <span asp-validation-for="EmailDestinatario" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="ComCopia" class="form-label fw-semibold">
+                                Com Cópia Para (opcional)
+                            </label>
+                            <input asp-for="ComCopia" class="form-control"
+                                   type="email" placeholder="outronome@empresa.com" />
+                            <span asp-validation-for="ComCopia" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Mensagem" class="form-label fw-semibold">Mensagem</label>
+                        <textarea asp-for="Mensagem" class="form-control" rows="4"
+                                  placeholder="Segue cotação para sua avaliação. Esperamos ter atendido todas as suas expectativas e agradecemos muito pela oportunidade de negócio. Conte sempre conosco."></textarea>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <p class="fw-semibold mb-2" style="font-size:1.05rem;">Permissões do Destinatário:</p>
+                            <div class="form-check mb-2">
+                                <input asp-for="PodeDispEstoque" class="form-check-input" type="checkbox" />
+                                <label asp-for="PodeDispEstoque" class="form-check-label">
+                                    Pode Ver Disponibilidade de Estoque
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input asp-for="PodeAltTransportadora" class="form-check-input" type="checkbox" />
+                                <label asp-for="PodeAltTransportadora" class="form-check-label">
+                                    Pode Alterar a Transportadora
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input asp-for="PodeAltCondPagamento" class="form-check-input" type="checkbox" />
+                                <label asp-for="PodeAltCondPagamento" class="form-check-label">
+                                    Pode Alterar a Condição de Pagamento
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input asp-for="PodeNegociar" class="form-check-input" type="checkbox" />
+                                <label asp-for="PodeNegociar" class="form-check-label">
+                                    Pode Negociar
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="fw-semibold mb-2" style="font-size:1.05rem;">Parâmetros de Envio:</p>
+                            @if (!string.IsNullOrWhiteSpace(Model.ConsultorEmail))
+                            {
+                                <div class="form-check mb-2">
+                                    <input asp-for="ConsultorRecebeCCO" class="form-check-input" type="checkbox" checked="checked" />
+                                    <label asp-for="ConsultorRecebeCCO" class="form-check-label">
+                                        Enviar Cópia Oculta Para Atendente: <strong>@Model.ConsultorEmail</strong>
+                                    </label>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.ExecutivoEmail))
+                            {
+                                <div class="form-check">
+                                    <input asp-for="ExecutivoRecebeCCO" class="form-check-input" type="checkbox" />
+                                    <label asp-for="ExecutivoRecebeCCO" class="form-check-label">
+                                        Enviar Cópia Oculta Para Executivo de Vendas: <strong>@Model.ExecutivoEmail</strong>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-controller="Cotacao" asp-action="Cotacao"
+                           asp-route-propostaId="@Model.PropostaId"
+                           class="btn btn-danger">
+                            <i class="fa-solid fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-paper-plane me-2"></i>Enviar Cotação
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+
+        @* ══════════ LOGS DE ENVIOS ANTERIORES ══════════ *@
+        <div class="cotacao-section-title">
+            <i class="fa-duotone fa-clock-rotate-left me-1 text-br"></i>Logs de Envios Anteriores
+        </div>
+
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0">Mostrar</label>
+                <select class="form-select form-select-sm" style="width:auto;">
+                    <option>25</option>
+                    <option>50</option>
+                    <option>100</option>
+                </select>
+                <span class="text-muted">registos</span>
+            </div>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <label class="form-label mb-0">Procurar:</label>
+                <input type="text" class="form-control form-control-sm" style="width:200px;" />
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Data/Hora Envio</th>
+                        <th>Destinatário</th>
+                        <th>E-mail</th>
+                        <th>Enviado Por</th>
+                        <th>Visualizado Em</th>
+                        <th class="text-center">Estoque</th>
+                        <th class="text-center">Negociar</th>
+                        <th class="text-center">Transportadora</th>
+                        <th class="text-center">Cond. Pagto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.HistoricoEnvios.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">Nenhum envio registrado.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var envio in Model.HistoricoEnvios)
+                        {
+                            <tr>
+                                <td>@envio.DtEnvio</td>
+                                <td>@envio.Nome</td>
+                                <td>@envio.Email</td>
+                                <td>@envio.NmUsuario</td>
+                                <td>@(string.IsNullOrWhiteSpace(envio.DtVisualizacao.Trim()) ? "—" : envio.DtVisualizacao)</td>
+                                <td class="text-center">
+                                    <span class="badge @(envio.FlagVisualizaEstoque == "S" ? "bg-success" : "bg-secondary")">@envio.FlagVisualizaEstoque</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @(envio.FlagPodeNegociar == "S" ? "bg-success" : "bg-secondary")">@envio.FlagPodeNegociar</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @(envio.FlagPodeTrocarTransportadora == "S" ? "bg-success" : "bg-secondary")">@envio.FlagPodeTrocarTransportadora</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @(envio.FlagPodeTrocarCondPagto == "S" ? "bg-success" : "bg-secondary")">@envio.FlagPodeTrocarCondPagto</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,103 @@
+/* ============================================
+   Cotações — Adicionar (formulário)
+   Alinhado com o design system SIC
+   ============================================ */
+
+/* ── Section title ── */
+.cotacao-add-section-title {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--sic-muted);
+    border-bottom: 1px solid var(--sic-border);
+    padding-bottom: .5rem;
+    margin-bottom: 1rem;
+}
+
+/* ── Form controls ── */
+.cotacao-add-form .form-label {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--sic-text);
+}
+
+.cotacao-add-form .form-control,
+.cotacao-add-form .form-select {
+    font-size: .85rem;
+    border-color: var(--sic-border);
+    background-color: var(--sic-surface);
+    color: var(--sic-text);
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.cotacao-add-form .form-control:focus,
+.cotacao-add-form .form-select:focus {
+    border-color: var(--sic-brand);
+    box-shadow: 0 0 0 .2rem rgba(255, 120, 45, .18);
+}
+
+/* ── Readonly fields ── */
+.cotacao-add-form .form-control[readonly] {
+    background-color: var(--sic-surface-2);
+    color: var(--sic-muted);
+    cursor: default;
+}
+
+/* ── Validation errors ── */
+.cotacao-add-form .input-validation-error {
+    border-color: var(--bs-danger) !important;
+}
+
+.cotacao-add-form .field-validation-error {
+    display: block;
+    font-size: .78rem;
+    color: var(--bs-danger);
+    margin-top: .25rem;
+}
+
+/* ── Toolbar (buttons) ── */
+.cotacao-add-toolbar {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.cotacao-add-toolbar .cotacao-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .45rem 1rem;
+    border-radius: .375rem;
+    border: 1px solid transparent;
+    transition: all .2s ease;
+    cursor: pointer;
+}
+
+.cotacao-add-toolbar .cotacao-btn i {
+    font-size: .85rem;
+}
+
+.cotacao-add-toolbar .cotacao-btn-salvar {
+    background: var(--sic-brand);
+    color: #fff;
+    border-color: var(--sic-brand);
+}
+
+.cotacao-add-toolbar .cotacao-btn-salvar:hover {
+    opacity: .85;
+}
+
+.cotacao-add-toolbar .cotacao-btn-voltar {
+    background: var(--sic-surface-2);
+    color: var(--sic-text);
+    border-color: var(--sic-border);
+    text-decoration: none !important;
+}
+
+.cotacao-add-toolbar .cotacao-btn-voltar:hover {
+    background: var(--sic-border);
+}

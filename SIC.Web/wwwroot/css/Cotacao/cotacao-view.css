@@ -1,0 +1,524 @@
+/* ============================================
+   Cotação — Visualização (Análise da Proposta)
+   Alinhado com o design system SIC
+   ============================================ */
+
+/* ── Indicador de cálculo pendente no Total c/ Imp. ── */
+.total-calcular-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: default;
+}
+
+/* ── Tom Select — modo escuro ── */
+[data-bs-theme="dark"] .ts-wrapper.single .ts-control,
+[data-bs-theme="dark"] .ts-wrapper .ts-control,
+[data-bs-theme="dark"] .ts-dropdown {
+    background-color: var(--bs-body-bg);
+    color: #fff;
+    border-color: var(--sic-border, var(--bs-border-color));
+}
+
+[data-bs-theme="dark"] .ts-dropdown .option {
+    color: #fff;
+}
+
+[data-bs-theme="dark"] .ts-dropdown .option.active,
+[data-bs-theme="dark"] .ts-dropdown .option:hover {
+    background-color: var(--bs-primary);
+    color: #fff;
+}
+
+[data-bs-theme="dark"] .ts-wrapper .ts-control input {
+    color: #fff;
+}
+
+/* ── Section title ── */
+.cotacao-section-title {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--sic-muted);
+    border-bottom: 1px solid var(--sic-border);
+    padding-bottom: .5rem;
+    margin-bottom: 1rem;
+}
+
+/* ── Botão Finalizar Cotação desabilitado ── */
+.btn.disabled,
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: auto !important;
+}
+
+.btn.disabled:hover,
+.btn:disabled:hover {
+    opacity: 0.5;
+}
+
+/* ── Quick info cards ── */
+.cotacao-quick-card {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .65rem .85rem;
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: .65rem;
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+    .cotacao-quick-card:hover {
+        border-color: color-mix(in srgb, var(--sic-brand) 30%, transparent);
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+    .cotacao-quick-card > i {
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+
+    .cotacao-quick-card small {
+        font-size: .7rem;
+        line-height: 1.2;
+    }
+
+    .cotacao-quick-card .fw-semibold {
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+/* ── Metric cards ── */
+.cotacao-metric-card {
+    border: 1px solid var(--sic-border);
+    border-radius: .5rem;
+    padding: .75rem 1rem;
+    background: var(--sic-surface-2);
+    text-align: center;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+    .cotacao-metric-card:hover {
+        border-color: color-mix(in srgb, var(--sic-brand) 30%, transparent);
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+    .cotacao-metric-card .metric-label {
+        font-size: .7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--sic-muted);
+        margin-bottom: .35rem;
+    }
+
+    .cotacao-metric-card .metric-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--sic-text);
+    }
+
+.cotacao-metric-card.metric-highlight {
+    background: linear-gradient(135deg, var(--sic-brand), color-mix(in srgb, var(--sic-brand) 80%, #000));
+    color: #fff;
+    border-color: var(--sic-brand);
+}
+
+    .cotacao-metric-card.metric-highlight .metric-label,
+    .cotacao-metric-card.metric-highlight .metric-value {
+        color: #fff;
+    }
+
+/* ── Clickable cards ── */
+.cotacao-quick-card.clickable-card {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+    .cotacao-quick-card.clickable-card:hover {
+        border-color: var(--sic-brand);
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+        transform: translateY(-1px);
+    }
+
+    .cotacao-quick-card.clickable-card:active {
+        transform: translateY(0);
+    }
+
+/* ── Actions panel ── */
+.cotacao-actions-panel {
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: .65rem;
+    padding: 1rem;
+}
+
+/* ── Table wrapper ── */
+.table-cotacao-wrap {
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: .65rem;
+    overflow: hidden;
+}
+
+/* ── Table ── */
+.table-cotacao {
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: var(--sic-surface-2);
+    margin-bottom: 0 !important;
+    min-width: 900px;
+}
+
+/* Dentro do modal não forçar largura mínima */
+.modal-body .table-cotacao {
+    min-width: 0;
+}
+
+/* ── Botões de ação do modal ── */
+.cotacao-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .42rem .9rem;
+    border-radius: .5rem;
+    border: 1px solid transparent;
+    transition: all .2s ease;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+    .cotacao-btn i {
+        font-size: .82rem;
+    }
+
+.cotacao-btn-adicionar {
+    background: rgba(var(--bs-success-rgb), .12);
+    color: var(--sic-text);
+    border-color: rgba(var(--bs-success-rgb), .3);
+}
+
+    .cotacao-btn-adicionar:hover {
+        background: rgba(var(--bs-success-rgb), .25);
+        border-color: rgba(var(--bs-success-rgb), .5);
+    }
+
+    .cotacao-btn-adicionar:disabled {
+        opacity: .55;
+        cursor: default;
+    }
+
+    .table-cotacao thead th {
+        font-size: .7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--sic-muted);
+        background: var(--sic-surface-2);
+        border-bottom: 2px solid var(--sic-border);
+        padding: .6rem .75rem;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .table-cotacao tbody td {
+        color: var(--sic-text);
+        border-bottom: 1px solid var(--sic-border);
+        padding: .6rem .75rem;
+        font-size: .85rem;
+        vertical-align: middle;
+    }
+
+    .table-cotacao tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-cotacao tbody tr:hover {
+        background: var(--sic-surface-2);
+    }
+
+/* ── Badge customizations ── */
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .75rem;
+    border-radius: .35rem;
+    font-weight: 600;
+}
+
+.badge-status-primary {
+    background: rgba(var(--bs-primary-rgb), .15);
+    color: var(--bs-primary);
+}
+
+.badge-status-success {
+    background: rgba(var(--bs-success-rgb), .15);
+    color: var(--bs-success);
+}
+
+.badge-status-danger {
+    background: rgba(var(--bs-danger-rgb), .15);
+    color: var(--bs-danger);
+}
+
+.badge-status-warning {
+    background: rgba(var(--bs-warning-rgb), .15);
+    color: var(--bs-warning);
+}
+
+/* ── Breadcrumb ── */
+.prepedido-breadcrumb {
+    font-size: .75rem;
+    color: var(--sic-muted);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+    .prepedido-breadcrumb i {
+        font-size: .65rem;
+    }
+
+    .prepedido-breadcrumb strong {
+        color: var(--sic-text);
+        font-weight: 600;
+    }
+
+/* ── Modal Frete ── */
+#modalOpcoesFrete .table {
+    font-size: .85rem;
+}
+
+#modalOpcoesFrete thead th {
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--sic-muted);
+    background: var(--sic-surface-2);
+    border-bottom: 2px solid var(--sic-border);
+    padding: .75rem;
+    white-space: nowrap;
+}
+
+#modalOpcoesFrete tbody td {
+    padding: .75rem;
+    vertical-align: middle;
+}
+
+.frete-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+    .frete-row:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+
+    .frete-row.table-active {
+        background-color: rgba(var(--bs-primary-rgb), 0.15);
+        font-weight: 600;
+    }
+
+/* ── Modal Frete: Botões e Estados ── */
+#modalOpcoesFrete .modal-footer .btn {
+    min-width: 120px;
+}
+
+#btnCalcularFrete:disabled,
+#btnSalvarFrete:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* ── Modal Frete: Indicadores Visuais ── */
+.frete-row .text-danger {
+    color: #dc3545 !important;
+}
+
+.frete-row .fa-exclamation-triangle {
+    opacity: 0.85;
+}
+
+/* ── Modal Frete: Responsividade ── */
+@media (max-width: 1199.98px) {
+    #modalOpcoesFrete .modal-dialog {
+        max-width: 95%;
+    }
+
+    #modalOpcoesFrete .table {
+        font-size: .8rem;
+    }
+
+    #modalOpcoesFrete thead th {
+        font-size: .7rem;
+        padding: .6rem .5rem;
+    }
+
+    #modalOpcoesFrete tbody td {
+        padding: .6rem .5rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #modalOpcoesFrete .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    #modalOpcoesFrete .table {
+        font-size: .75rem;
+        min-width: 800px;
+    }
+
+    #modalOpcoesFrete thead th,
+    #modalOpcoesFrete tbody td {
+        padding: .5rem .4rem;
+    }
+
+    #modalOpcoesFrete .modal-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    #modalOpcoesFrete .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* ── Animação de Loading para o botão Calcular ── */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spinner.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* ── Melhorias de acessibilidade ── */
+.frete-row:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: -2px;
+}
+
+.clickable-card:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 991.98px) {
+    .cotacao-metric-card .metric-value {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .cotacao-quick-card {
+        padding: .55rem .7rem;
+    }
+
+    .cotacao-quick-card > i {
+        font-size: 1rem;
+    }
+
+    .cotacao-actions-panel {
+        padding: .75rem;
+    }
+}
+
+/* ── Catalog pagination ── */
+.catalogo-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    padding: .65rem .75rem;
+}
+
+    .catalogo-pagination .page-btn {
+        min-width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .78rem;
+        font-weight: 600;
+        border-radius: .375rem;
+        border: 1px solid var(--sic-border);
+        background: var(--sic-surface);
+        color: var(--sic-text);
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+
+    .catalogo-pagination .page-btn:hover:not(:disabled):not(.active) {
+        background: var(--sic-surface-2);
+        border-color: var(--sic-brand);
+    }
+
+    .catalogo-pagination .page-btn.active {
+        background: var(--sic-brand);
+        border-color: var(--sic-brand);
+        color: #fff;
+    }
+
+    .catalogo-pagination .page-btn:disabled {
+        opacity: .4;
+        cursor: default;
+    }
+
+    .catalogo-pagination .page-info {
+        font-size: .75rem;
+        color: var(--sic-muted);
+        margin: 0 .5rem;
+    }
+
+    .catalogo-pagination .page-size-sep {
+        display: inline-block;
+        width: 1px;
+        height: 20px;
+        background: var(--sic-border);
+        margin: 0 .4rem;
+        flex-shrink: 0;
+    }
+
+    .catalogo-pagination .page-size-select {
+        height: 32px;
+        padding: 0 .5rem;
+        font-size: .78rem;
+        font-weight: 600;
+        border-radius: .375rem;
+        border: 1px solid var(--sic-border);
+        background: var(--sic-surface);
+        color: var(--sic-text);
+        cursor: pointer;
+        transition: border-color .15s ease;
+        appearance: auto;
+    }
+
+    .catalogo-pagination .page-size-select:hover,
+    .catalogo-pagination .page-size-select:focus {
+        border-color: var(--sic-brand);
+        outline: none;
+    }
+

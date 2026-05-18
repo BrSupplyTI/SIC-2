@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using SIC.Web.Services;
+using SIC.Web.Services.Cotacao;
 using SIC.Web.Services.PrePedidosPDF;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -199,6 +200,16 @@ builder.Services
             }
         };
     });
+
+builder.Services.AddScoped<CotacaoEmailService>();
+builder.Services.AddScoped<CotacaoQueryService>();
+builder.Services.AddScoped<CotacaoAddService>();
+builder.Services.AddHttpClient<CotacaoApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 builder.Services.AddAuthorization();
 

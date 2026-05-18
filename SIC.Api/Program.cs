@@ -1,10 +1,13 @@
 using SIC.Api.Services;
+using SIC.Api.Services.Cotacao;
 using SIC.Api.Services.PrePedidosPDF;
 using SIC.Domain.Abstractions;
+using SIC.Domain.Abstractions.Cotacao;
 using SIC.Domain.Abstractions.PrePedidosPDF;
 using SIC.Infrastructure.Integrations;
 using SIC.Infrastructure.Integrations.PrePedidosPDF;
 using SIC.Infrastructure.Repositories;
+using SIC.Infrastructure.Repositories.Cotacao;
 using SIC.Infrastructure.Repositories.PrePedidosPDF;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +35,10 @@ builder.Services.AddScoped<IPrePedidoPDFCommandRepository, SqlPrePedidoPDFComman
 builder.Services.AddScoped<IPrePedidoPDFQueryService, PrePedidoPDFQueryService>();
 builder.Services.AddScoped<IPrePedidoPDFCommandService, PrePedidoPDFCommandService>();
 builder.Services.AddHttpClient<IPrePedidoPDFIntegrationService, PrePedidoPDFIntegrationService>();
+builder.Services.AddScoped<ICotacaoQueryRepository, SqlCotacaoQueryRepository>();
+builder.Services.AddScoped<ICotacaoQueryService, CotacaoQueryService>();
+builder.Services.AddScoped<ICotacaoCommandRepository, SqlCotacaoCommandRepository>();
+builder.Services.AddScoped<ICotacaoCommandService, CotacaoCommandService>();
 
 var app = builder.Build();
 

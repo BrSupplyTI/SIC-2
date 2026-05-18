@@ -1,0 +1,99 @@
+/* ============================================
+   Cotações — Cadastro (complemento)
+   Extensão mínima do cotacao-add.css base
+   ============================================ */
+
+/* ── Checkbox alinhado na base do campo ── */
+.cotacao-add-form .form-check-label {
+    font-size: .85rem;
+    color: var(--sic-text);
+}
+
+.cotacao-add-form .form-check-input:checked {
+    background-color: var(--sic-brand);
+    border-color: var(--sic-brand);
+}
+
+/* ── Link "Atualizar Observação" ── */
+.cotacao-link-atualizar {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--sic-brand) !important;
+    text-decoration: none !important;
+    transition: opacity .2s ease;
+}
+
+.cotacao-link-atualizar:hover {
+    opacity: .75;
+}
+
+/* ── Select desabilitado (Tabela de Preços) ── */
+.cotacao-add-form .form-select:disabled {
+    background-color: var(--sic-surface-2);
+    color: var(--sic-muted);
+    cursor: not-allowed;
+}
+
+[data-bs-theme="dark"] .cotacao-add-form .form-select:disabled {
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    border-color: var(--bs-border-color);
+    opacity: 1;
+}
+
+/* ── Textarea ── */
+.cotacao-add-form textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* ── Select2 — Dark theme ── */
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection {
+    background-color: var(--sic-surface-2) !important;
+    border-color: var(--sic-border) !important;
+    color: var(--sic-text) !important;
+}
+
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection__rendered {
+    color: var(--sic-text) !important;
+}
+
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection__placeholder {
+    color: var(--sic-muted) !important;
+}
+
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection__clear {
+    color: var(--sic-muted) !important;
+}
+
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-dropdown {
+    background-color: var(--sic-surface) !important;
+    border-color: var(--sic-border) !important;
+    color: var(--sic-text) !important;
+}
+
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field {
+    background-color: var(--sic-surface-2) !important;
+    border-color: var(--sic-border) !important;
+    color: var(--sic-text) !important;
+}
+
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-results__option {
+    background-color: var(--sic-surface) !important;
+    color: var(--sic-text) !important;
+}
+
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: var(--sic-brand) !important;
+    color: #fff !important;
+}
+
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-results__option--selected {
+    background-color: var(--sic-brand-2) !important;
+    color: var(--sic-text) !important;
+}
+
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-results__message {
+    background-color: var(--sic-surface) !important;
+    color: var(--sic-muted) !important;
+}

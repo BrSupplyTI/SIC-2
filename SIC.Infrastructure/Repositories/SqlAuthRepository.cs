@@ -18,6 +18,7 @@ public sealed class SqlAuthRepository(IConfiguration configuration) : IAuthRepos
         await connection.OpenAsync(cancellationToken);
 
         var emailColumnExists = await DoesColumnExistAsync(connection, "view_login", "Email", cancellationToken);
+        var backOfficeColumnExists = await DoesColumnExistAsync(connection, "view_login", "FlagBackOffice", cancellationToken);
 
         var sql = $"""
             SELECT TOP 1
@@ -26,6 +27,7 @@ public sealed class SqlAuthRepository(IConfiguration configuration) : IAuthRepos
                 Nome,
                 FlagAdmin,
                 {(emailColumnExists ? "Email" : "CAST(NULL AS NVARCHAR(256)) AS Email")},
+                {(backOfficeColumnExists ? "FlagBackOffice" : "CAST(0 AS BIT) AS FlagBackOffice")},
                 (SELECT TOP 1 U.Foto FROM BR_Usuario U WITH (NOLOCK) WHERE U.UsuarioID = view_login.UsuarioID) AS Foto,
                 EstabelecimentoID,
                 NmEstabelecimento,
@@ -61,6 +63,7 @@ public sealed class SqlAuthRepository(IConfiguration configuration) : IAuthRepos
         }
 
         var emailColumnExists = await DoesColumnExistAsync(connection, "view_login", "Email", cancellationToken);
+        var backOfficeColumnExists = await DoesColumnExistAsync(connection, "view_login", "FlagBackOffice", cancellationToken);
 
         var sql = $"""
             SELECT TOP 1
@@ -69,6 +72,7 @@ public sealed class SqlAuthRepository(IConfiguration configuration) : IAuthRepos
                 Nome,
                 FlagAdmin,
                 {(emailColumnExists ? "Email" : "CAST(NULL AS NVARCHAR(256)) AS Email")},
+                {(backOfficeColumnExists ? "FlagBackOffice" : "CAST(0 AS BIT) AS FlagBackOffice")},
                 (SELECT TOP 1 U.Foto FROM BR_Usuario U WITH (NOLOCK) WHERE U.UsuarioID = view_login.UsuarioID) AS Foto,
                 EstabelecimentoID,
                 NmEstabelecimento,
@@ -97,6 +101,7 @@ public sealed class SqlAuthRepository(IConfiguration configuration) : IAuthRepos
         await connection.OpenAsync(cancellationToken);
 
         var emailColumnExists = await DoesColumnExistAsync(connection, "view_login", "Email", cancellationToken);
+        var backOfficeColumnExists = await DoesColumnExistAsync(connection, "view_login", "FlagBackOffice", cancellationToken);
 
         var sql = $"""
             SELECT TOP 1
@@ -105,6 +110,7 @@ public sealed class SqlAuthRepository(IConfiguration configuration) : IAuthRepos
                 Nome,
                 FlagAdmin,
                 {(emailColumnExists ? "Email" : "CAST(NULL AS NVARCHAR(256)) AS Email")},
+                {(backOfficeColumnExists ? "FlagBackOffice" : "CAST(0 AS BIT) AS FlagBackOffice")},
                 (SELECT TOP 1 U.Foto FROM BR_Usuario U WITH (NOLOCK) WHERE U.UsuarioID = view_login.UsuarioID) AS Foto,
                 EstabelecimentoID,
                 NmEstabelecimento,
@@ -520,6 +526,7 @@ public sealed class SqlAuthRepository(IConfiguration configuration) : IAuthRepos
             Login = reader.GetString(reader.GetOrdinal("Login")),
             Nome = reader.GetString(reader.GetOrdinal("Nome")),
             FlagAdmin = ReadFlexibleBoolean(reader, "FlagAdmin"),
+            FlagBackOffice = ReadFlexibleBoolean(reader, "FlagBackOffice"),
             Email = ReadNullableString(reader, "Email"),
             Foto = ReadNullableString(reader, "Foto"),
             EstabelecimentoId = ReadNullableInt32(reader, "EstabelecimentoID"),

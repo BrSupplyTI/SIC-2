@@ -1,0 +1,297 @@
+@model SIC.Web.Models.Cotacao.CotacaoAddViewModel
+@{
+    ViewData["Title"] = "Cadastro de Nova Cotação";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Cotacao/cotacao-add.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Cotacao/cotacao-cadastro.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- ═══ Header ═══ -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 mb-0">
+                    <i class="fa-duotone fa-thin fa-file-circle-plus me-2 text-br"></i>Cadastro de Nova Cotação
+                </h2>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-controller="Cotacao" asp-action="Index" class="btn btn-outline-primary">
+                    <i class="fa-solid fa-list me-2"></i>Lista de Cotações
+                </a>
+                <button type="button" class="btn btn-outline-primary" id="btnVoltar">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Voltar
+                </button>
+            </div>
+        </div>
+
+        <form method="post" asp-controller="Cotacao" asp-action="Add" id="formCotacaoCadastro" class="cotacao-add-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="TipoNome" id="TipoNome" />
+            <input type="hidden" name="TipoID" value="2" />
+            <input type="hidden" id="MargemPadrao_hidden" name="MargemPadrao" />
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger mb-3">
+                    <strong>Corrija os campos abaixo:</strong>
+                    <ul class="mb-0 mt-1">
+                        @foreach (var entry in ViewData.ModelState)
+                        {
+                            foreach (var error in entry.Value!.Errors)
+                            {
+                                <li><b>@entry.Key</b>: @error.ErrorMessage</li>
+                            }
+                        }
+                    </ul>
+                </div>
+            }
+
+            <!-- ═══ Seção 1 — Dados Principais ═══ -->
+            <h6 class="cotacao-add-section-title mt-0">Dados Principais</h6>
+
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="Tipo" class="form-label">Tipo <span class="text-danger">*</span></label>
+                    <select asp-for="Tipo" asp-items="Model.Tipos" class="form-select">
+                        <option value="">Selecione</option>
+                    </select>
+                    <span asp-validation-for="Tipo" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-2" id="colMotivoBonificacao" style="display:none;">
+                    <label asp-for="MotivoBonificacaoId" class="form-label">Motivo <span class="text-danger">*</span></label>
+                    <select asp-for="MotivoBonificacaoId" asp-items="Model.MotivosBonificacao" class="form-select" id="MotivoBonificacaoId">
+                        <option value="">Selecione</option>
+                    </select>
+                    <span asp-validation-for="MotivoBonificacaoId" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-2" id="colPedidoOriginal" style="display:none;">
+                    <label asp-for="PedidoOriginal" class="form-label">Pedido Original <span class="text-danger">*</span></label>
+                    <input asp-for="PedidoOriginal" id="PedidoOriginal" type="number" class="form-control" />
+                    <span asp-validation-for="PedidoOriginal" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-2" id="colNrChamado" style="display:none;">
+                    <label asp-for="NrChamado" class="form-label">Número Chamado <span class="text-danger">*</span></label>
+                    <input asp-for="NrChamado" id="NrChamado" class="form-control" inputmode="numeric" />
+                    <span asp-validation-for="NrChamado" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label asp-for="NomeCotacao" class="form-label">Nome da Cotação <span class="text-danger">*</span></label>
+                    <input asp-for="NomeCotacao" class="form-control" />
+                    <span asp-validation-for="NomeCotacao" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="Estabelecimento" class="form-label">Estabelecimento <span class="text-danger">*</span></label>
+                    <select asp-for="Estabelecimento" asp-items="Model.Estabelecimentos" class="form-select">
+                        <option value="">Selecione</option>
+                    </select>
+                    <span asp-validation-for="Estabelecimento" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="Cliente" class="form-label">Cliente <span class="text-danger">*</span></label>
+                    <select asp-for="Cliente" id="Cliente" class="form-select">
+                        <option value="">Digite para pesquisar...</option>
+                    </select>
+                    <span asp-validation-for="Cliente" class="field-validation-error"></span>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4 align-items-end">
+
+                <!-- Endereço -->
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label asp-for="Endereco" class="form-label">
+                        Endereço <span class="text-danger">*</span>
+                    </label>
+                    <select asp-for="Endereco" asp-items="Model.EnderecoOptions" class="form-select">
+                        <option value="">Selecione</option>
+                    </select>
+                </div>
+
+                <!-- Local de Entrega -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="LocalEntrega" class="form-label">Local de Entrega</label>
+                    <select asp-for="LocalEntrega" asp-items="Model.LocalEntregaOptions" class="form-select">
+                        <option value="">Selecione</option>
+                    </select>
+                </div>
+
+                <!-- Observação + Atualizar (MESMA LINHA NO TOPO) -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="d-flex align-items-center">
+                        <label asp-for="ObsLocalEntrega" class="form-label mb-0">
+                            Observação do local de entrega
+                        </label>
+
+                        <a href="javascript:void(0)" class="cotacao-link-atualizar ms-2">
+                            <i class="fa-solid fa-rotate me-1"></i>Atualizar Observação
+                        </a>
+                    </div>
+
+                    <select asp-for="ObsLocalEntrega" asp-items="Model.ObsLocalEntregaOptions" class="form-select mt-1">
+                        <option value="">Selecione</option>
+                    </select>
+                </div>
+
+                <!-- Tabela de Preços -->
+                <div class="col-12 col-md-3 col-lg-1">
+                    <label asp-for="TabelaPreco" class="form-label">Tabela de Preços</label>
+                    <input asp-for="TabelaPrecoId" type="hidden" id="TabelaPrecoId" />
+                    <input asp-for="TabelaPreco" id="TabelaPreco" class="form-control" disabled placeholder="—" />
+                </div>
+
+                <!-- Checkbox -->
+                <div class="col-12 col-md-6 col-lg-2 d-flex align-items-center">
+                    <div class="form-check mt-4">
+                        <input asp-for="PrecoItens" class="form-check-input" />
+                        <label asp-for="PrecoItens" class="form-check-label">
+                            Calcular Conforme Tabela de Preço
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ═══ Seção 2 — Tributação / Localização ═══ -->
+            <h6 class="cotacao-add-section-title">Tributação / Localização</h6>
+
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-2 col-lg-1">
+                    <label asp-for="UfOrigem" class="form-label">UF Origem <span class="text-danger">*</span></label>
+                    <input asp-for="UfOrigem" class="form-control" readonly id="UfOrigem" />
+                </div>
+                <div class="col-6 col-md-2 col-lg-1">
+                    <label asp-for="UfDestino" class="form-label">UF Destino <span class="text-danger">*</span></label>
+                    <select asp-for="UfDestino" asp-items="Model.UfDestinoOptions" class="form-select" id="UfDestino">
+                        <option value="">UF</option>
+                    </select>
+                    <span asp-validation-for="UfDestino" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label asp-for="CidadeDestino" class="form-label">Cidade Destino <span class="text-danger">*</span></label>
+                    <select asp-for="CidadeDestino" asp-items="Model.CidadeDestinoOptions" class="form-select" id="CidadeDestino">
+                        <option value="">Selecione</option>
+                    </select>
+                    <span asp-validation-for="CidadeDestino" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label asp-for="MargemPadrao" class="form-label">Margem Padrão (%)</label>
+                    <input asp-for="MargemPadrao" id="MargemPadrao" class="form-control" />
+                </div>
+            </div>
+
+            <!-- ═══ Seção 3 — Condições Comerciais ═══ -->
+            <h6 class="cotacao-add-section-title">Condições Comerciais</h6>
+
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label asp-for="Validade" class="form-label">Validade <span class="text-danger">*</span></label>
+                    <input asp-for="Validade" type="date" class="form-control" />
+                    <span asp-validation-for="Validade" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4" id="colCondPagto">
+                    <label asp-for="CondPagtoId" class="form-label">Condição de Pagamento <span class="text-danger">*</span></label>
+                    <input type="hidden" id="CondPagtoId_hidden" name="CondPagtoId" />
+                    <select id="CondPagtoId" class="form-select"
+                            data-is-admin="@(User.FindFirst("sic_admin")?.Value == "1" ? "true" : "false")"
+                            data-is-backoffice="@(User.FindFirst("sic_backoffice")?.Value == "1" ? "true" : "false")">
+                        <option value="">Selecione</option>
+                        @foreach (var item in Model.CondicoesPagamento)
+                        {
+                            if (item.Value == Model.CondPagtoId?.ToString())
+                            {
+                                <option value="@item.Value" selected="selected">@item.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="CondPagtoId" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4" id="colFormaPagto">
+                    <label asp-for="FormaPagtoId" class="form-label">Forma de Pagamento <span class="text-danger">*</span></label>
+                    <select asp-for="FormaPagtoId" asp-items="Model.FormasPagamento" class="form-select">
+                        <option value="">Selecione</option>
+                    </select>
+                    <span asp-validation-for="FormaPagtoId" class="field-validation-error"></span>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label asp-for="TipoOrdem" class="form-label">Tipo de Ordem <span class="text-danger">*</span></label>
+                    <select asp-for="TipoOrdem" asp-items="Model.TipoOrdemOptions" class="form-select">
+                        <option value="">Selecione</option>
+                    </select>
+                    <span asp-validation-for="TipoOrdem" class="field-validation-error"></span>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label asp-for="OrdemCompra" class="form-label">Ordem de Compra</label>
+                    <input asp-for="OrdemCompra" class="form-control" />
+                </div>
+                <div class="col-12 col-md-6 col-lg-4" id="colNrContrato" style="display:none;">
+                    <label asp-for="NrContrato" class="form-label">
+                        Nº do Contrato
+                        <a id="btnNovoContrato" href="#" target="_blank" class="ms-1 text-success" title="Gerenciar contratos">
+                            <i class="fa-solid fa-plus"></i>
+                        </a>
+                    </label>
+                    <select asp-for="NrContrato" id="NrContrato" class="form-select">
+                        <option value="">Selecione</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ═══ Seção 4 — Contato ═══ -->
+            <h6 class="cotacao-add-section-title">Contato</h6>
+
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6">
+                    <label asp-for="NomeContatoExterno" class="form-label">Nome Contato (Externo)</label>
+                    <input asp-for="NomeContatoExterno" class="form-control" />
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="EmailContatoExterno" class="form-label">E-mail Contato (Externo)</label>
+                    <input asp-for="EmailContatoExterno" class="form-control" />
+                </div>
+            </div>
+
+            <!-- ═══ Seção 5 — Observações ═══ -->
+            <h6 class="cotacao-add-section-title">Observações</h6>
+
+            <div class="row g-3 mb-2">
+                <div class="col-12">
+                    <label asp-for="Observacoes" class="form-label">Observações</label>
+                    <textarea asp-for="Observacoes" class="form-control" rows="5"></textarea>
+                </div>
+            </div>
+
+            <!-- ═══ Footer ═══ -->
+            <hr class="my-4" />
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                <small class="text-muted"><span class="text-danger">*</span> Campos Obrigatórios</small>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-plus me-2"></i>Criar Cotação
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
+    <script>
+        window.estabelecimentoUfMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EstabelecimentoUfMap));
+    </script>
+    <script src="~/js/Cotacao/cotacao-cadastro.js" asp-append-version="true"></script>
+}

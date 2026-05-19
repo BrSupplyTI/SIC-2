@@ -9,8 +9,6 @@ namespace SIC.Web.Controllers.Cotacao;
 [Authorize]
 [Route("Cotacao")]
 public sealed class CotacaoController(
-    CotacaoQueryService queryService,
-    CotacaoAddService addService,
     CotacaoApiClient apiClient,
     CotacaoEmailService emailService) : Controller
 {
@@ -51,8 +49,8 @@ public sealed class CotacaoController(
             DataFinal = dataFinal,
         };
 
-        var estabelecimentosTask = queryService.GetEstabelecimentoOptionsAsync(cancellationToken);
-        var statusOptionsTask = queryService.GetStatusOptionsAsync(cancellationToken);
+        var estabelecimentosTask = apiClient.GetEstabelecimentoOptionsAsync(cancellationToken);
+        var statusOptionsTask = apiClient.GetStatusOptionsAsync(cancellationToken);
 
         await Task.WhenAll(estabelecimentosTask, statusOptionsTask);
 
@@ -62,8 +60,12 @@ public sealed class CotacaoController(
             FiltroDataInicial = filtroDataInicial,
             FiltroDataFinal = filtroDataFinal,
             FiltroAplicado = filtroAplicado,
-            EstabelecimentoOptions = estabelecimentosTask.Result,
-            StatusOptions = statusOptionsTask.Result,
+            EstabelecimentoOptions = estabelecimentosTask.Result
+                .Select(e => new SelectOptionViewModel { Id = e.EstabelecimentoId, Nome = e.Nome })
+                .ToList(),
+            StatusOptions = statusOptionsTask.Result
+                .Select(s => new SelectOptionViewModel { Id = s.Id, Nome = s.Nome })
+                .ToList(),
         };
 
         return View(vm);
@@ -109,7 +111,12 @@ public sealed class CotacaoController(
             var orderColStr = Request.Query["order[0][column]"].ToString();
             var orderDir = Request.Query["order[0][dir]"].ToString();
 
-            var allItems = await queryService.GetListAsync(filtro, filtroDataInicial, filtroDataFinal, cancellationToken);
+            var allItems = await apiClient.GetListaAsync(
+                GetUsuarioId(), filtroCotacao,
+                cdExtCliente, propostaId, cnpj,
+                estabelecimentoID, statusID,
+                filtroDataInicial, filtroDataFinal,
+                cancellationToken);
 
             IEnumerable<CotacaoListItemViewModel> filtered = allItems;
             if (!string.IsNullOrWhiteSpace(searchValue))
@@ -175,7 +182,7 @@ public sealed class CotacaoController(
         if (propostaId <= 0)
             return RedirectToAction(nameof(Index));
 
-        var dados = await addService.GetPropostaParaEditAsync(propostaId, cancellationToken);
+        var dados = await apiClient.GetPropostaParaEditAsync(propostaId, cancellationToken);
         if (dados is null)
         {
             TempData["SwalIcon"]  = "warning";
@@ -232,13 +239,14 @@ public sealed class CotacaoController(
         // Carrega Tipos de Ordem para o tipo salvo
         if (!string.IsNullOrWhiteSpace(vm.Tipo) && int.TryParse(vm.Tipo, out var tipoId))
         {
-            vm.TipoOrdemOptions = await addService.GetTiposOrdemAsync(tipoId, GetUsuarioId(), cancellationToken);
+            var tiposOrdem = await apiClient.GetTiposOrdemAsync(tipoId, GetUsuarioId(), cancellationToken);
+            vm.TipoOrdemOptions = tiposOrdem.Select(t => new SelectListItem { Value = t.Id.ToString(), Text = t.Nome }).ToList();
         }
 
         // Carrega Endereços do cliente e pré-seleciona
         if (dados.ClienteId > 0)
         {
-            var enderecos = await addService.GetEnderecosByClienteAsync(dados.ClienteId, cancellationToken);
+            var enderecos = await apiClient.GetEnderecosByClienteAsync(dados.ClienteId, cancellationToken);
             vm.EnderecoOptions = enderecos.Select(e => new SelectListItem
             {
                 Value    = e.ClienteEnderecoId.ToString(),
@@ -250,7 +258,7 @@ public sealed class CotacaoController(
         // Carrega Locais de Entrega do endereço e pré-seleciona
         if (dados.ClienteEnderecoID.HasValue)
         {
-            var locais = await addService.GetLocaisEntregaByEnderecoAsync(dados.ClienteEnderecoID.Value, cancellationToken);
+            var locais = await apiClient.GetLocaisEntregaByEnderecoAsync(dados.ClienteEnderecoID.Value, cancellationToken);
             vm.LocalEntregaOptions = locais.Select(l => new SelectListItem
             {
                 Value    = l.ClienteLocalEntregaId.ToString(),
@@ -258,7 +266,6 @@ public sealed class CotacaoController(
                 Selected = l.ClienteLocalEntregaId.ToString() == vm.LocalEntrega
             }).ToList();
 
-            // Pré-seleciona ObsLocalEntrega a partir do local de entrega salvo
             var localSelecionado = locais.FirstOrDefault(l => l.ClienteLocalEntregaId.ToString() == vm.LocalEntrega);
             if (localSelecionado?.ObsLocalEntrega is not null)
             {
@@ -273,22 +280,13 @@ public sealed class CotacaoController(
         // Carrega Cidades da UF destino e pré-seleciona
         if (!string.IsNullOrWhiteSpace(dados.UfDestino))
         {
-            var cidades = await addService.GetCidadesByUfAsync(dados.UfDestino, cancellationToken);
+            var cidades = await apiClient.GetCidadesByUfAsync(dados.UfDestino, cancellationToken);
             vm.CidadeDestinoOptions = cidades.Select(c => new SelectListItem
             {
-                Value    = c.Value,
-                Text     = c.Text,
-                Selected = c.Value == vm.CidadeDestino
+                Value    = c.Id.ToString(),
+                Text     = c.Nome,
+                Selected = c.Id.ToString() == vm.CidadeDestino
             }).ToList();
-        }
-
-        // Carrega Contratos do cliente (para Comodato)
-        if (dados.ClienteId > 0 && !string.IsNullOrWhiteSpace(dados.NrContrato))
-        {
-            var contratos = await addService.GetContratosAsync(dados.ClienteId, cancellationToken);
-            // TipoOrdemOptions já foi carregado, apenas garantimos que NrContrato está no select
-            // Será visível via JS se o tipo for Comodato
-            _ = contratos; // disponíveis via AJAX normal caso o usuário altere o tipo
         }
 
         return View(vm);
@@ -368,7 +366,37 @@ public sealed class CotacaoController(
                 VlrPedidoMinimo       = 0m,
             };
 
-            await addService.AtualizarPropostaAsync(vm.PropostaId, request, cancellationToken);
+            await apiClient.AtualizarPropostaAsync(vm.PropostaId, new AtualizarPropostaRequest
+            {
+                Nome                  = request.Nome,
+                TipoID                = request.TipoID,
+                TipoNome              = request.TipoNome,
+                EstabelecimentoID     = request.EstabelecimentoID,
+                ClienteId             = request.ClienteId,
+                ClienteEnderecoID     = request.ClienteEnderecoID,
+                ClienteLocalEntregaID = request.ClienteLocalEntregaID,
+                ObsLocalEntrega       = request.ObsLocalEntrega,
+                TabelaPrecoID         = request.TabelaPrecoID,
+                FlagPrecoConformeTabela = request.FlagPrecoConformeTabela,
+                UfOrigem              = request.UfOrigem,
+                UfDestino             = request.UfDestino,
+                CodigoIBGE            = request.CodigoIBGE,
+                MargemPadrao          = request.MargemPadrao ?? 0m,
+                DataValidade          = request.DataValidade,
+                CondPagtoId           = request.CondPagtoId,
+                FormaPagamentoSAP     = request.FormaPagamentoSAP,
+                TipoOVSAP             = request.TipoOVSAP,
+                OrdemCompra           = request.OrdemCompra,
+                NrContrato            = request.NrContrato,
+                TipoMotivoIDSAP       = request.TipoMotivoIDSAP,
+                ContatoNome           = request.ContatoNome,
+                ContatoEmail          = request.ContatoEmail,
+                Obs                   = request.Obs,
+                UsuarioId             = request.UsuarioId,
+                ValorVendaTotal       = request.ValorVendaTotal,
+                Frete                 = request.Frete,
+                VlrPedidoMinimo       = request.VlrPedidoMinimo,
+            }, cancellationToken);
 
             TempData["SwalIcon"]  = "success";
             TempData["SwalTitle"] = "Salvo!";
@@ -395,9 +423,8 @@ public sealed class CotacaoController(
             return RedirectToAction(nameof(Index));
         }
 
-        var cotacao = await queryService.GetByPropostaIdAsync(propostaId, cancellationToken);
-
-        if (cotacao == null)
+        var detalhe = await apiClient.GetDetalheAsync(propostaId, cancellationToken);
+        if (detalhe is null)
         {
             TempData["SwalIcon"] = "warning";
             TempData["SwalTitle"] = "Não encontrado";
@@ -405,11 +432,15 @@ public sealed class CotacaoController(
             return RedirectToAction(nameof(Index));
         }
 
-        cotacao.CondicoesPagamento = await queryService.GetCondicoesPagamentoAsync(
-            cotacao.EstabelecimentoID, cotacao.ValorVendaTotal, cancellationToken);
+        var cotacao = MapToViewModel(detalhe);
 
-        var usuarioId   = GetUsuarioId();
-        var isAdmin     = User.FindFirst("sic_admin")?.Value == "1";
+        cotacao.CondicoesPagamento = (await apiClient.GetCondicoesPagamentoAsync(
+            cotacao.EstabelecimentoID, cotacao.ValorVendaTotal, cancellationToken))
+            .Select(c => new SelectOptionViewModel { Id = c.Id, Nome = c.Nome })
+            .ToList();
+
+        var usuarioId    = GetUsuarioId();
+        var isAdmin      = User.FindFirst("sic_admin")?.Value == "1";
         var isBackOffice = User.FindFirst("sic_backoffice")?.Value == "1";
         cotacao.PodeAprovar = isAdmin || isBackOffice || usuarioId == cotacao.AtendenteAprovadorID;
 
@@ -470,9 +501,14 @@ public sealed class CotacaoController(
             int clienteId = int.TryParse(vm.Cliente, out var cid) ? cid : 0;
 
             // Calcula frete antes do insert
-            var (frete, vlrPedidoMinimo) = clienteEnderecoId.HasValue
-                ? await addService.BuscarFreteInicialAsync(clienteEnderecoId.Value, clienteId, vm.UfDestino, cancellationToken)
-                : (0m, 0m);
+            decimal frete = 0m, vlrPedidoMinimo = 0m;
+            if (clienteEnderecoId.HasValue)
+            {
+                var freteInicial = await apiClient.BuscarFreteInicialAsync(
+                    clienteEnderecoId.Value, clienteId, vm.UfDestino, cancellationToken);
+                frete = freteInicial?.Frete ?? 0m;
+                vlrPedidoMinimo = freteInicial?.VlrPedidoMinimo ?? 0m;
+            }
 
             var request = new CriarPropostaRequest
             {
@@ -506,9 +542,9 @@ public sealed class CotacaoController(
                 VlrPedidoMinimo = vlrPedidoMinimo,
             };
 
-            var propostaId = await addService.CriarPropostaAsync(request, cancellationToken);
+            var novaPropostaId = await apiClient.CriarPropostaAsync(request, cancellationToken);
 
-            return RedirectToAction(nameof(Cotacao), new { propostaId });
+            return RedirectToAction(nameof(Cotacao), new { propostaId = novaPropostaId });
         }
         catch (Exception ex)
         {
@@ -524,21 +560,21 @@ public sealed class CotacaoController(
         if (string.IsNullOrWhiteSpace(term) || term.Length < 2)
             return Json(new { results = Array.Empty<object>() });
 
-        var items = await addService.SearchClientesAsync(term, estabelecimentoId, cancellationToken);
+        var items = await apiClient.SearchClientesAsync(term, estabelecimentoId, cancellationToken);
         return Json(new { results = items.Select(i => new { id = i.Id, text = i.Text }) });
     }
 
     [HttpGet("GetEnderecos")]
     public async Task<IActionResult> GetEnderecos(int clienteId, CancellationToken cancellationToken)
     {
-        var items = await addService.GetEnderecosByClienteAsync(clienteId, cancellationToken);
+        var items = await apiClient.GetEnderecosByClienteAsync(clienteId, cancellationToken);
         return Json(items.Select(i => new { id = i.ClienteEnderecoId, text = i.Text }));
     }
 
     [HttpGet("GetLocaisEntrega")]
     public async Task<IActionResult> GetLocaisEntrega(int clienteEnderecoId, CancellationToken cancellationToken)
     {
-        var items = await addService.GetLocaisEntregaByEnderecoAsync(clienteEnderecoId, cancellationToken);
+        var items = await apiClient.GetLocaisEntregaByEnderecoAsync(clienteEnderecoId, cancellationToken);
         return Json(items.Select(i => new
         {
             id                  = i.ClienteLocalEntregaId,
@@ -557,7 +593,7 @@ public sealed class CotacaoController(
     [HttpGet("GetTabelaPreco")]
     public async Task<IActionResult> GetTabelaPreco(int clienteId, CancellationToken cancellationToken)
     {
-        var item = await addService.GetTabelaPrecoByClienteAsync(clienteId, cancellationToken);
+        var item = await apiClient.GetTabelaPrecoByClienteAsync(clienteId, cancellationToken);
         if (item is null)
             return Json(new { found = false });
 
@@ -567,7 +603,7 @@ public sealed class CotacaoController(
     [HttpGet("GetFormaPagtoCliente")]
     public async Task<IActionResult> GetFormaPagtoCliente(int clienteId, CancellationToken cancellationToken)
     {
-        var formaPagtoId = await addService.GetFormaPagamentoByClienteAsync(clienteId, cancellationToken);
+        var formaPagtoId = await apiClient.GetFormaPagamentoByClienteAsync(clienteId, cancellationToken);
         if (formaPagtoId is null)
             return Json(new { found = false });
 
@@ -580,28 +616,28 @@ public sealed class CotacaoController(
         if (string.IsNullOrWhiteSpace(cdUf))
             return Json(Array.Empty<object>());
 
-        var items = await addService.GetCidadesByUfAsync(cdUf, cancellationToken);
-        return Json(items.Select(i => new { id = i.Value, text = i.Text }));
+        var items = await apiClient.GetCidadesByUfAsync(cdUf, cancellationToken);
+        return Json(items.Select(i => new { id = i.Id, text = i.Nome }));
     }
 
     [HttpGet("GetContratos")]
     public async Task<IActionResult> GetContratos(int clienteId, CancellationToken cancellationToken)
     {
-        var items = await addService.GetContratosAsync(clienteId, cancellationToken);
+        var items = await apiClient.GetContratosByClienteAsync(clienteId, cancellationToken);
         return Json(items.Select(i => new { id = i.NrContrato, text = i.Text }));
     }
 
     [HttpGet("GetTiposOrdem")]
     public async Task<IActionResult> GetTiposOrdem(int cotacaoTipoId, CancellationToken cancellationToken)
     {
-        var items = await addService.GetTiposOrdemAsync(cotacaoTipoId, GetUsuarioId(), cancellationToken);
-        return Json(items.Select(i => new { id = i.Value, text = i.Text }));
+        var items = await apiClient.GetTiposOrdemAsync(cotacaoTipoId, GetUsuarioId(), cancellationToken);
+        return Json(items.Select(i => new { id = i.Id, text = i.Nome }));
     }
 
     [HttpGet("GetTipoOVSAPByEndereco")]
     public async Task<IActionResult> GetTipoOVSAPByEndereco(int clienteEnderecoId, CancellationToken cancellationToken)
     {
-        var tipoOV = await addService.GetTipoOVSAPByEnderecoAsync(clienteEnderecoId, cancellationToken);
+        var tipoOV = await apiClient.GetTipoOVSAPByEnderecoAsync(clienteEnderecoId, cancellationToken);
         if (tipoOV is null)
             return Json(new { found = false });
 
@@ -613,7 +649,7 @@ public sealed class CotacaoController(
     {
         try
         {
-            var opcoes = await queryService.CalcularFretePropostaAsync(propostaId, cancellationToken);
+            var opcoes = await apiClient.CalcularFretePropostaAsync(propostaId, cancellationToken);
             return Json(opcoes);
         }
         catch (Exception ex)
@@ -632,8 +668,8 @@ public sealed class CotacaoController(
     {
         try
         {
-            await queryService.SalvarFretePropostaAsync(propostaId, transportadoraId, valorFrete, prazoTotal, cancellationToken);
-            return Json(new { success = true });
+            var result = await apiClient.SalvarFreteAsync(propostaId, transportadoraId, valorFrete, prazoTotal, cancellationToken);
+            return Json(result.Success ? new { success = true } : new { success = false, error = result.Message });
         }
         catch (Exception ex)
         {
@@ -804,7 +840,7 @@ public sealed class CotacaoController(
         int propostaId,
         CancellationToken cancellationToken)
     {
-        var result = await queryService.ValidarItensImportacaoAsync(propostaId, cancellationToken);
+        var result = await apiClient.ValidarItensImportacaoAsync(propostaId, cancellationToken);
         return Ok(result);
     }
 
@@ -814,7 +850,7 @@ public sealed class CotacaoController(
         int propostaItemId,
         CancellationToken cancellationToken)
     {
-        var result = await queryService.GetImpostosItemAsync(propostaItemId, cancellationToken);
+        var result = await apiClient.GetImpostosItemAsync(propostaId, propostaItemId, cancellationToken);
         if (result is null) return NotFound();
         return Ok(result);
     }
@@ -827,10 +863,11 @@ public sealed class CotacaoController(
         [FromServices] CotacaoPdfService pdfService,
         CancellationToken cancellationToken)
     {
-        var model = await queryService.GetByPropostaIdAsync(propostaId, cancellationToken);
-        if (model is null) return NotFound();
+        var detalhe = await apiClient.GetDetalheAsync(propostaId, cancellationToken);
+        if (detalhe is null) return NotFound();
 
-        var executivo = await queryService.GetExecutivoVendasAsync(model.ClienteID, cancellationToken);
+        var model = MapToViewModel(detalhe);
+        var executivo = await apiClient.GetExecutivoVendasAsync(detalhe.ClienteID, cancellationToken);
 
         byte[] bytes;
         try
@@ -852,9 +889,10 @@ public sealed class CotacaoController(
         [FromServices] CotacaoExcelService excelService,
         CancellationToken cancellationToken)
     {
-        var model = await queryService.GetByPropostaIdAsync(propostaId, cancellationToken);
-        if (model is null) return NotFound();
+        var detalhe = await apiClient.GetDetalheAsync(propostaId, cancellationToken);
+        if (detalhe is null) return NotFound();
 
+        var model = MapToViewModel(detalhe);
         try
         {
             var (fileBytes, fileName) = await excelService.GerarExcelAsync(model, cancellationToken);
@@ -874,16 +912,13 @@ public sealed class CotacaoController(
     {
         try
         {
-            var statusId = await queryService.FinalizarAsync(
-                propostaId,
-                request.DataValidade,
-                request.UsuarioID,
-                cancellationToken);
+            var result = await apiClient.FinalizarAsync(
+                propostaId, request.DataValidade, request.UsuarioID, cancellationToken);
 
-            if (statusId is null)
-                return BadRequest(new { success = false, error = "Não foi possível finalizar a proposta." });
+            if (!result.Success)
+                return BadRequest(new { success = false, error = result.Message });
 
-            return Ok(new { success = true, statusId });
+            return Ok(new { success = true });
         }
         catch (Exception ex)
         {
@@ -901,8 +936,8 @@ public sealed class CotacaoController(
     {
         try
         {
-            await queryService.AprovarAsync(propostaId, request.AprovadorID, cancellationToken);
-            return Ok(new { success = true });
+            var result = await apiClient.AprovarAsync(propostaId, request.AprovadorID, cancellationToken);
+            return result.Success ? Ok(new { success = true }) : BadRequest(new { success = false, error = result.Message });
         }
         catch (Exception ex)
         {
@@ -920,8 +955,8 @@ public sealed class CotacaoController(
     {
         try
         {
-            await queryService.ReprovarAsync(propostaId, request.AprovadorID, request.Justificativa, cancellationToken);
-            return Ok(new { success = true });
+            var result = await apiClient.ReprovarAsync(propostaId, request.AprovadorID, request.Justificativa, cancellationToken);
+            return result.Success ? Ok(new { success = true }) : BadRequest(new { success = false, error = result.Message });
         }
         catch (Exception ex)
         {
@@ -937,8 +972,8 @@ public sealed class CotacaoController(
         try
         {
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "0.0.0.0";
-            var pedidoId = await queryService.AutorizarFaturamentoAsync(propostaId, ip, cancellationToken);
-            return Ok(new { success = true, pedidoId });
+            var result = await apiClient.AutorizarFaturamentoAsync(propostaId, ip, cancellationToken);
+            return result.Success ? Ok(new { success = true }) : BadRequest(new { success = false, error = result.Message });
         }
         catch (Exception ex)
         {
@@ -954,12 +989,13 @@ public sealed class CotacaoController(
 
     private async Task CarregarLookupsAsync(CotacaoAddViewModel vm, CancellationToken cancellationToken)
     {
-        var tiposTask = addService.GetTiposAsync(GetUsuarioId(), cancellationToken);
-        var estabelecimentosTask = addService.GetEstabelecimentosAsync(cancellationToken);
-        var condPagtoTask = addService.GetCondicoesPagamentoAsync(cancellationToken);
-        var formasPagtoTask = addService.GetFormasPagamentoAsync(cancellationToken);
-        var ufsTask = addService.GetUfsAsync(cancellationToken);
-        var motivosTask = addService.GetMotivosBonificacaoAsync(GetUsuarioId(), cancellationToken);
+        var usuarioId = GetUsuarioId();
+        var tiposTask           = apiClient.GetTiposCotacaoAsync(usuarioId, cancellationToken);
+        var estabelecimentosTask = apiClient.GetEstabelecimentosAsync(cancellationToken);
+        var condPagtoTask       = apiClient.GetCondicoesPagamentoAsync(0, 0m, cancellationToken);
+        var formasPagtoTask     = apiClient.GetFormasPagamentoAsync(cancellationToken);
+        var ufsTask             = apiClient.GetUfsAsync(cancellationToken);
+        var motivosTask         = apiClient.GetMotivosBonificacaoAsync(usuarioId, cancellationToken);
 
         await Task.WhenAll(tiposTask, estabelecimentosTask, condPagtoTask, formasPagtoTask, ufsTask, motivosTask);
 
@@ -967,26 +1003,134 @@ public sealed class CotacaoController(
         var ufs = ufsTask.Result;
         var ufMap = ufs.ToDictionary(u => u.UfId, u => u.CdUf);
 
-        vm.Tipos = tiposTask.Result;
-        vm.Estabelecimentos = estabelecimentos.Select(e => new SelectListItem
-        {
-            Value = e.EstabelecimentoId.ToString(),
-            Text = e.Nome
-        }).ToList();
-        vm.CondicoesPagamento = condPagtoTask.Result;
-        vm.FormasPagamento = formasPagtoTask.Result;
-        vm.MotivosBonificacao = motivosTask.Result;
-
-        vm.UfDestinoOptions = ufs.Select(u => new SelectListItem
-        {
-            Value = u.CdUf,
-            Text = u.CdUf
-        }).OrderBy(u => u.Text).ToList();
-
-        vm.EstabelecimentoUfMap = estabelecimentos.ToDictionary(
-            e => e.EstabelecimentoId.ToString(),
-            e => ufMap.GetValueOrDefault(e.UfId, string.Empty));
+        vm.Tipos = tiposTask.Result
+            .Select(t => new SelectListItem { Value = t.CotacaoTipoId.ToString(), Text = t.DsCotacaoTipo })
+            .ToList();
+        vm.Estabelecimentos = estabelecimentos
+            .Select(e => new SelectListItem { Value = e.EstabelecimentoId.ToString(), Text = e.Nome })
+            .ToList();
+        vm.CondicoesPagamento = condPagtoTask.Result
+            .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Nome })
+            .ToList();
+        vm.FormasPagamento = formasPagtoTask.Result
+            .Select(f => new SelectListItem { Value = f.Id.ToString(), Text = f.Nome })
+            .ToList();
+        vm.MotivosBonificacao = motivosTask.Result
+            .Select(m => new SelectListItem { Value = m.Id.ToString(), Text = m.Nome })
+            .ToList();
+        vm.UfDestinoOptions = ufs
+            .Select(u => new SelectListItem { Value = u.CdUf, Text = u.CdUf })
+            .OrderBy(u => u.Text)
+            .ToList();
+        vm.EstabelecimentoUfMap = estabelecimentos
+            .ToDictionary(
+                e => e.EstabelecimentoId.ToString(),
+                e => ufMap.GetValueOrDefault(e.UfId, string.Empty));
     }
+
+    private static CotacaoViewModel MapToViewModel(CotacaoDetalheViewModel d) => new()
+    {
+        PropostaID                    = d.PropostaID,
+        CdProposta                    = d.CdProposta,
+        Nome                          = d.Nome,
+        Versao                        = d.Versao,
+        Itens                         = d.Itens,
+        StatusID                      = d.StatusID,
+        StatusNome                    = d.StatusNome,
+        TipoCotacao                   = d.TipoCotacao,
+        DataValidade                  = d.DataValidade,
+        OrdemCompra                   = d.OrdemCompra,
+        EstabelecimentoID             = d.EstabelecimentoID,
+        EstabelecimentoNome           = d.EstabelecimentoNome,
+        EstabelecimentoCNPJ           = d.EstabelecimentoCNPJ,
+        EstabelecimentoRazaoSocial    = d.EstabelecimentoRazaoSocial,
+        ClienteID                     = d.ClienteID,
+        ClienteCodigo                 = d.ClienteCodigo,
+        ClienteNome                   = d.ClienteNome,
+        ClienteCodNome                = d.ClienteCodNome,
+        ClienteCNPJ                   = d.ClienteCNPJ,
+        ClienteContribuinte           = d.ClienteContribuinte,
+        EhContribuinte                = d.EhContribuinte,
+        ClienteEnderecoID             = d.ClienteEnderecoID,
+        ClienteEndereco               = d.ClienteEndereco,
+        ClienteCidadeEstado           = d.ClienteCidadeEstado,
+        ClienteLocalEntregaID         = d.ClienteLocalEntregaID,
+        LocalEntregaNome              = d.LocalEntregaNome,
+        LocalEntregaEndereco          = d.LocalEntregaEndereco,
+        LocalEntregaCidadeEstado      = d.LocalEntregaCidadeEstado,
+        LocalEntregaObservacao        = d.LocalEntregaObservacao,
+        CanalVenda                    = d.CanalVenda,
+        TipoOrdem                     = d.TipoOrdem,
+        TipoOVSAP                     = d.TipoOVSAP,
+        TipoOVEhRevenda               = d.TipoOVEhRevenda,
+        TipoMotivoIDSAP               = d.TipoMotivoIDSAP,
+        Motivo                        = d.Motivo,
+        MotivoNome                    = d.MotivoNome,
+        Justificativa                 = d.Justificativa,
+        AprovadorUsuarioID            = d.AprovadorUsuarioID,
+        AprovadorNome                 = d.AprovadorNome,
+        AprovadorJustificativa        = d.AprovadorJustificativa,
+        CondPagtoID                   = d.CondPagtoID,
+        CondPagtoNome                 = d.CondPagtoNome,
+        FormaPagamentoSAP             = d.FormaPagamentoSAP,
+        FormaPagamentoDesc            = d.FormaPagamentoDesc,
+        FlagDefCondPagTelevendas      = d.FlagDefCondPagTelevendas,
+        TabelaPrecoID                 = d.TabelaPrecoID,
+        TabelaPrecoNome               = d.TabelaPrecoNome,
+        FlagPrecoConformeTabela       = d.FlagPrecoConformeTabela,
+        MargemPadrao                  = d.MargemPadrao,
+        MargemBruta                   = d.MargemBruta,
+        MargemContribuida             = d.MargemContribuida,
+        MargemBrutaFixa               = d.MargemBrutaFixa,
+        MargemContribuidaFixa         = d.MargemContribuidaFixa,
+        Frete                         = d.Frete,
+        TotalVenda                    = d.TotalVenda,
+        TotalVendaFrete               = d.TotalVendaFrete,
+        TotalVendaSemImposto          = d.TotalVendaSemImposto,
+        TotalVendaFreteSemImposto     = d.TotalVendaFreteSemImposto,
+        ValorVendaTotal               = d.ValorVendaTotal,
+        VlrContribTotal               = d.VlrContribTotal,
+        ValorContribuicaoFixo         = d.ValorContribuicaoFixo,
+        ValorTotalFixo                = d.ValorTotalFixo,
+        VlrPedidoMinimo               = d.VlrPedidoMinimo,
+        TotalPeso                     = d.TotalPeso,
+        QtdItens                      = d.QtdItens,
+        DiasPrazoEntrega              = d.DiasPrazoEntrega,
+        DataProgEntrega               = d.DataProgEntrega,
+        NatOperacao                   = d.NatOperacao,
+        UfOrigem                      = d.UfOrigem,
+        UfDestino                     = d.UfDestino,
+        CodigoIBGE                    = d.CodigoIBGE,
+        ContatoNome                   = d.ContatoNome,
+        ContatoEmail                  = d.ContatoEmail,
+        TransportadoraID              = d.TransportadoraID,
+        TransportadoraNome            = d.TransportadoraNome,
+        CotacaoID                     = d.CotacaoID,
+        CotacaoIdOriginal             = d.CotacaoIdOriginal,
+        CotacaoStatusDesc             = d.CotacaoStatusDesc,
+        CotacaoEnvioComentarios       = d.CotacaoEnvioComentarios,
+        FlagRevisarValorProdutos      = d.FlagRevisarValorProdutos,
+        FlagRevisarValorFrete         = d.FlagRevisarValorFrete,
+        FlagRevisarPrazoPagamento     = d.FlagRevisarPrazoPagamento,
+        FlagRevisarPrazoEntrega       = d.FlagRevisarPrazoEntrega,
+        FlagRevisarAtendimento        = d.FlagRevisarAtendimento,
+        FlagRevisarPermiteTrocarMarca = d.FlagRevisarPermiteTrocarMarca,
+        FlagRevisarPermiteTrocarUnidade = d.FlagRevisarPermiteTrocarUnidade,
+        FlagPrecosInformados          = d.FlagPrecosInformados,
+        CotacaoEnvioIPAprovacao       = d.CotacaoEnvioIPAprovacao,
+        ConsultorUsuarioID            = d.ConsultorUsuarioID,
+        ConsultorNome                 = d.ConsultorNome,
+        ConsultorEmail                = d.ConsultorEmail,
+        CarteiraNome                  = d.CarteiraNome,
+        Observacao                    = d.Observacao,
+        Obs                           = d.Obs,
+        StatusCredito                 = d.StatusCredito,
+        FlagPrecisaAprovacao          = d.FlagPrecisaAprovacao,
+        PercMargemMinPedido           = d.PercMargemMinPedido,
+        PercMargemMaxPedido           = d.PercMargemMaxPedido,
+        AtendenteAprovadorID          = d.AtendenteAprovadorID,
+        AtendenteAprovadorNome        = d.AtendenteAprovadorNome,
+    };
 
     [HttpGet("{propostaId:int}/enviar")]
     public async Task<IActionResult> Enviar(int propostaId, CancellationToken cancellationToken)
@@ -994,7 +1138,7 @@ public sealed class CotacaoController(
         if (propostaId <= 0)
             return RedirectToAction(nameof(Index));
 
-        var dados = await queryService.GetEnviarEmailDadosAsync(propostaId, cancellationToken);
+        var dados = await apiClient.GetEmailDadosAsync(propostaId, cancellationToken);
         if (dados is null)
         {
             TempData["SwalIcon"]  = "warning";
@@ -1003,16 +1147,14 @@ public sealed class CotacaoController(
             return RedirectToAction(nameof(Index));
         }
 
-        // Pré-preenche o e-mail do destinatário com o contato da proposta
         dados.EmailDestinatario = dados.ContatoEmail;
 
-        // Pré-preenche a saudação com base no nome do contato
         var nomeContato = dados.ContatoNome?.Trim().Split(' ').FirstOrDefault() ?? "";
         dados.Saudacao = string.IsNullOrWhiteSpace(nomeContato)
             ? "Prezado(a),"
             : $"Prezado(a) {nomeContato},";
 
-        dados.HistoricoEnvios = await queryService.GetHistoricoEnviosAsync(propostaId, cancellationToken);
+        dados.HistoricoEnvios = await apiClient.GetHistoricoEnviosAsync(propostaId, cancellationToken);
 
         return View("EnviarEmailCotacao", dados);
     }
@@ -1026,8 +1168,7 @@ public sealed class CotacaoController(
     {
         if (!ModelState.IsValid)
         {
-            // Re-popula os dados de exibição que não vêm no POST body
-            var dados = await queryService.GetEnviarEmailDadosAsync(propostaId, cancellationToken);
+            var dados = await apiClient.GetEmailDadosAsync(propostaId, cancellationToken);
             if (dados is not null)
             {
                 form.CdProposta          = dados.CdProposta;
@@ -1042,7 +1183,7 @@ public sealed class CotacaoController(
                 form.TotalVenda          = dados.TotalVenda;
                 form.Frete               = dados.Frete;
             }
-            form.HistoricoEnvios = await queryService.GetHistoricoEnviosAsync(propostaId, cancellationToken);
+            form.HistoricoEnvios = await apiClient.GetHistoricoEnviosAsync(propostaId, cancellationToken);
             return View("EnviarEmailCotacao", form);
         }
 
@@ -1057,7 +1198,7 @@ public sealed class CotacaoController(
         }
         catch (Exception ex)
         {
-            var dados = await queryService.GetEnviarEmailDadosAsync(propostaId, cancellationToken);
+            var dados = await apiClient.GetEmailDadosAsync(propostaId, cancellationToken);
             if (dados is not null)
             {
                 form.CdProposta          = dados.CdProposta;
@@ -1072,7 +1213,7 @@ public sealed class CotacaoController(
                 form.TotalVenda          = dados.TotalVenda;
                 form.Frete               = dados.Frete;
             }
-            form.HistoricoEnvios = await queryService.GetHistoricoEnviosAsync(propostaId, cancellationToken);
+            form.HistoricoEnvios = await apiClient.GetHistoricoEnviosAsync(propostaId, cancellationToken);
             ModelState.AddModelError(string.Empty, $"Erro ao enviar e-mail: {ex.Message}");
             return View("EnviarEmailCotacao", form);
         }

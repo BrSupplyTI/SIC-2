@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using SIC.Web.Models.Auth;
+using SIC.Web.Models.Cotacao;
 
 namespace SIC.Web.Services.Cotacao;
 
@@ -110,6 +111,131 @@ public sealed partial class CotacaoApiClient
             $"api/cotacao/{propostaId}/recalcular-margem-bruta",
             new { },
             cancellationToken);
+
+    // ── proposta ──────────────────────────────────────────────────────────────
+
+    public async Task<int?> CriarPropostaAsync(
+        CriarPropostaRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("api/cotacao", request, cancellationToken);
+            if (!response.IsSuccessStatusCode) return null;
+            var result = await response.Content.ReadFromJsonAsync<CriarPropostaResultVm>(
+                cancellationToken: cancellationToken);
+            return result?.PropostaId;
+        }
+        catch { return null; }
+    }
+
+    public async Task<bool> AtualizarPropostaAsync(
+        int propostaId,
+        AtualizarPropostaRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await httpClient.PutAsJsonAsync(
+                $"api/cotacao/{propostaId}", request, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    // ── finalizar / aprovar / reprovar ────────────────────────────────────────
+
+    public Task<OperationResultVm> FinalizarAsync(
+        int propostaId,
+        string dataValidade,
+        int usuarioId,
+        CancellationToken cancellationToken = default)
+        => PostAsync(
+            $"api/cotacao/{propostaId}/finalizar",
+            new { DataValidade = dataValidade, UsuarioId = usuarioId },
+            cancellationToken);
+
+    public Task<OperationResultVm> AprovarAsync(
+        int propostaId,
+        int aprovadorId,
+        CancellationToken cancellationToken = default)
+        => PostAsync(
+            $"api/cotacao/{propostaId}/aprovar",
+            new { AprovadorId = aprovadorId },
+            cancellationToken);
+
+    public Task<OperationResultVm> ReprovarAsync(
+        int propostaId,
+        int aprovadorId,
+        string justificativa,
+        CancellationToken cancellationToken = default)
+        => PostAsync(
+            $"api/cotacao/{propostaId}/reprovar",
+            new { AprovadorId = aprovadorId, Justificativa = justificativa },
+            cancellationToken);
+
+    // ── frete / faturamento ───────────────────────────────────────────────────
+
+    public Task<OperationResultVm> SalvarFreteAsync(
+        int propostaId,
+        int transportadoraId,
+        decimal valorFrete,
+        int prazoTotal,
+        CancellationToken cancellationToken = default)
+        => PostAsync(
+            $"api/cotacao/{propostaId}/salvar-frete",
+            new { TransportadoraId = transportadoraId, ValorFrete = valorFrete, PrazoTotal = prazoTotal },
+            cancellationToken);
+
+    public Task<OperationResultVm> AutorizarFaturamentoAsync(
+        int propostaId,
+        string ipAprovacao,
+        CancellationToken cancellationToken = default)
+        => PostAsync(
+            $"api/cotacao/{propostaId}/autorizar-faturamento",
+            new { IpAprovacao = ipAprovacao },
+            cancellationToken);
+
+    // ── locais de entrega ─────────────────────────────────────────────────────
+
+    public async Task<bool> EnsureLocaisEntregaAsync(
+        int clienteEnderecoId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync(
+                $"api/cotacao/enderecos/{clienteEnderecoId}/ensure-locais-entrega",
+                new { },
+                cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    // ── log de envio de e-mail ────────────────────────────────────────────────
+
+    public async Task<bool> SalvarLogEnvioAsync(
+        SalvarLogEnvioRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync(
+                $"api/cotacao/{request.PropostaId}/salvar-log-envio",
+                request,
+                cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    // ── helpers ───────────────────────────────────────────────────────────────
+
+    private sealed class CriarPropostaResultVm
+    {
+        public int PropostaId { get; set; }
+    }
 
     private async Task<OperationResultVm> PostAsync<TRequest>(
         string url,

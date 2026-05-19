@@ -1,6 +1,5 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.Data.SqlClient;
 using MimeKit;
 using SIC.Web.Models.Cotacao;
 using System.Text;
@@ -10,10 +9,12 @@ namespace SIC.Web.Services.Cotacao;
 /// <summary>
 /// Serviço de envio de e-mail da Cotação e gravação do log.
 /// Replica a lógica do PHP controllers/cotacoes/EnviarEmail.php.
+/// Os dados são obtidos via CotacaoApiClient (sem SQL direto no Web).
 /// </summary>
 public sealed class CotacaoEmailService(
     IConfiguration configuration,
-    IWebHostEnvironment env)
+    IWebHostEnvironment env,
+    CotacaoApiClient apiClient)
 {
     private readonly string _smtpHost      = configuration["Smtp:Host"]      ?? string.Empty;
     private readonly int    _smtpPort      = configuration.GetValue<int?>("Smtp:Port") ?? 587;
@@ -22,8 +23,6 @@ public sealed class CotacaoEmailService(
     private readonly string _smtpPass      = configuration["Smtp:Password"]  ?? string.Empty;
     private readonly string _smtpFrom      = configuration["Smtp:FromEmail"] ?? string.Empty;
     private readonly string _smtpFromName  = configuration["Smtp:FromName"]  ?? "SIC";
-    private readonly string _connectionString = configuration.GetConnectionString("SicDatabase")
-        ?? throw new InvalidOperationException("ConnectionStrings:SicDatabase não configurada.");
 
     // ═══════════════════════════════════════════════════════════════════════
     //  PONTO DE ENTRADA PRINCIPAL
@@ -51,8 +50,10 @@ public sealed class CotacaoEmailService(
         var titulo = $"Cotação {estabTitulo}: {form.CotacaoID}";
 
         // ── 4. Carregar dados completos da proposta para o template ───────
-        var cot = await GetDadosEmailAsync(form.PropostaId, cancellationToken)
+        var tpl = await apiClient.GetEmailTemplateAsync(form.PropostaId, cancellationToken)
                   ?? throw new InvalidOperationException($"Proposta #{form.PropostaId} não encontrada.");
+
+        var cot = MapToDadosEmail(tpl);
 
         // ── 5. Carregar template HTML ─────────────────────────────────────
         var templatePath = Path.Combine(
@@ -114,21 +115,22 @@ public sealed class CotacaoEmailService(
             throw;
         }
 
-        // ── 9. Gravar log no banco (saveLogEnvio do PHP) ──────────────────
-        await SalvarLogEnvioAsync(new LogEnvioParams(
-            PropostaId:            form.PropostaId,
-            Nome:                  form.ContatoNome,
-            Email:                 emailDestinatario,
-            Saudacao:              form.Saudacao,
-            Mensagem:              mensagem,
-            ComCopia:              comCopia,
-            Hash:                  hash,
-            UsuarioID:             usuarioLogadoId,
-            PodeDispEstoque:       form.PodeDispEstoque       ? 1 : 0,
-            PodeAltTransportadora: form.PodeAltTransportadora ? 1 : 0,
-            PodeAltCondPagamento:  form.PodeAltCondPagamento  ? 1 : 0,
-            PodeNegociar:          form.PodeNegociar          ? 1 : 0
-        ), cancellationToken);
+        // ── 9. Gravar log no banco via API ────────────────────────────────
+        await apiClient.SalvarLogEnvioAsync(new SalvarLogEnvioRequest
+        {
+            PropostaId            = form.PropostaId,
+            Nome                  = form.ContatoNome,
+            Email                 = emailDestinatario,
+            Saudacao              = form.Saudacao,
+            Mensagem              = mensagem,
+            ComCopia              = comCopia,
+            Hash                  = hash,
+            UsuarioId             = usuarioLogadoId,
+            PodeDispEstoque       = form.PodeDispEstoque       ? 1 : 0,
+            PodeAltTransportadora = form.PodeAltTransportadora ? 1 : 0,
+            PodeAltCondPagamento  = form.PodeAltCondPagamento  ? 1 : 0,
+            PodeNegociar          = form.PodeNegociar          ? 1 : 0,
+        }, cancellationToken);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -256,274 +258,52 @@ public sealed class CotacaoEmailService(
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    //  CONSULTA DE DADOS PARA O TEMPLATE (tudo que o PHP buscava via $cot)
+    //  MAPPER: CotacaoEmailTemplateViewModel → DadosEmail
     // ═══════════════════════════════════════════════════════════════════════
 
-    private async Task<DadosEmail?> GetDadosEmailAsync(
-        int propostaId,
-        CancellationToken cancellationToken)
+    private static DadosEmail MapToDadosEmail(CotacaoEmailTemplateViewModel tpl) => new()
     {
-        const string sql = """
-            SELECT
-                -- Cotação
-                Proposta.CdProposta                                         AS CdProposta,
-                ISNULL(Proposta.OrdemCompra, '')                            AS OrdemCompra,
-                ISNULL(Proposta.Obs, '')                                    AS Obs,
-                ISNULL(Proposta.ContatoNome, '')                            AS ContatoNome,
-                ISNULL(Proposta.ContatoEmail, '')                           AS ContatoEmail,
-                CONVERT(VARCHAR(10), Proposta.DataValidade, 103)            AS DataValidade,
-                ISNULL(CP.NmCondPagto, '')                                  AS CondPagtoNome,
-                PropostaStatus.NmStatus                                     AS StatusNome,
-                ISNULL(Proposta.DiasPrazoEntrega, 0)                        AS DiasPrazoEntrega,
-                ISNULL(Transp.NmTransportadora, '')                         AS TransportadoraNome,
-                ISNULL(Proposta.Frete, 0)                                   AS VlrFrete,
-                (SELECT ISNULL(SUM(PI.VlrPrecoVenda),0)
-                 FROM BrWeb..Proposta_Itens PI WITH (NOLOCK)
-                 WHERE PI.PropostaID = Proposta.PropostaId)                 AS TotalVendaSemFrete,
-                (SELECT ISNULL(SUM(PI.VlrPrecoVenda),0) + ISNULL(Proposta.Frete,0)
-                 FROM BrWeb..Proposta_Itens PI WITH (NOLOCK)
-                 WHERE PI.PropostaID = Proposta.PropostaId)                 AS TotalVendaFinal,
-
-                -- Estabelecimento
-                ISNULL(Est.EstabelRazaoSocial, '')                          AS EstabRazaoSocial,
-                ISNULL(Est.EstabelCNPJ, '')                                 AS EstabCNPJ,
-                ISNULL(Est.InscrEstadual, '')                               AS EstabInscrEstadual,
-                ISNULL(Est.EstabelTelefone, '')                             AS EstabTelefone,
-                ISNULL(PARSENAME(REPLACE(Est.EstabelEndereco,',','.'),3),'') AS EstabEndereco,
-                ISNULL(PARSENAME(REPLACE(Est.EstabelEndereco,',','.'),2),'') AS EstabNumero,
-                ISNULL(PARSENAME(REPLACE(Est.EstabelEndereco,',','.'),1),'') AS EstabComplemento,
-                ISNULL(Est.EstabelBairro, '')                               AS EstabBairro,
-                ISNULL(CidEst.NmCidade, '')                                 AS EstabCidade,
-                ISNULL(UFEst.CdUF, '')                                      AS EstabUF,
-                ISNULL(Est.EstabelCEP, '')                                         AS EstabCEP,
-
-                -- Consultor
-                ISNULL(Consultor.NmUsuario, '')                             AS ConsultorNome,
-                ISNULL(Consultor.Email, '')                                 AS ConsultorEmail,
-                ISNULL(Consultor.Telefone, '')                              AS ConsultorTelefone,
-
-                -- Cliente
-                ISNULL(Cli.NmCliente, '')                                   AS ClienteRazaoSocial,
-                ISNULL(Cli.CNPJCliente, '')                                 AS ClienteCNPJ,
-                ISNULL(Cli.TelefoneCliente, '')                                    AS ClienteTelefone,
-
-                -- Endereço de entrega (local diferente tem prioridade, igual ao PHP)
-                ISNULL(CLE.FlagEnderecoDiferente, 0)                        AS FlagEnderecoDiferente,
-
-                -- Local de entrega
-                ISNULL(CLE.DsLogradouro, '')                                AS LocLogradouro,
-                ISNULL(CLE.DsNumero, '')                                    AS LocNumero,
-                ISNULL(CLE.DsComplemento, '')                               AS LocComplemento,
-                ISNULL(CLE.DsBairro, '')                                    AS LocBairro,
-                ISNULL(CidLoc.NmCidade, '')                                 AS LocCidade,
-                ISNULL(UFLoc.CdUF, '')                                      AS LocUF,
-                ISNULL(CLE.DsCEP, '')                                       AS LocCEP,
-
-                -- Endereço principal do cliente
-                ISNULL(CE.Logradouro, '')                                   AS EndLogradouro,
-                ISNULL(CE.Numero, '')                                       AS EndNumero,
-                ISNULL(CE.Complemento, '')                                  AS EndComplemento,
-                ISNULL(CE.Bairro, '')                                       AS EndBairro,
-                ISNULL(CE.Cidade, '')                                       AS EndCidade,
-                ISNULL(UFEnd.CdUF, '')                                      AS EndUF,
-                ISNULL(CE.CEP, '')                                          AS EndCEP
-
-            FROM BrWeb.dbo.Proposta Proposta (NOLOCK)
-            LEFT JOIN BrWeb.dbo.Proposta_Status PropostaStatus (NOLOCK)
-                ON PropostaStatus.StatusID = Proposta.StatusID
-            LEFT JOIN BrSupply.dbo.BR_CondPagto CP (NOLOCK)
-                ON CP.CondPagtoID = Proposta.CondPagto
-            LEFT JOIN BrSupply.dbo.BR_Transportadora Transp (NOLOCK)
-                ON Transp.TransportadoraID = Proposta.TransportadoraID
-            LEFT JOIN BrSupply.dbo.BR_Estabelecimento Est (NOLOCK)
-                ON Est.EstabelecimentoID = Proposta.EstabelecimentoID
-            LEFT JOIN BrSupply.dbo.BR_Cidade CidEst (NOLOCK)
-                ON CidEst.CidadeID = Est.EstabelCidadeID
-            LEFT JOIN BrSupply.dbo.BR_UF UFEst (NOLOCK)
-                ON UFEst.UFID = Est.UFID
-            LEFT JOIN BrSupply.dbo.BR_Usuario Consultor (NOLOCK)
-                ON Consultor.UsuarioID = Proposta.UsuarioID
-            LEFT JOIN BrSupply.dbo.BR_Cliente Cli (NOLOCK)
-                ON Cli.ClienteID = Proposta.ClienteId
-            LEFT JOIN BrSupply.dbo.BR_ClienteLocalEntrega CLE (NOLOCK)
-                ON CLE.ClienteLocalEntregaID = Proposta.ClienteLocalEntregaID
-            LEFT JOIN BrSupply.dbo.BR_Cidade CidLoc (NOLOCK)
-                ON CidLoc.CidadeID = CLE.CdCidadeID
-            LEFT JOIN BrSupply.dbo.BR_UF UFLoc (NOLOCK)
-                ON UFLoc.UFID = CLE.CdUFID
-            LEFT JOIN BrSupply.dbo.BR_ClienteEndereco CE (NOLOCK)
-                ON CE.ClienteEnderecoID = Proposta.ClienteEnderecoID
-            LEFT JOIN BrSupply.dbo.BR_UF UFEnd (NOLOCK)
-                ON UFEnd.UFID = CE.UFID
-            WHERE Proposta.PropostaId = @PropostaID
-            """;
-
-        const string itensSql = """
-            SELECT
-                PI.CodItemBR,
-                PI.DescrItemBR,
-                ISNULL(PI.PrecoItem, 0)      AS PrecoItem,
-                ISNULL(PI.IPI, 0)            AS IPI,
-                ISNULL(PI.ST, 0)             AS ST,
-                ISNULL(PI.Quantidade, 0)     AS Quantidade,
-                ISNULL(PI.VlrPrecoVenda / NULLIF(PI.Quantidade, 0), 0) AS VlrUnitario,
-                ISNULL(Seg.NmSegmento, '')   AS NmSegmento,
-                ISNULL(CF.CdClassificacaoFiscal, '') AS NCM
-            FROM BrWeb.dbo.Proposta_Itens PI (NOLOCK)
-            LEFT JOIN BrSupply.dbo.BR_Item Item (NOLOCK)
-                ON Item.CdItem = PI.CodItemBR
-            LEFT JOIN BrSupply.dbo.BR_Segmento Seg (NOLOCK)
-                ON Seg.SegmentoID = Item.SegmentoID
-            LEFT JOIN BrSupply.dbo.BR_ClassificacaoFiscal CF (NOLOCK)
-                ON CF.ClassificacaoFiscalID = Item.ClassificacaoFiscalID
-            WHERE PI.PropostaID = @PropostaID
-            ORDER BY PI.PropostaItemID
-            """;
-
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
-
-        // Cabeçalho
-        await using var cmd = new SqlCommand(sql, connection);
-        cmd.Parameters.AddWithValue("@PropostaID", propostaId);
-
-        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
-            return null;
-
-        static string S(SqlDataReader r, string col)
-        {
-            var ord = r.GetOrdinal(col);
-            return r.IsDBNull(ord) ? string.Empty : r.GetString(ord);
-        }
-        static int I(SqlDataReader r, string col)
-        {
-            var ord = r.GetOrdinal(col);
-            return r.IsDBNull(ord) ? 0 : Convert.ToInt32(r.GetValue(ord));
-        }
-        static decimal D(SqlDataReader r, string col)
-        {
-            var ord = r.GetOrdinal(col);
-            return r.IsDBNull(ord) ? 0m : Convert.ToDecimal(r.GetValue(ord));
-        }
-
-        var flagEndDiferente = I(reader, "FlagEnderecoDiferente");
-
-        var dados = new DadosEmail
-        {
-            CdProposta         = S(reader, "CdProposta"),
-            OrdemCompra        = S(reader, "OrdemCompra"),
-            Obs                = S(reader, "Obs"),
-            ContatoNome        = S(reader, "ContatoNome"),
-            ContatoEmail       = S(reader, "ContatoEmail"),
-            DataValidade       = S(reader, "DataValidade"),
-            CondPagtoNome      = S(reader, "CondPagtoNome"),
-            StatusNome         = S(reader, "StatusNome"),
-            DiasPrazoEntrega   = I(reader, "DiasPrazoEntrega"),
-            TransportadoraNome = S(reader, "TransportadoraNome"),
-            VlrFrete           = D(reader, "VlrFrete"),
-            TotalVendaSemFrete = D(reader, "TotalVendaSemFrete"),
-            TotalVendaFinal    = D(reader, "TotalVendaFinal"),
-
-            EstabRazaoSocial   = S(reader, "EstabRazaoSocial"),
-            EstabCNPJ          = S(reader, "EstabCNPJ"),
-            EstabInscrEstadual = S(reader, "EstabInscrEstadual"),
-            EstabTelefone      = S(reader, "EstabTelefone"),
-            EstabEndereco      = S(reader, "EstabEndereco"),
-            EstabNumero        = S(reader, "EstabNumero"),
-            EstabComplemento   = S(reader, "EstabComplemento"),
-            EstabBairro        = S(reader, "EstabBairro"),
-            EstabCidade        = S(reader, "EstabCidade"),
-            EstabUF            = S(reader, "EstabUF"),
-            EstabCEP           = S(reader, "EstabCEP"),
-
-            ConsultorNome      = S(reader, "ConsultorNome"),
-            ConsultorEmail     = S(reader, "ConsultorEmail"),
-            ConsultorTelefone  = S(reader, "ConsultorTelefone"),
-
-            ClienteRazaoSocial = S(reader, "ClienteRazaoSocial"),
-            ClienteCNPJ        = S(reader, "ClienteCNPJ"),
-            ClienteTelefone    = S(reader, "ClienteTelefone"),
-
-            // Endereço: local diferente tem prioridade (igual ao PHP)
-            ClienteEndereco    = flagEndDiferente > 0 ? S(reader, "LocLogradouro")  : S(reader, "EndLogradouro"),
-            ClienteNumero      = flagEndDiferente > 0 ? S(reader, "LocNumero")      : S(reader, "EndNumero"),
-            ClienteComplemento = flagEndDiferente > 0 ? S(reader, "LocComplemento") : S(reader, "EndComplemento"),
-            ClienteBairro      = flagEndDiferente > 0 ? S(reader, "LocBairro")      : S(reader, "EndBairro"),
-            ClienteCidade      = flagEndDiferente > 0 ? S(reader, "LocCidade")      : S(reader, "EndCidade"),
-            ClienteUF          = flagEndDiferente > 0 ? S(reader, "LocUF")          : S(reader, "EndUF"),
-            ClienteCEP         = flagEndDiferente > 0 ? S(reader, "LocCEP")         : S(reader, "EndCEP"),
-        };
-
-        await reader.CloseAsync();
-
-        // Itens
-        await using var cmdItens = new SqlCommand(itensSql, connection);
-        cmdItens.Parameters.AddWithValue("@PropostaID", propostaId);
-
-        var itens = new List<ItemEmail>();
-        await using var readerItens = await cmdItens.ExecuteReaderAsync(cancellationToken);
-        while (await readerItens.ReadAsync(cancellationToken))
-        {
-            itens.Add(new ItemEmail(
-                CodItemBR:   S(readerItens, "CodItemBR"),
-                DescrItemBR: S(readerItens, "DescrItemBR"),
-                PrecoItem:   D(readerItens, "PrecoItem"),
-                IPI:         D(readerItens, "IPI"),
-                ST:          D(readerItens, "ST"),
-                Quantidade:  D(readerItens, "Quantidade"),
-                VlrUnitario: D(readerItens, "VlrUnitario"),
-                NmSegmento:  S(readerItens, "NmSegmento"),
-                NCM:         S(readerItens, "NCM")
-            ));
-        }
-
-        dados.Itens = itens;
-        return dados;
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  LOG DE ENVIO (saveLogEnvio do PHP → BRWeb..Proposta_CotacaoEnvio)
-    // ═══════════════════════════════════════════════════════════════════════
-
-    private async Task SalvarLogEnvioAsync(
-        LogEnvioParams p,
-        CancellationToken cancellationToken)
-    {
-        const string sql = """
-            INSERT INTO BRWeb..Proposta_CotacaoEnvio
-                (PropostaID, Nome, Email, Saudacao, Mensagem, ComCopia, Hash,
-                 UsuarioID,
-                 FlagVisualizaEstoque, FlagPodeTrocarTransportadora,
-                 FlagPodeTrocarCondPagto, FlagPodeNegociar,
-                 DataHora, FlagAtivo)
-            VALUES
-                (@PropostaID, @Nome, @Email, @Saudacao, @Mensagem, @ComCopia, @Hash,
-                 @UsuarioID,
-                 @FlagVisualizaEstoque, @FlagPodeTrocarTransportadora,
-                 @FlagPodeTrocarCondPagto, @FlagPodeNegociar,
-                 GETDATE(), 1)
-            """;
-
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
-
-        await using var cmd = new SqlCommand(sql, connection);
-        cmd.Parameters.AddWithValue("@PropostaID",               p.PropostaId);
-        cmd.Parameters.AddWithValue("@Nome",                     p.Nome);
-        cmd.Parameters.AddWithValue("@Email",                    p.Email);
-        cmd.Parameters.AddWithValue("@Saudacao",                 p.Saudacao);
-        cmd.Parameters.AddWithValue("@Mensagem",                 (object?)p.Mensagem     ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@ComCopia",                 (object?)p.ComCopia     ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@Hash",                     p.Hash);
-        cmd.Parameters.AddWithValue("@UsuarioID",                p.UsuarioID);
-        cmd.Parameters.AddWithValue("@FlagVisualizaEstoque",     p.PodeDispEstoque);
-        cmd.Parameters.AddWithValue("@FlagPodeTrocarTransportadora", p.PodeAltTransportadora);
-        cmd.Parameters.AddWithValue("@FlagPodeTrocarCondPagto",  p.PodeAltCondPagamento);
-        cmd.Parameters.AddWithValue("@FlagPodeNegociar",         p.PodeNegociar);
-
-        await cmd.ExecuteNonQueryAsync(cancellationToken);
-    }
+        CdProposta         = tpl.CdProposta,
+        OrdemCompra        = tpl.OrdemCompra,
+        Obs                = tpl.Obs,
+        ContatoNome        = tpl.ContatoNome,
+        ContatoEmail       = tpl.ContatoEmail,
+        DataValidade       = tpl.DataValidade,
+        CondPagtoNome      = tpl.CondPagtoNome,
+        StatusNome         = tpl.StatusNome,
+        DiasPrazoEntrega   = tpl.DiasPrazoEntrega,
+        TransportadoraNome = tpl.TransportadoraNome,
+        VlrFrete           = tpl.VlrFrete,
+        TotalVendaSemFrete = tpl.TotalVendaSemFrete,
+        TotalVendaFinal    = tpl.TotalVendaFinal,
+        EstabRazaoSocial   = tpl.EstabRazaoSocial,
+        EstabCNPJ          = tpl.EstabCNPJ,
+        EstabInscrEstadual = tpl.EstabInscrEstadual,
+        EstabTelefone      = tpl.EstabTelefone,
+        EstabEndereco      = tpl.EstabEndereco,
+        EstabNumero        = tpl.EstabNumero,
+        EstabComplemento   = tpl.EstabComplemento,
+        EstabBairro        = tpl.EstabBairro,
+        EstabCidade        = tpl.EstabCidade,
+        EstabUF            = tpl.EstabUF,
+        EstabCEP           = tpl.EstabCEP,
+        ConsultorNome      = tpl.ConsultorNome,
+        ConsultorEmail     = tpl.ConsultorEmail,
+        ConsultorTelefone  = tpl.ConsultorTelefone,
+        ClienteRazaoSocial = tpl.ClienteRazaoSocial,
+        ClienteCNPJ        = tpl.ClienteCNPJ,
+        ClienteTelefone    = tpl.ClienteTelefone,
+        ClienteEndereco    = tpl.ClienteEndereco,
+        ClienteNumero      = tpl.ClienteNumero,
+        ClienteComplemento = tpl.ClienteComplemento,
+        ClienteBairro      = tpl.ClienteBairro,
+        ClienteCidade      = tpl.ClienteCidade,
+        ClienteUF          = tpl.ClienteUF,
+        ClienteCEP         = tpl.ClienteCEP,
+        Itens              = tpl.Itens.Select(i => new ItemEmail(
+            i.CodItemBR, i.DescrItemBR, i.PrecoItem, i.IPI, i.ST,
+            i.Quantidade, i.VlrUnitario, i.NmSegmento, i.NCM)).ToList(),
+    };
 
     // ═══════════════════════════════════════════════════════════════════════
     //  HELPERS
@@ -597,18 +377,4 @@ public sealed class CotacaoEmailService(
         decimal VlrUnitario,
         string NmSegmento,
         string NCM);
-
-    private sealed record LogEnvioParams(
-        int     PropostaId,
-        string  Nome,
-        string  Email,
-        string  Saudacao,
-        string? Mensagem,
-        string? ComCopia,
-        string  Hash,
-        int     UsuarioID,
-        int     PodeDispEstoque,
-        int     PodeAltTransportadora,
-        int     PodeAltCondPagamento,
-        int     PodeNegociar);
 }

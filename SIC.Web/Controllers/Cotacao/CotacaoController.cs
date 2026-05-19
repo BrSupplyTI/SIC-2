@@ -9,8 +9,6 @@ namespace SIC.Web.Controllers.Cotacao;
 [Authorize]
 [Route("Cotacao")]
 public sealed class CotacaoController(
-    CotacaoQueryService queryService,
-    CotacaoAddService addService,
     CotacaoApiClient apiClient,
     CotacaoEmailService emailService) : Controller
 {
@@ -258,7 +256,6 @@ public sealed class CotacaoController(
                 Selected = l.ClienteLocalEntregaId.ToString() == vm.LocalEntrega
             }).ToList();
 
-            // Pré-seleciona ObsLocalEntrega a partir do local de entrega salvo
             var localSelecionado = locais.FirstOrDefault(l => l.ClienteLocalEntregaId.ToString() == vm.LocalEntrega);
             if (localSelecionado?.ObsLocalEntrega is not null)
             {
@@ -280,15 +277,6 @@ public sealed class CotacaoController(
                 Text     = c.Text,
                 Selected = c.Value == vm.CidadeDestino
             }).ToList();
-        }
-
-        // Carrega Contratos do cliente (para Comodato)
-        if (dados.ClienteId > 0 && !string.IsNullOrWhiteSpace(dados.NrContrato))
-        {
-            var contratos = await addService.GetContratosAsync(dados.ClienteId, cancellationToken);
-            // TipoOrdemOptions já foi carregado, apenas garantimos que NrContrato está no select
-            // Será visível via JS se o tipo for Comodato
-            _ = contratos; // disponíveis via AJAX normal caso o usuário altere o tipo
         }
 
         return View(vm);
@@ -1003,10 +991,8 @@ public sealed class CotacaoController(
             return RedirectToAction(nameof(Index));
         }
 
-        // Pré-preenche o e-mail do destinatário com o contato da proposta
         dados.EmailDestinatario = dados.ContatoEmail;
 
-        // Pré-preenche a saudação com base no nome do contato
         var nomeContato = dados.ContatoNome?.Trim().Split(' ').FirstOrDefault() ?? "";
         dados.Saudacao = string.IsNullOrWhiteSpace(nomeContato)
             ? "Prezado(a),"

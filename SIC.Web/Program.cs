@@ -241,8 +241,7 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("sic_admin", "1"));
 });
 builder.Services.AddScoped<CotacaoEmailService>();
-builder.Services.AddScoped<CotacaoQueryService>();
-builder.Services.AddScoped<CotacaoAddService>();
+
 builder.Services.AddHttpClient<CotacaoApiClient>(client =>
 {
     var baseUrl = builder.Configuration["Api:BaseUrl"]
@@ -265,19 +264,7 @@ if (!string.IsNullOrWhiteSpace(pathBase))
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler(errorApp =>
-    {
-        errorApp.Run(async context =>
-        {
-            var ex = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
-            context.Response.ContentType = "text/plain; charset=utf-8";
-            await context.Response.WriteAsync(
-                $"ERRO: {ex?.Error?.GetType().Name}\n\n" +
-                $"Mensagem: {ex?.Error?.Message}\n\n" +
-                $"Stack:\n{ex?.Error?.StackTrace}\n\n" +
-                $"Inner: {ex?.Error?.InnerException?.Message}");
-        });
-    });
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 app.UseHttpsRedirection();

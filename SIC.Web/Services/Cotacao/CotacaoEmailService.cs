@@ -597,18 +597,4 @@ public sealed class CotacaoEmailService(
         decimal VlrUnitario,
         string NmSegmento,
         string NCM);
-
-    private sealed record LogEnvioParams(
-        int     PropostaId,
-        string  Nome,
-        string  Email,
-        string  Saudacao,
-        string? Mensagem,
-        string? ComCopia,
-        string  Hash,
-        int     UsuarioID,
-        int     PodeDispEstoque,
-        int     PodeAltTransportadora,
-        int     PodeAltCondPagamento,
-        int     PodeNegociar);
 }

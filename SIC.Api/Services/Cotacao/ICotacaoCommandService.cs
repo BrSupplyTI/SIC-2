@@ -1,4 +1,5 @@
-﻿using SIC.Api.Models.Auth;
+﻿using SIC.Api.Contracts.Cotacao;
+using SIC.Api.Models.Auth;
 
 namespace SIC.Api.Services.Cotacao;
 
@@ -60,5 +61,51 @@ public interface ICotacaoCommandService
 
     Task<OperationResult> RecalcularMargemBrutaPropostaAsync(
         int propostaId,
+        CancellationToken cancellationToken = default);
+
+    Task<OperationResult> FinalizarAsync(
+        int propostaId,
+        string dataValidade,
+        int usuarioId,
+        CancellationToken cancellationToken = default);
+
+    Task<OperationResult> AprovarAsync(
+        int propostaId,
+        int aprovadorId,
+        CancellationToken cancellationToken = default);
+
+    Task<OperationResult> ReprovarAsync(
+        int propostaId,
+        int aprovadorId,
+        string justificativa,
+        CancellationToken cancellationToken = default);
+
+    Task<OperationResult> SalvarFretePropostaAsync(
+        int propostaId,
+        int transportadoraId,
+        decimal valorFrete,
+        int prazoTotal,
+        CancellationToken cancellationToken = default);
+
+    Task<OperationResult> AutorizarFaturamentoAsync(
+        int propostaId,
+        string ipAprovacao,
+        CancellationToken cancellationToken = default);
+
+    Task<int> CriarPropostaAsync(
+        CriarPropostaRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task AtualizarPropostaAsync(
+        int propostaId,
+        AtualizarPropostaRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<CotacaoLocalEntregaOptionDto>> EnsureLocaisEntregaAsync(
+        int clienteEnderecoId,
+        CancellationToken cancellationToken = default);
+
+    Task SalvarLogEnvioAsync(
+        SalvarLogEnvioRequest request,
         CancellationToken cancellationToken = default);
 }

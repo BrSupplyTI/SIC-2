@@ -82,6 +82,68 @@ public sealed class PrePedidoPDFCommandService(
             "Erro ao atualizar quantidade.");
     }
 
+    public async Task<OperationResult> AtualizarVlrUnitAsync(
+        int prePedidoId,
+        int prePedidoItemId,
+        decimal vlrUnit,
+        string descricao,
+        CancellationToken cancellationToken = default)
+    {
+        if (vlrUnit < 0)
+        {
+            return new OperationResult
+            {
+                Success = false,
+                Message = "O valor unitário não pode ser negativo."
+            };
+        }
+
+        var prePedido = await queryRepository.GetByIdAsync(prePedidoId, cancellationToken);
+
+        if (prePedido is null)
+        {
+            return new OperationResult
+            {
+                Success = false,
+                Message = "Pré-pedido não encontrado."
+            };
+        }
+
+        if (prePedido.StatusPrePedidoPDFID != 1)
+        {
+            return new OperationResult
+            {
+                Success = false,
+                Message = "O valor unitário só pode ser alterado quando o status estiver Aguardando."
+            };
+        }
+
+        return await ExecuteAsync(
+            () => repository.UpdateVlrUnitAsync(prePedidoItemId, prePedidoId, vlrUnit, descricao, cancellationToken),
+            "Valor unitário atualizado com sucesso.",
+            "Erro ao atualizar valor unitário.");
+    }
+
+    public async Task<OperationResult> AtualizarObsAsync(
+        int prePedidoId,
+        string obsNota,
+        string obsComprador,
+        CancellationToken cancellationToken = default)
+    {
+        var prePedido = await queryRepository.GetByIdAsync(prePedidoId, cancellationToken);
+
+        if (prePedido is null)
+            return new OperationResult { Success = false, Message = "Pré-pedido não encontrado." };
+
+        if (prePedido.StatusPrePedidoPDFID == 4 || prePedido.StatusPrePedidoPDFID == 5)
+            return new OperationResult { Success = false, Message = "As observações não podem ser alteradas quando o pré-pedido está aceito ou recusado." };
+
+        return await ExecuteAsync(
+            () => repository.UpdateObsAsync(prePedidoId, obsNota, obsComprador, cancellationToken),
+            "Observações atualizadas com sucesso.",
+            "Erro ao atualizar observações.");
+    }
+
     public Task<OperationResult> CancelarAsync(
         int prePedidoId,
         CancellationToken cancellationToken = default)

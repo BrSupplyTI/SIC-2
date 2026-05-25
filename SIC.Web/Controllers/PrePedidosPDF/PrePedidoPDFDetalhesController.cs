@@ -142,6 +142,30 @@ public sealed class PrePedidoPDFDetalhesController(PrePedidoPDFApiClient apiClie
             request.Descricao,
             cancellationToken));
 
+    [HttpPut("PrePedido/{id:int}/itens/{itemId:int}/vlr-unit")]
+    public async Task<IActionResult> AtualizarVlrUnit(
+        int id,
+        int itemId,
+        [FromBody] AtualizarVlrUnitRequest request,
+        CancellationToken cancellationToken)
+        => Json(await apiClient.AtualizarVlrUnitAsync(
+            id,
+            itemId,
+            request.VlrUnit,
+            request.Descricao,
+            cancellationToken));
+
+    [HttpPut("PrePedido/{id:int}/obs")]
+    public async Task<IActionResult> AtualizarObs(
+        int id,
+        [FromBody] AtualizarObsRequest request,
+        CancellationToken cancellationToken)
+        => Json(await apiClient.AtualizarObsAsync(
+            id,
+            request.ObsNota ?? string.Empty,
+            request.ObsComprador ?? string.Empty,
+            cancellationToken));
+
     [HttpPost("PrePedido/{id:int}/itens/{itemId:int}/excluir")]
     public async Task<IActionResult> ExcluirItem(
         int id,
@@ -216,6 +240,14 @@ public sealed class PrePedidoPDFDetalhesController(PrePedidoPDFApiClient apiClie
     public sealed record AtualizarQuantidadeRequest(
         int Quantidade,
         string Descricao);
+
+    public sealed record AtualizarVlrUnitRequest(
+        decimal VlrUnit,
+        string Descricao);
+
+    public sealed record AtualizarObsRequest(
+        string? ObsNota,
+        string? ObsComprador);
 
     public sealed record ExcluirItemRequest(string Descricao);
 

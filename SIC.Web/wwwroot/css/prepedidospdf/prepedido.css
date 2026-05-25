@@ -46,6 +46,85 @@
     color: var(--sic-muted);
 }
 
+/* ── Inline edit — Obs. Nota / Obs. Comprador ── */
+.btn-obs-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 .2rem;
+    background: none;
+    border: none;
+    color: var(--sic-muted);
+    font-size: .7rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .15s ease, color .15s ease;
+}
+
+.prepedido-quick-card:hover .btn-obs-edit {
+    opacity: 1;
+}
+
+.btn-obs-edit:hover {
+    color: var(--bs-primary);
+    opacity: 1 !important;
+}
+
+.obs-display-text {
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.obs-inline-edit {
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    color: var(--sic-text);
+    border-color: var(--bs-primary);
+    resize: vertical;
+}
+
+.obs-inline-edit:focus {
+    box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .2);
+    border-color: var(--bs-primary);
+}
+
+/* ── Tom Select dentro do modal Trocar Item ── */
+.prepedido-modal .ts-wrapper.form-select .ts-control,
+.prepedido-modal .ts-wrapper.form-select.single .ts-control,
+.prepedido-modal .ts-wrapper.form-select.single .ts-control .item,
+.prepedido-modal .ts-wrapper.form-select .ts-control input {
+    color: var(--sic-text);
+}
+
+.prepedido-modal .ts-wrapper.form-select .ts-control input::placeholder {
+    color: var(--sic-muted);
+    opacity: 1;
+}
+
+.prepedido-modal .ts-wrapper.form-select .ts-dropdown {
+    background: var(--sic-surface-2, var(--bs-body-bg));
+    border-color: var(--sic-border, var(--bs-border-color));
+    z-index: 1060;
+}
+
+.prepedido-modal .ts-wrapper.form-select .ts-dropdown .option {
+    color: var(--sic-text);
+}
+
+.prepedido-modal .ts-wrapper.form-select .ts-dropdown .option.active {
+    background: rgba(var(--bs-primary-rgb), .25);
+    color: var(--sic-text);
+}
+
+.prepedido-modal .ts-wrapper.form-select .ts-dropdown .option:hover {
+    background: rgba(var(--bs-primary-rgb), .15);
+    color: var(--sic-text);
+}
+
+.prepedido-modal .ts-wrapper.form-select .ts-dropdown .no-results {
+    color: var(--sic-muted);
+}
+
 /* ── Section title ── */
 .prepedido-section-title {
     font-size: .8rem;
@@ -105,6 +184,26 @@
     .prepedido-mapping-panel .form-label i {
         font-size: .8rem;
     }
+
+/* ── Mapping panel — display + lápis ── */
+.prepedido-mapping-panel-label {
+    margin-bottom: .1rem;
+}
+
+.mapping-display-text {
+    font-size: .9rem;
+    word-break: break-word;
+    min-height: 1.4em;
+}
+
+.prepedido-mapping-panel .btn-obs-edit {
+    opacity: 0;
+}
+
+.prepedido-mapping-panel:hover .btn-obs-edit,
+.prepedido-mapping-panel-label:hover .btn-obs-edit {
+    opacity: 1;
+}
 
 /* ── Table ── */
 .table-prepedido-wrap {

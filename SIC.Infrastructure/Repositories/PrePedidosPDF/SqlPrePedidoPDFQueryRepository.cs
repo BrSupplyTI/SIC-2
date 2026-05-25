@@ -92,7 +92,7 @@ public sealed class SqlPrePedidoPDFQueryRepository(IConfiguration configuration)
         LEFT JOIN BrSupply.dbo.BR_TblPrecoItem TI WITH (NOLOCK) ON TI.TblPrecoVigID = V.TblPrecoVigID AND TI.ItemID = I.ItemID
         LEFT JOIN BrSupply.dbo.BR_PrecoEstoque PE WITH (NOLOCK) ON PE.EstabelecimentoID = C.EstabelecimentoID AND PE.ItemID = I.ItemID
         WHERE pdfPI.PDFPrePedidoID = @PDFPrePedidoID
-        ORDER BY pdfPI.Sequencia ASC
+        ORDER BY CAST(pdfPI.Sequencia AS INT) ASC
         """;
 
     private const string LogsSql = """

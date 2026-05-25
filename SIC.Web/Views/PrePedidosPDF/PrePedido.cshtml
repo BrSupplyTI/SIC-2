@@ -349,7 +349,27 @@
                                     }
                                 </td>
                                 <td class="text-end text-nowrap">
-                                    @if (!string.IsNullOrWhiteSpace(item.VlrTblPrecoFormat))
+                                    @if (string.IsNullOrWhiteSpace(item.VlrTblPrecoFormat))
+                                    {
+                                        @("R$ 0,00")
+                                    }
+                                    else
+                                    {
+                                        @item.VlrTblPrecoFormat
+                                    }
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    @if (permiteEditarQuantidade)
+                                    {
+                                        <input type="text"
+                                               inputmode="numeric"
+                                               class="form-control form-control-sm js-prepedido-vlrunit text-end mx-auto prepedido-qty-input"
+                                               value="@item.PDFVlrUnit"
+                                               data-item-id="@item.PDFPrePedidoPDFItemID"
+                                               data-descricao="@item.Descricao"
+                                               data-last-value="@item.PDFVlrUnit" />
+                                    }
+                                    else
                                     {
                                         @($"R$ {item.PDFVlrUnit}")
                                     }
@@ -689,6 +709,8 @@
                 atualizarEndereco: '@Url.Action("AtualizarEndereco", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 atualizarLocalEntrega: '@Url.Action("AtualizarLocalEntrega", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 atualizarQuantidadeBase: '@Url.Action("PrePedido", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                atualizarVlrUnitBase: '@Url.Action("PrePedido", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                atualizarObs: '@Url.Action("AtualizarObs", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 cancelar: '@Url.Action("Cancelar", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 reprocessar: '@Url.Action("Reprocessar", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 trocaItens: '@Url.Action("GetTrocaItens", "PrePedidoPDFDetalhes")',

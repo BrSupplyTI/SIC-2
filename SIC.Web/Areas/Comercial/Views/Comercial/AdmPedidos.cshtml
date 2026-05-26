@@ -1,0 +1,181 @@
+@{
+    ViewData["Title"] = "Adm. de Pedidos";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/comercial/comercial.css" asp-append-version="true" />
+}
+
+<div class="comercial-area">
+    <div class="comercial-header">
+        <h2>
+            <i class="fa-duotone fa-box text-br me-2"></i>Administração de Pedidos
+        </h2>
+        <p>
+            Gestão de pedidos em todas as etapas do fluxo comercial: liberação, alteração, acompanhamento e relatórios.
+            Selecione uma seção abaixo para expandir suas opções.
+        </p>
+    </div>
+
+    <div class="accordion comercial-accordion" id="comercialPedidosAccordion">
+
+        @* ──────────────────────────────────────────────────────────
+           1. Gestão de Pedidos
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingGestaoPedidos">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseGestaoPedidos"
+                        aria-expanded="false"
+                        aria-controls="collapseGestaoPedidos">
+                    <i class="fa-duotone fa-clipboard-list comercial-icon"></i>
+                    Gestão de Pedidos
+                </button>
+            </h2>
+            <div id="collapseGestaoPedidos" class="accordion-collapse collapse" aria-labelledby="headingGestaoPedidos" data-bs-parent="#comercialPedidosAccordion">
+                <div class="accordion-body">
+                    <div class="comercial-module-desc">
+                        Libere, integre e acompanhe pedidos comerciais em todas as etapas.
+                    </div>
+                    <ul class="comercial-feature-list">
+                        
+                        <li class="comercial-feature-item comercial-feature-item-link">
+                            <a asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="Index" class="comercial-feature-link">
+                                <i class="fa-duotone fa-flag-checkered comercial-feature-icon"></i>
+                                <div class="comercial-feature-content">
+                                    <h6>Liberação de Pedidos</h6>
+                                    <p>Programar e liberar pedidos dos clientes, conforme condições comerciais.</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right comercial-feature-arrow"></i>
+                            </a>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-pen-to-square comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Alteração de Pedido <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Editar itens, quantidades, preços e condições de pedidos em aberto.</p>
+                            </div>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-ban comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Cancelamento de Pedido <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Cancelar pedidos total ou parcialmente com registro de motivo.</p>
+                            </div>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-truck-clock comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Acompanhamento de Pedidos <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Monitorar status, prazos de entrega e etapas de processamento dos pedidos.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* ──────────────────────────────────────────────────────────
+           2. Pré-Pedidos e ERP
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingPrePedidos">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapsePrePedidos"
+                        aria-expanded="false"
+                        aria-controls="collapsePrePedidos">
+                    <i class="fa-duotone fa-file-lines comercial-icon"></i>
+                    Pré-Pedidos e ERP
+                </button>
+            </h2>
+            <div id="collapsePrePedidos" class="accordion-collapse collapse" aria-labelledby="headingPrePedidos" data-bs-parent="#comercialPedidosAccordion">
+                <div class="accordion-body">
+                    <div class="comercial-module-desc">
+                        Gerencie pré-pedidos e a integração com o ERP para faturamento e processamento.
+                    </div>
+                    <ul class="comercial-feature-list">
+                        <li class="comercial-feature-item comercial-feature-item-link">
+                            <a asp-area="" asp-controller="PrePedidosPDF" asp-action="List" class="comercial-feature-link">
+                                <i class="fa-duotone fa-file-invoice comercial-feature-icon"></i>
+                                <div class="comercial-feature-content">
+                                    <h6>Pedidos ERP</h6>
+                                    <p>Visualizar e gerenciar pedidos integrados com o ERP corporativo.</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right comercial-feature-arrow"></i>
+                            </a>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-file-circle-plus comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Pré-Pedidos <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Criar e gerenciar pré-pedidos antes da conversão para pedido definitivo.</p>
+                            </div>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-arrows-turn-to-dots comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Conversão para Pedido <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Converter pré-pedidos aprovados em pedidos definitivos no sistema.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* ──────────────────────────────────────────────────────────
+           3. Consultas e Relatórios
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingConsultasPedidos">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseConsultasPedidos"
+                        aria-expanded="false"
+                        aria-controls="collapseConsultasPedidos">
+                    <i class="fa-duotone fa-magnifying-glass-chart comercial-icon"></i>
+                    Consultas e Relatórios
+                </button>
+            </h2>
+            <div id="collapseConsultasPedidos" class="accordion-collapse collapse" aria-labelledby="headingConsultasPedidos" data-bs-parent="#comercialPedidosAccordion">
+                <div class="accordion-body">
+                    <div class="comercial-module-desc">
+                        Consulte pedidos e gere relatórios de desempenho comercial.
+                    </div>
+                    <ul class="comercial-feature-list">
+                        <li class="comercial-feature-item comercial-feature-item-link">
+                            <a asp-area="" asp-controller="Pedidos" asp-action="Busca" class="comercial-feature-link">
+                                <i class="fa-duotone fa-boxes comercial-feature-icon"></i>
+                                <div class="comercial-feature-content">
+                                    <h6>Consulta de Pedidos</h6>
+                                    <p>Pesquisar pedidos por número, cliente, data ou status.</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right comercial-feature-arrow"></i>
+                            </a>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-chart-mixed comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Relatório de Pedidos <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Relatórios de volume, faturamento e desempenho por período e representante.</p>
+                            </div>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-gauge-high comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Dashboard Comercial <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Painel com indicadores-chave: pedidos em aberto, ticket médio e metas.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

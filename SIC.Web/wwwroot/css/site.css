@@ -909,15 +909,14 @@ a {
 
 .styled-table {
     border-collapse: collapse;
-    margin: 25px 0;
-    border: 2px solid var(--sic-brand-2);
+    margin: 10px 0;    
+    font-size: 0.9rem;
 }
 
-    .styled-table thead th {
-        background-color: var(--sic-brand-2) !important;
+    .styled-table thead th {        
         vertical-align: middle;
         border-bottom: 1px solid var(--sic-brand);
-        color: var(--bs-text-muted);
+        color: var(--sic-brand) !important;
         font-size: 0.9em;
         text-transform: uppercase;
     }
@@ -984,8 +983,8 @@ button.btn.btn-secondary.buttons-collection.dropdown-toggle {
 /* INÍCIO - Personalização de estilo botões Bootstrap */
 
 .form-check-input[type="checkbox"] {
-    min-height: 20px !important;
-    min-width: 35px !important;
+    min-height: 22px !important;
+    min-width: 22px !important;
     margin-right: 10px !important;
 }
 

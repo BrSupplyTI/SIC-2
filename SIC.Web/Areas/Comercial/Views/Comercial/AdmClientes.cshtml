@@ -1,0 +1,168 @@
+@{
+    ViewData["Title"] = "Adm. de Clientes";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/comercial/comercial.css" asp-append-version="true" />
+}
+
+<div class="comercial-area">
+    <div class="comercial-header">
+        <h2>
+            <i class="fa-duotone fa-user-tie text-br me-2"></i>Administração de Clientes
+        </h2>
+        <p>
+            Centralize o gerenciamento de clientes: cadastro, manutenção, consultas e integrações.
+            Selecione uma seção abaixo para expandir suas opções.
+        </p>
+    </div>
+
+    <div class="accordion comercial-accordion" id="comercialClientesAccordion">
+
+        @* ──────────────────────────────────────────────────────────
+           1. Cadastro e Manutenção
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingCadastro">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseCadastro"
+                        aria-expanded="false"
+                        aria-controls="collapseCadastro">
+                    <i class="fa-duotone fa-address-card comercial-icon"></i>
+                    Cadastro e Manutenção
+                </button>
+            </h2>
+            <div id="collapseCadastro" class="accordion-collapse collapse" aria-labelledby="headingCadastro" data-bs-parent="#comercialClientesAccordion">
+                <div class="accordion-body">
+                    <div class="comercial-module-desc">
+                        Crie, edite e gerencie informações cadastrais de clientes, vínculos de representantes
+                        e agrupamentos comerciais.
+                    </div>
+                    <ul class="comercial-feature-list">
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-user-plus comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Cadastro de Clientes <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Incluir novos clientes com dados fiscais, endereço e contatos.</p>
+                            </div>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-pen-to-square comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Alteração Cadastral <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Editar dados de clientes existentes: razão social, endereço, condições comerciais.</p>
+                            </div>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-handshake comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Vínculos de Representantes <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Associar ou alterar representantes comerciais vinculados a cada cliente.</p>
+                            </div>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-layer-group comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Grupos de Clientes <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Organizar clientes em grupos comerciais para políticas de preço e condições.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* ──────────────────────────────────────────────────────────
+           2. Consultas e Relatórios
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingConsultasClientes">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseConsultasClientes"
+                        aria-expanded="false"
+                        aria-controls="collapseConsultasClientes">
+                    <i class="fa-duotone fa-magnifying-glass-chart comercial-icon"></i>
+                    Consultas e Relatórios
+                </button>
+            </h2>
+            <div id="collapseConsultasClientes" class="accordion-collapse collapse" aria-labelledby="headingConsultasClientes" data-bs-parent="#comercialClientesAccordion">
+                <div class="accordion-body">
+                    <div class="comercial-module-desc">
+                        Pesquise clientes, visualize detalhes e gere relatórios de carteira comercial.
+                    </div>
+                    <ul class="comercial-feature-list">
+                        <li class="comercial-feature-item comercial-feature-item-link">
+                            <a asp-area="" asp-controller="Clientes" asp-action="Busca" class="comercial-feature-link">
+                                <i class="fa-duotone fa-search comercial-feature-icon"></i>
+                                <div class="comercial-feature-content">
+                                    <h6>Consulta de Clientes</h6>
+                                    <p>Pesquisar clientes por razão social, CNPJ, cidade ou representante.</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right comercial-feature-arrow"></i>
+                            </a>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-file-chart-column comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Relatório de Carteira <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Visão consolidada da carteira de clientes com volume de pedidos e faturamento.</p>
+                            </div>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-credit-card comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Análise de Crédito <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Consultar limites de crédito, saldos e histórico de inadimplência dos clientes.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* ──────────────────────────────────────────────────────────
+           3. Integrações
+           ────────────────────────────────────────────────────────── *@
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingIntegracoesClientes">
+                <button class="accordion-button fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseIntegracoesClientes"
+                        aria-expanded="false"
+                        aria-controls="collapseIntegracoesClientes">
+                    <i class="fa-duotone fa-plug comercial-icon"></i>
+                    Integrações
+                </button>
+            </h2>
+            <div id="collapseIntegracoesClientes" class="accordion-collapse collapse" aria-labelledby="headingIntegracoesClientes" data-bs-parent="#comercialClientesAccordion">
+                <div class="accordion-body">
+                    <div class="comercial-module-desc">
+                        Gerencie a integração de dados cadastrais de clientes com sistemas externos (ERP, CRM).
+                    </div>
+                    <ul class="comercial-feature-list">
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-arrows-rotate comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Sincronização ERP <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Sincronizar cadastros de clientes entre o SIC e o ERP corporativo.</p>
+                            </div>
+                        </li>
+                        <li class="comercial-feature-item">
+                            <i class="fa-duotone fa-file-import comercial-feature-icon"></i>
+                            <div class="comercial-feature-content">
+                                <h6>Importação / Exportação <span class="comercial-badge-soon">Em breve</span></h6>
+                                <p>Importar ou exportar dados de clientes em formato Excel ou CSV.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

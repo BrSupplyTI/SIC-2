@@ -1,0 +1,205 @@
+@model SIC.Web.Models.Liberacao.LiberacaoPedidoDetalhesViewModel
+@{
+    // Modais de ação de item (Fase 5) - conversão fiel de comercial_liberacao_pedido.php
+    // modalEditarItem, modalEditarItemComOV, modalExcluirItem, modalTrocarItem
+    var areaName = "Comercial";
+}
+
+<!-- ============================================================ -->
+<!-- MODAL: EDITAR ITEM (sem OV)                                  -->
+<!-- ============================================================ -->
+<div class="modal fade" id="modalEditarItem" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form asp-area="@areaName" asp-controller="LiberacaoPedido" asp-action="AlterarItem" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-duotone fa-pencil me-2"></i>Alterar Item do Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" id="EdtCotacaoID" />
+                    <input type="hidden" name="CotacaoItemID" id="EdtCotacaoItemID" />
+                    <input type="hidden" name="ItemIDOld" id="EdtItemIDOld" />
+                    <input type="hidden" name="CdItemOld" id="EdtCdItemOld" />
+                    <input type="hidden" name="NmItemOld" id="EdtNmItemOld" />
+                    <input type="hidden" name="QuantidadeOld" id="EdtQtItemOld" />
+                    <input type="hidden" name="ValorOld" id="EdtVlrUnitOld" />
+                    <input type="hidden" name="OrdemItemOld" id="EdtOrdemOld" />
+                    <input type="hidden" name="SequenciaOld" id="EdtSequenciaOld" />
+
+                    <p class="mb-1">Item: <strong><span id="EdtCdItem"></span> — <span id="EdtNmItem"></span></strong></p>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-3">
+                            <label class="form-label">Quantidade</label>
+                            <input type="number" min="1" step="1" name="Quantidade" id="EdtQtItem" class="form-control" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Valor Unitário (R$)</label>
+                            <input type="text" name="Valor" id="EdtVlrUnit" class="form-control" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Ordem Cliente</label>
+                            <input type="text" name="OrdemItem" id="EdtOrdem" class="form-control" maxlength="50" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Sequência</label>
+                            <input type="text" name="Sequencia" id="EdtSequencia" class="form-control" maxlength="50" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Motivo da alteração <span class="text-danger">*</span></label>
+                            <textarea name="Motivo" class="form-control" rows="2" required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info"><i class="fa-solid fa-check me-1"></i>Confirmar Alteração</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: EDITAR ITEM COM OV (só ordem/sequência)               -->
+<!-- ============================================================ -->
+<div class="modal fade" id="modalEditarItemComOV" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-area="@areaName" asp-controller="LiberacaoPedido" asp-action="AlterarItemComOv" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-duotone fa-pencil me-2"></i>Alterar Ordem/Sequência — Pedido com OV</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" id="EdtOVCotacaoID" />
+                    <input type="hidden" name="CotacaoItemID" id="EdtOVCotacaoItemID" />
+                    <input type="hidden" name="CdItemOld" id="EdtOVCdItemOld" />
+                    <input type="hidden" name="NmItemOld" id="EdtOVNmItemOld" />
+                    <input type="hidden" name="OrdemItemOld" id="EdtOVOrdemOld" />
+                    <input type="hidden" name="SequenciaOld" id="EdtOVSequenciaOld" />
+
+                    <div class="alert alert-warning">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        Pedido com Ordem de Venda — apenas a Ordem do Cliente e a Sequência podem ser alteradas.
+                    </div>
+                    <p class="mb-1">Item: <strong><span id="EdtOVCdItem"></span> — <span id="EdtOVNmItem"></span></strong></p>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Ordem Cliente</label>
+                            <input type="text" name="OrdemItem" id="EdtOVOrdem" class="form-control" maxlength="50" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sequência</label>
+                            <input type="text" name="Sequencia" id="EdtOVSequencia" class="form-control" maxlength="50" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Motivo da alteração <span class="text-danger">*</span></label>
+                            <textarea name="Motivo" class="form-control" rows="2" required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info"><i class="fa-solid fa-check me-1"></i>Confirmar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: EXCLUIR ITEM                                          -->
+<!-- ============================================================ -->
+<div class="modal fade" id="modalExcluirItem" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-area="@areaName" asp-controller="LiberacaoPedido" asp-action="ExcluirItem" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fa-duotone fa-trash-alt me-2"></i>Excluir Item do Pedido</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" id="DelCotacaoID" />
+                    <input type="hidden" name="CotacaoItemID" id="DelCotacaoItemID" />
+                    <input type="hidden" name="ItemIDOld" id="DelItemID" />
+                    <input type="hidden" name="CdItemOld" id="DelCdItemOld" />
+                    <input type="hidden" name="NmItemOld" id="DelNmItemOld" />
+                    <input type="hidden" name="QuantidadeOld" id="DelQtItemOld" />
+                    <input type="hidden" name="ValorOld" id="DelVlrUnitOld" />
+
+                    <p>Confirma a exclusão do item abaixo do pedido?</p>
+                    <ul class="list-unstyled ms-2">
+                        <li><strong>Código:</strong> <span id="DelCdItem"></span></li>
+                        <li><strong>Descrição:</strong> <span id="DelNmItem"></span></li>
+                        <li><strong>Qtde.:</strong> <span id="DelQtItem"></span></li>
+                        <li><strong>Vlr. Unit.:</strong> R$ <span id="DelVlrUnit"></span></li>
+                    </ul>
+                    <div class="mt-3">
+                        <label class="form-label">Motivo da exclusão <span class="text-danger">*</span></label>
+                        <textarea name="Motivo" class="form-control" rows="2" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash me-1"></i>Excluir Item</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: TROCAR ITEM (com busca de compatíveis)                -->
+<!-- ============================================================ -->
+<div class="modal fade" id="modalTrocarItem" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <form asp-area="@areaName" asp-controller="LiberacaoPedido" asp-action="TrocarItem" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title"><i class="fa-duotone fa-arrows-rotate me-2"></i>Substituir Item do Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" id="AltCotacaoID" />
+                    <input type="hidden" name="CotacaoItemID" id="AltCotacaoItemID" />
+                    <input type="hidden" name="ItemIDOld" id="AltItemID" />
+                    <input type="hidden" name="CdItemOld" id="AltCdItemOld" />
+                    <input type="hidden" name="NmItemOld" id="AltNmItemOld" />
+
+                    <div class="card mb-3">
+                        <div class="card-header py-2"><strong>Item atual do pedido</strong></div>
+                        <div class="card-body py-2">
+                            <div class="row">
+                                <div class="col-md-2"><small class="text-muted">Código</small><br /><strong><span id="AltCdItem"></span></strong></div>
+                                <div class="col-md-5"><small class="text-muted">Nome</small><br /><span id="AltNmItem"></span></div>
+                                <div class="col-md-1 text-center"><small class="text-muted">Qtde.</small><br /><span id="AltQtItem"></span></div>
+                                <div class="col-md-2 text-end"><small class="text-muted">Vlr. Unit.</small><br />R$ <span id="AltVlrUnit"></span></div>
+                                <div class="col-md-2 text-end"><small class="text-muted">Custo</small><br />R$ <span id="AltCusto"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="divItensDubstitutos"></div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-12">
+                            <label class="form-label">Motivo da substituição <span class="text-danger">*</span></label>
+                            <textarea name="Motivo" class="form-control" rows="2" required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning btnTrocarItemFinal d-none">
+                        <i class="fa-solid fa-check me-1"></i>Confirmar Substituição
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

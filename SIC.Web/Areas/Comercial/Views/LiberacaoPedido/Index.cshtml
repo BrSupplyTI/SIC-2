@@ -1,0 +1,940 @@
+@model SIC.Web.Models.Liberacao.LiberacaoPedidoListViewModel
+@{
+    ViewData["Title"] = "Liberação de Pedidos";
+
+    var totalFiltrosAtivos = Model.FiltrosAtivos.Count;
+}
+
+@functions {
+    static string BadgeRuptura(int qtRuptura)
+    {
+        if (qtRuptura <= 0)
+            return "<span class=\"lib-badge lib-badge-ok\">0</span>";
+        return "<span class=\"lib-badge lib-badge-danger\">" + qtRuptura + "</span>";
+    }
+
+    static string BadgeIntegracao(string integracao)
+    {
+        if (string.IsNullOrWhiteSpace(integracao)) return "<span class=\"lib-badge lib-badge-muted\">—</span>";
+        if (integracao.Equals("Sim", StringComparison.OrdinalIgnoreCase) || integracao.Equals("Integrado", StringComparison.OrdinalIgnoreCase))
+            return "<span class=\"lib-badge lib-badge-ok\">" + integracao + "</span>";
+        if (integracao.Contains("Erro", StringComparison.OrdinalIgnoreCase))
+            return "<span class=\"lib-badge lib-badge-danger\">" + integracao + "</span>";
+        return "<span class=\"lib-badge lib-badge-warn\">" + integracao + "</span>";
+    }
+
+    static string BadgeSla(string sla)
+    {
+        if (string.IsNullOrWhiteSpace(sla)) return "<span class=\"lib-badge lib-badge-muted\">—</span>";
+        if (sla.Contains("OK", StringComparison.OrdinalIgnoreCase) || sla.Contains("Dentro", StringComparison.OrdinalIgnoreCase))
+            return "<span class=\"lib-badge lib-badge-ok\">" + sla + "</span>";
+        return "<span class=\"lib-badge lib-badge-warn\">" + sla + "</span>";
+    }
+
+    static string ValMargem(decimal margem)
+    {
+        if (margem > 0) return "<span class=\"lib-val lib-val-ok\">" + margem.ToString("N2") + "%</span>";
+        if (margem < 0) return "<span class=\"lib-val lib-val-danger\">" + margem.ToString("N2") + "%</span>";
+        return "<span class=\"lib-val lib-val-muted\">0,00%</span>";
+    }
+
+    static string ValFrete(decimal percFrete)
+    {
+        if (percFrete > 5) return "<span class=\"lib-val lib-val-danger\">" + percFrete.ToString("N2") + "%</span>";
+        if (percFrete > 0) return "<span class=\"lib-val lib-val-warn\">" + percFrete.ToString("N2") + "%</span>";
+        return "<span class=\"lib-val lib-val-muted\">0,00%</span>";
+    }
+
+    static string ValDiasParado(int dias)
+    {
+        if (dias > 0) return "<span class=\"lib-val lib-val-danger\">" + dias + "d</span>";
+        return "<span class=\"lib-val lib-val-ok\">Em dia</span>";
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
+    <style>
+        .lib-section-title {
+            font-size: .9rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+            color: var(--sic-muted); border-bottom: 1px solid var(--sic-border);
+            padding-bottom: .5rem; margin-bottom: 1rem;
+        }
+        .lib-table-wrap {
+            border: 1px solid var(--sic-border); border-radius: .5rem; overflow: hidden;
+        }
+        .lib-table { --bs-table-bg: transparent; --bs-table-hover-bg: var(--sic-surface-2); }
+        .lib-table thead th {
+            font-size: .9rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
+            color: var(--sic-muted); background: var(--sic-surface-2);
+            border-bottom: 2px solid var(--sic-border); padding: .45rem .5rem; white-space: nowrap;
+        }
+        .lib-table tbody td {
+            color: var(--sic-text); border-bottom: 1px solid var(--sic-border);
+            padding: .4rem .5rem; font-size: .9rem; vertical-align: middle;
+        }
+        .lib-table tbody tr:last-child td { border-bottom: none; }
+        .lib-table tbody tr.selected { background: rgba(var(--bs-primary-rgb), .08) !important; }
+
+        /* Dashboard cards */
+        .lib-dash-card {
+            border-radius: .5rem; padding: .85rem 1rem; 
+            border: 1px solid var(--sic-border); background: var(--sic-surface-2);
+            display: flex; align-items: center; gap: .85rem;
+            border-left: 3px solid var(--sic-border);
+            transition: box-shadow .15s, transform .15s;
+        }
+        .lib-dash-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            transform: translateY(-1px);
+        }
+        .lib-dash-card .lib-dash-icon {
+            width: 40px; height: 40px; border-radius: .5rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0;
+        }
+        .lib-dash-card .lib-dash-info {
+            min-width: 0;
+        }
+        .lib-dash-card h3 { font-size: 1.35rem; font-weight: 700; margin: 0; line-height: 1.2; }
+        .lib-dash-card small { font-size: .68rem; color: var(--sic-muted); text-transform: uppercase; letter-spacing: .04em; line-height: 1.3; }
+
+        /* Card color variants */
+        .lib-dash-card--primary  { border-left-color: var(--bs-primary); }
+        .lib-dash-card--primary .lib-dash-icon  { background: rgba(var(--bs-primary-rgb), .1); color: var(--bs-primary); }
+        .lib-dash-card--success  { border-left-color: #198754; }
+        .lib-dash-card--success .lib-dash-icon  { background: rgba(25,135,84,.1); color: #198754; }
+        .lib-dash-card--danger   { border-left-color: #dc3545; }
+        .lib-dash-card--danger .lib-dash-icon   { background: rgba(220,53,69,.1); color: #dc3545; }
+        .lib-dash-card--warning  { border-left-color: #997404; }
+        .lib-dash-card--warning .lib-dash-icon  { background: rgba(255,193,7,.15); color: #997404; }
+
+        /* Summary bar */
+        .lib-dash-summary {
+            display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+            padding: .6rem 1rem; border-radius: .375rem;
+            background: var(--sic-surface-2); border: 1px solid var(--sic-border);
+            font-size: .78rem; color: var(--sic-muted);
+        }
+        .lib-dash-summary strong { color: var(--sic-text); }
+
+        /* Badges */
+        .lib-badge {
+            display: inline-block; font-size: .7rem; font-weight: 600; padding: .2rem .55rem;
+            border-radius: .25rem; line-height: 1.2;
+        }
+        .lib-badge-ok { background: rgba(25,135,84,.12); color: #198754; }
+        .lib-badge-warn { background: rgba(255,193,7,.15); color: #997404; }
+        .lib-badge-danger { background: rgba(220,53,69,.12); color: #dc3545; }
+        .lib-badge-muted { background: rgba(108,117,125,.1); color: var(--sic-muted); }
+
+        /* Value spans */
+        .lib-val { font-weight: 600; font-size: .78rem; }
+        .lib-val-ok { color: #198754; }
+        .lib-val-warn { color: #997404; }
+        .lib-val-danger { color: #dc3545; }
+        .lib-val-muted { color: var(--sic-muted); }
+
+        /* Bulk bar */
+        .lib-bulk-bar {
+            display: none; position: sticky; bottom: 0; z-index: 10;
+            background: var(--sic-surface-2); border-top: 2px solid rgba(var(--bs-primary-rgb), .3);
+            padding: .75rem 1.25rem; border-radius: .5rem .5rem 0 0;
+            box-shadow: 0 -4px 12px rgba(0,0,0,.08);
+        }
+        .lib-bulk-bar.show { display: flex; }
+
+        /* ColVis menu */
+        .lib-colvis-menu {
+            max-height: 360px; overflow-y: auto; min-width: 220px; font-size: .82rem;
+        }
+
+        /* Badge filtro ativo */
+        .badge-filtro-ativo {
+            display: inline-flex; align-items: center; gap: .35rem;
+            background: rgba(var(--bs-primary-rgb), .1); color: var(--sic-text);
+            font-size: .78rem; font-weight: 500; padding: .3rem .7rem; border-radius: .375rem;
+            cursor: pointer; transition: background .15s;
+        }
+        .badge-filtro-ativo:hover { background: rgba(var(--bs-primary-rgb), .2); }
+
+        /* checkbox alignment */
+        .lib-table .form-check-input { margin-top: 0; }
+
+        /* OV error tooltip */
+        .lib-ov-erro { border-bottom: 1px dashed #dc3545; cursor: help; }
+    </style>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin fa-flag-checkered me-2 text-br"></i>Liberação de Pedidos</h2>
+                </div>
+                <p class="text-muted mt-1 mb-0">
+                    <strong>@Model.Pedidos.Count.ToString("N0", new System.Globalization.CultureInfo("pt-BR"))</strong> pedido(s) encontrado(s)
+                </p>
+            </div>
+        </div>
+
+        <!-- Dashboard cards -->
+        <div class="row g-2 mb-3">
+            <div class="col-6 col-xl-2">
+                <div class="lib-dash-card lib-dash-card--primary">
+                    <div class="lib-dash-icon"><i class="fa-duotone fa-clipboard-list"></i></div>
+                    <div class="lib-dash-info">
+                        <h3 class="text-primary">@Model.Pedidos.Count</h3>
+                        <small>Total Pedidos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-2">
+                <div class="lib-dash-card lib-dash-card--success">
+                    <div class="lib-dash-icon"><i class="fa-duotone fa-file-circle-check"></i></div>
+                    <div class="lib-dash-info">
+                        <h3 style="color:#198754">@Model.TotalComOV</h3>
+                        <small>Com OV</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-2">
+                <div class="lib-dash-card lib-dash-card--danger">
+                    <div class="lib-dash-icon"><i class="fa-duotone fa-triangle-exclamation"></i></div>
+                    <div class="lib-dash-info">
+                        <h3 style="color:#dc3545">@Model.TotalComRuptura</h3>
+                        <small>Com Ruptura</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-2">
+                <div class="lib-dash-card lib-dash-card--warning">
+                    <div class="lib-dash-icon"><i class="fa-duotone fa-clock"></i></div>
+                    <div class="lib-dash-info">
+                        <h3 style="color:#997404">@Model.TotalAtrasados</h3>
+                        <small>Atrasados</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-2">
+                <div class="lib-dash-card lib-dash-card--danger">
+                    <div class="lib-dash-icon"><i class="fa-duotone fa-circle-exclamation"></i></div>
+                    <div class="lib-dash-info">
+                        <h3 style="color:#dc3545">@Model.TotalErroOV</h3>
+                        <small>Erro na OV</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-2">
+                <div class="lib-dash-card lib-dash-card--warning">
+                    <div class="lib-dash-icon"><i class="fa-duotone fa-file-slash"></i></div>
+                    <div class="lib-dash-info">
+                        <h3 style="color:#997404">@Model.TotalSemOC</h3>
+                        <small>Sem Ordem Compra</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary bar -->
+        <div class="lib-dash-summary mb-4">           
+            <span><i class="fa-solid fa-coins me-1"></i> Valor total: <strong>@Model.Pedidos.Sum(p => p.ValorPedido).ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</strong></span>
+        </div>
+
+        <!-- Alertas TempData -->
+        @if (TempData["Sucesso"] is string msgSucesso)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-circle-check me-1"></i>@msgSucesso
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Erro"] is string msgErro)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-circle-exclamation me-1"></i>@msgErro
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Formulário GET com filtros hidden -->
+        <form method="get" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="Index" id="formLiberacao">
+            <input type="hidden" name="filtroPalavra1" id="hidFiltroPalavra1" value="@Model.FiltroPalavra1" />
+            <input type="hidden" name="filtroPalavra2" id="hidFiltroPalavra2" value="@Model.FiltroPalavra2" />
+            <input type="hidden" name="filtroPalavra3" id="hidFiltroPalavra3" value="@Model.FiltroPalavra3" />
+            <input type="hidden" name="filtroOrdemCompra" id="hidFiltroOrdemCompra" value="@Model.FiltroOrdemCompra" />
+            <input type="hidden" name="filtroRuptura" id="hidFiltroRuptura" value="@Model.FiltroRuptura" />
+            <input type="hidden" name="filtroFrete" id="hidFiltroFrete" value="@Model.FiltroFrete" />
+            <input type="hidden" name="filtroMargemNegativa" id="hidFiltroMargemNegativa" value="@Model.FiltroMargemNegativa" />
+            <input type="hidden" name="filtroValorAbaixo" id="hidFiltroValorAbaixo" value="@Model.FiltroValorAbaixo" />
+            <input type="hidden" name="filtroValorAcima" id="hidFiltroValorAcima" value="@Model.FiltroValorAcima" />
+            <input type="hidden" name="filtroIntegracaoSAP" id="hidFiltroIntegracaoSAP" value="@Model.FiltroIntegracaoSAP" />
+            <input type="hidden" name="filtroContemItem" id="hidFiltroContemItem" value="@Model.FiltroContemItem" />
+            <input type="hidden" name="filtroAtrasados" id="hidFiltroAtrasados" value="@Model.FiltroAtrasados" />
+            <input type="hidden" name="filtroFretePagar" id="hidFiltroFretePagar" value="@Model.FiltroFretePagar" />
+
+            <!-- Busca & Controles -->
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-lg-4">
+                    <small class="text-muted">Pesquisar na tabela</small>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="inputBuscaTabela"
+                               placeholder="Cliente, produto, pedido..." />
+                        <button type="button" class="btn btn-primary" id="btnBuscaTabela">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <small class="text-muted">Por página</small>
+                    <select class="form-select h-45px" id="selectPageSize">
+                        @foreach (var size in new[] { 10, 20, 30, 50, 100, 200 })
+                        {
+                            <option value="@size" selected="@(size == 20)">@size itens</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <small class="text-muted">Colunas</small>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <i class="fa-solid fa-table-columns me-1"></i>Colunas
+                        </button>
+                        <ul class="dropdown-menu lib-colvis-menu" id="colVisMenu"></ul>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-4 d-flex gap-2 align-items-end">
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1 position-relative" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFiltros">
+                        <i class="fa-solid fa-sliders me-1"></i>Filtros
+                        @if (totalFiltrosAtivos > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@totalFiltrosAtivos</span>
+                        }
+                    </button>
+                    <a asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="Index" class="btn btn-outline-danger" title="Limpar filtros">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-success" id="btnExportCsv" title="Exportar CSV">
+                        <i class="fa-solid fa-file-csv"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Filtros ativos -->
+        @if (Model.FiltrosAtivos.Count > 0)
+        {
+            <div class="d-flex flex-wrap gap-2 mb-4" id="activeFilters">
+                @foreach (var f in Model.FiltrosAtivos)
+                {
+                    <span class="badge-filtro-ativo" onclick="removeFilter('@f.Campo')">
+                        <i class="fa-solid fa-filter me-1"></i>@f.Label<i class="fa-solid fa-xmark ms-2"></i>
+                    </span>
+                }
+            </div>
+        }
+
+        <!-- Tabela -->
+        <div class="lib-section-title">
+            <i class="fa-duotone fa-list me-1 text-br"></i>Pedidos para Liberação
+        </div>
+
+        <div class="lib-table-wrap">
+            <div class="table-responsive">
+                <table class="table table-hover lib-table mb-0 styled-table" id="tblLiberacao">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width:36px">
+                                <input type="checkbox" class="form-check-input" id="chkAll" title="Selecionar todos" />
+                            </th>
+                            <th>Pedido</th>
+                            <th>Cód. Cliente</th>
+                            <th>Cliente</th>
+                            <th>Razão Social</th>
+                            <th>Carteira</th>
+                            <th>Cidade/UF</th>
+                            <th>Ordem Compra</th>
+                            <th>OC Preenchida</th>                            
+                            <th>Data Pedido</th>
+                            <th>Prog. Entrega</th>
+                            <th>Prog. Embarque</th>
+                            <th>Prog. Liberação</th>
+                            <th>SLA Cliente</th>
+                            <th class="text-center">Status SLA</th>
+                            <th class="text-center">Dias Parado</th>
+                            <th class="text-center">Qt Itens</th>
+                            <th class="text-center">Qt Ruptura</th>
+                            <th class="text-end">Valor Pedido</th>
+                            <th class="text-end">Margem Bruta</th>
+                            <th class="text-end">Frete R$</th>
+                            <th class="text-end">Frete Calc</th>
+                            <th class="text-end">% Frete</th>
+                            <th class="text-end">Taxa Serviço</th>
+                            <th>Forma Pagto</th>
+                            <th class="text-center">Integração SAP</th>
+                            <th>Erro SAP</th>
+                            <th>OV SAP</th>
+                            <th>Categoria</th>
+                            <th>Canal Venda</th>
+                            <th>Tipo Doc.</th>
+                            <th>Local Entrega</th>
+                            <th>Cd. Controle</th>
+                            <th>Lib. Automático</th>
+                            <th>Observações</th>
+                            <th>Solicitante</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Pedidos)
+                        {
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input chk-row" value="@row.CotacaoID" />
+                                </td>
+                                <td>
+                                    <a asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="Detalhes" asp-route-cotacaoId="@row.CotacaoID"
+                                       class="fw-semibold text-decoration-none text-br" title="Ver Detalhes">
+                                        @row.CotacaoID
+                                    </a>
+                                </td>
+                                <td>@row.CdExtCliente</td>
+                                <td>@row.NmCliente</td>
+                                <td>@row.RazaoSocialCliente</td>
+                                <td>@row.NmCarteira</td>
+                                <td>@row.CidadeUF</td>
+                                <td>@row.OrdemCompra</td>
+                                <td>@row.OC_Preenchida</td>                                
+                                <td>@row.DataCotacao</td>
+                                <td>@row.DataProgEntrega</td>
+                                <td>@row.DataProgEmbarque</td>
+                                <td>@row.DataProgLiberacao</td>
+                                <td>@row.DataSLACliente</td>
+                                <td class="text-center">@Html.Raw(BadgeSla(row.StatusSLACliente))</td>
+                                <td class="text-center">@Html.Raw(ValDiasParado(row.QtDiasParado))</td>
+                                <td class="text-center">@row.QtItens</td>
+                                <td class="text-center">@Html.Raw(BadgeRuptura(row.QtRuptura))</td>
+                                <td class="text-end">@row.ValorPedido.ToString("N2")</td>
+                                <td class="text-end">@Html.Raw(ValMargem(row.MargemBruta))</td>
+                                <td class="text-end">@row.VlrFrete.ToString("N2")</td>
+                                <td class="text-end">@row.VlrFreteCalc.ToString("N2")</td>
+                                <td class="text-end">@Html.Raw(ValFrete(row.PercFrete))</td>
+                                <td class="text-end">@row.VlrTaxaServico.ToString("N2")</td>
+                                <td>@row.FormaPagto</td>
+                                <td class="text-center">@Html.Raw(BadgeIntegracao(row.StatusIntegradoSAP))</td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(row.DescricaoErroSAP))
+                                    {
+                                        <span class="lib-ov-erro text-danger" title="@row.DescricaoErroSAP">@row.DescricaoErroSAP</span>
+                                    }
+                                </td>
+                                <td>@row.TipoOVSAP</td>
+                                <td>@row.NmCategoria</td>
+                                <td>@row.NmCanalVenda</td>
+                                <td>@row.TipoDocumento</td>
+                                <td>@row.NmLocalEntrega</td>
+                                <td>@row.CdControle</td>
+                                <td>@row.LiberarAutomatico</td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(row.Observacoes))
+                                    {
+                                        <span title="@row.Observacoes">@(row.Observacoes.Length > 40 ? row.Observacoes[..40] + "…" : row.Observacoes)</span>
+                                    }
+                                </td>
+                                <td>@row.Solicitante</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Bulk action bar -->
+        <div class="lib-bulk-bar align-items-center justify-content-between" id="bulkBar">
+            <span class="fw-semibold"><span id="bulkCount">0</span> pedido(s) selecionado(s)</span>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success" id="btnLiberar">
+                    <i class="fa-solid fa-check me-1"></i>Liberar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnIntegrar">
+                    <i class="fa-solid fa-plug me-1"></i>Integrar
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Offcanvas de Filtros -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasFiltros" aria-labelledby="offcanvasFiltrosLabel" style="width:400px">
+    <div class="offcanvas-header border-bottom">
+        <h5 id="offcanvasFiltrosLabel" class="mb-0"><i class="fa-duotone fa-sliders me-2 text-br"></i>Filtros</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+        <div class="flex-grow-1">
+
+            <!-- Expressões de pesquisa -->
+            <p class="lib-section-title"><i class="fa-solid fa-magnifying-glass me-1"></i>Pesquisa por Expressão</p>
+            <div class="mb-2">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <label class="form-label fw-semibold mb-0 flex-grow-1" for="filtroPalavra1">Contém a Expressão (1)</label>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:.75rem;" id="btnAddExpr2" title="Adicionar expressão"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <input type="text" class="form-control form-control-sm" id="filtroPalavra1" value="@Model.FiltroPalavra1" placeholder="Ex: cliente, cidade, código..." />
+            </div>
+            <div class="mb-2" id="wrapExpr2" style="display:none">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <label class="form-label fw-semibold mb-0 flex-grow-1" for="filtroPalavra2">Contém a Expressão (2)</label>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:.75rem;" id="btnAddExpr3" title="Adicionar expressão"><i class="fa-solid fa-plus"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:.75rem;" id="btnRemExpr2" title="Remover expressão"><i class="fa-solid fa-minus"></i></button>
+                </div>
+                <input type="text" class="form-control form-control-sm" id="filtroPalavra2" value="@Model.FiltroPalavra2" placeholder="Segunda expressão (opcional)" />
+            </div>
+            <div class="mb-3" id="wrapExpr3" style="display:none">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <label class="form-label fw-semibold mb-0 flex-grow-1" for="filtroPalavra3">Contém a Expressão (3)</label>
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:.75rem;" id="btnRemExpr3" title="Remover expressão"><i class="fa-solid fa-minus"></i></button>
+                </div>
+                <input type="text" class="form-control form-control-sm" id="filtroPalavra3" value="@Model.FiltroPalavra3" placeholder="Terceira expressão (opcional)" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold mb-1" for="filtroContemItem"><i class="fa-solid fa-box me-1 text-muted"></i>Contém o Item (código ou parte do nome)</label>
+                <input type="text" class="form-control form-control-sm" id="filtroContemItem" value="@Model.FiltroContemItem" placeholder="Código ou nome do produto" />
+            </div>
+
+            <!-- Filtros com radio buttons -->
+            <p class="lib-section-title mt-4"><i class="fa-solid fa-filter me-1"></i>Filtros de Situação</p>
+
+            <!-- Ruptura: 0=tudo, 1=com, 2=sem -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1 text-muted"></i>Existência de Ruptura</label>
+                <select class="form-select" id="rfRuptura" name="rfRuptura">
+                    <option value="0" selected="@(Model.FiltroRuptura == 0)">Todos os Pedidos</option>
+                    <option value="1" selected="@(Model.FiltroRuptura == 1)">COM Ruptura</option>
+                    <option value="2" selected="@(Model.FiltroRuptura == 2)">SEM Ruptura</option>
+                </select>
+            </div>
+
+            <!-- Ordem de Compra: 0=tudo, 1=preenchida, 2=vazia -->
+             <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-receipt me-1 text-muted"></i>Ordem de Compra</label>
+                <select class="form-select" id="rfOrdemCompra" name="rfOrdemCompra">
+                    <option value="0" selected="@(Model.FiltroOrdemCompra == 0)">Todos os Pedidos</option>
+                    <option value="1" selected="@(Model.FiltroOrdemCompra == 1)">COM Ordem de Compra</option>
+                    <option value="2" selected="@(Model.FiltroOrdemCompra == 2)">SEM Ordem de Compra</option>
+                </select>
+            </div>
+
+            <!-- Frete (cobrança): 0=tudo, 1=com valor, 2=sem valor -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-truck me-1 text-muted"></i>Cobrança de Frete</label>
+                <select class="form-select" id="rfFrete" name="rfFrete">
+                    <option value="0" selected="@(Model.FiltroFrete == 0)">Todos os Pedidos</option>
+                    <option value="1" selected="@(Model.FiltroFrete == 1)">COM Cobrança</option>
+                    <option value="2" selected="@(Model.FiltroFrete == 2)">SEM Cobrança</option>                    
+                </select>
+            </div>
+
+            <!-- Frete a Pagar: 0=tudo, 1=agrupados, 2=acima da meta 6% -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-money-bill me-1 text-muted"></i>Pagamento de Frete</label>
+                <select class="form-select" id="rfFretePagar" name="rfFretePagar">
+                    <option value="0" selected="@(Model.FiltroFretePagar == 0)">Todos os Pedidos</option>
+                    <option value="1" selected="@(Model.FiltroFretePagar == 1)">Frete Agrupado</option>
+                    <option value="2" selected="@(Model.FiltroFretePagar == 2)">Frete Acima de 6%</option>
+                </select>
+            </div>
+
+
+
+            <!-- Integração SAP -->            
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-plug me-1 text-muted"></i>Integração SAP</label>
+                <select class="form-select" id="filtroIntegracaoSAP">
+                    @{
+                        var sapOptions = new[] { ("", "Todos os Pedidos"), ("Com OV", "Com OV"), ("Não enviado", "Não enviado"), ("Na fila", "Na fila"), ("ERRO", "ERRO") };
+                    }
+                    @foreach (var (val, label) in sapOptions)
+                    {
+                        <option value="@val" selected="@(Model.FiltroIntegracaoSAP == val || (string.IsNullOrWhiteSpace(val) && string.IsNullOrWhiteSpace(Model.FiltroIntegracaoSAP)))">@label</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Valores -->            
+            <div class="row g-2 mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-chart-bar me-1 text-muted"></i>Valor do Pedido</label>
+                <div class="col-6">
+                    <label class="form-label fw-semibold mb-1">Maior do que (R$)</label>
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="filtroValorAcima" value="@(Model.FiltroValorAcima != 0 ? Model.FiltroValorAcima.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")" placeholder="0" />
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-semibold mb-1">Menor do que (R$)</label>
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="filtroValorAbaixo" value="@(Model.FiltroValorAbaixo != 0 ? Model.FiltroValorAbaixo.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")" placeholder="0" />
+                </div>
+            </div>
+
+            <!-- SLA Cliente: 0=tudo, 1=atrasado -->
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="rfAtrasados" name="rfAtrasados" @(Model.FiltroAtrasados == 1 ? "checked" : "")>
+                <label class="form-check-label" for="rfAtrasados">
+                    <i class="fa-solid fa-clock text-info me-1"></i>Apenas SLA Atrasado
+                </label>
+            </div>
+
+            <!-- Margem: 0=tudo, 1=negativa -->
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="rfMargem" name="rfMargem" @(Model.FiltroMargemNegativa == 1 ? "checked" : "")>
+                <label class="form-check-label" for="rfMargem">
+                    <i class="fa-solid fa-arrow-trend-down text-info me-1"></i>Apenas Margem Negativa
+                </label>
+            </div>
+            
+        </div>
+
+        <div class="d-grid gap-2 pt-3 border-top">
+            <button type="button" class="btn btn-primary" id="btnAplicarFiltros">
+                <i class="fa-solid fa-check me-1"></i>Aplicar Filtros
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
+                <i class="fa-solid fa-eraser me-1"></i>Limpar Tudo
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Liberar -->
+<div class="modal fade" id="modalLiberar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="Liberar" id="formLiberar">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-duotone fa-flag-checkered me-2 text-br"></i>Confirmar Liberação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Deseja liberar <strong id="liberarQtd">0</strong> pedido(s) selecionado(s)?</p>
+                    <div id="liberarIds"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-check me-1"></i>Liberar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Integrar -->
+<div class="modal fade" id="modalIntegrar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="Integrar" id="formIntegrar">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-duotone fa-plug me-2 text-br"></i>Confirmar Integração</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Deseja integrar <strong id="integrarQtd">0</strong> pedido(s) selecionado(s)?</p>
+                    <div id="integrarIds"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plug me-1"></i>Integrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        (() => {
+            if (typeof DataTable === 'undefined') return;
+
+            var hiddenCols = [4, 8, 10, 11, 12, 21, 22, 23, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
+
+            var dt = new DataTable('#tblLiberacao', {
+                pageLength: 50,
+                lengthChange: false,
+                searching: true,
+                info: true,
+                paging: true,
+                order: [[1, 'asc']],
+                pagingType: 'full_numbers',
+                columnDefs: [
+                    { orderable: false, targets: 0 },
+                    { visible: false, targets: hiddenCols }
+                ],
+                language: {
+                    emptyTable: 'Nenhum pedido encontrado.',
+                    info: 'Mostrando _START_ até _END_ de _TOTAL_ pedidos',
+                    infoEmpty: 'Mostrando 0 até 0 de 0 pedidos',
+                    zeroRecords: 'Nenhum pedido corresponde ao filtro',
+                    paginate: { first: 'Primeiro', previous: 'Anterior', next: 'Próximo', last: 'Último' }
+                }
+            });
+
+            // Esconde busca nativa do DataTables
+            var dtSearch = document.querySelector('#tblLiberacao_wrapper .dt-search');
+            if (dtSearch) dtSearch.style.display = 'none';
+
+            // ColVis menu
+            var colVisMenu = document.getElementById('colVisMenu');
+            var headers = dt.columns().header().toArray();
+            headers.forEach(function (th, idx) {
+                if (idx === 0) return;
+                var li = document.createElement('li');
+                var label = document.createElement('label');
+                label.className = 'dropdown-item d-flex align-items-center gap-2';
+                var cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'form-check-input mt-0';
+                cb.checked = dt.column(idx).visible();
+                cb.addEventListener('change', function () {
+                    dt.column(idx).visible(this.checked);
+                });
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(' ' + th.textContent.trim()));
+                li.appendChild(label);
+                colVisMenu.appendChild(li);
+            });
+
+            // Busca personalizada
+            var inputBusca = document.getElementById('inputBuscaTabela');
+            var btnBusca = document.getElementById('btnBuscaTabela');
+            function aplicarBusca() { dt.search(inputBusca.value || '').draw(); }
+            btnBusca?.addEventListener('click', aplicarBusca);
+            inputBusca?.addEventListener('keyup', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); aplicarBusca(); }
+            });
+
+            // Page size
+            document.getElementById('selectPageSize')?.addEventListener('change', function () {
+                dt.page.len(parseInt(this.value, 10)).draw();
+            });
+
+            // Select all / bulk
+            var chkAll = document.getElementById('chkAll');
+            var bulkBar = document.getElementById('bulkBar');
+            var bulkCount = document.getElementById('bulkCount');
+
+            function getChecked() {
+                return Array.from(document.querySelectorAll('.chk-row:checked')).map(function (c) { return c.value; });
+            }
+            function updateBulk() {
+                var ids = getChecked();
+                bulkCount.textContent = ids.length;
+                bulkBar.classList.toggle('show', ids.length > 0);
+                document.querySelectorAll('.chk-row').forEach(function (cb) {
+                    cb.closest('tr').classList.toggle('selected', cb.checked);
+                });
+            }
+
+            chkAll?.addEventListener('change', function () {
+                var rows = dt.rows({ search: 'applied' }).nodes();
+                rows.each(function (row) {
+                    var cb = row.querySelector('.chk-row');
+                    if (cb) cb.checked = chkAll.checked;
+                });
+                updateBulk();
+            });
+            document.getElementById('tblLiberacao')?.addEventListener('change', function (e) {
+                if (e.target.classList.contains('chk-row')) updateBulk();
+            });
+
+            // Liberar button
+            document.getElementById('btnLiberar')?.addEventListener('click', function () {
+                var ids = getChecked();
+                if (ids.length === 0) return;
+                document.getElementById('liberarQtd').textContent = ids.length;
+                var container = document.getElementById('liberarIds');
+                container.innerHTML = '';
+                ids.forEach(function (id) {
+                    var inp = document.createElement('input');
+                    inp.type = 'hidden'; inp.name = 'cotacaoIds'; inp.value = id;
+                    container.appendChild(inp);
+                });
+                new bootstrap.Modal(document.getElementById('modalLiberar')).show();
+            });
+
+            // Integrar button
+            document.getElementById('btnIntegrar')?.addEventListener('click', function () {
+                var ids = getChecked();
+                if (ids.length === 0) return;
+                document.getElementById('integrarQtd').textContent = ids.length;
+                var container = document.getElementById('integrarIds');
+                container.innerHTML = '';
+                ids.forEach(function (id) {
+                    var inp = document.createElement('input');
+                    inp.type = 'hidden'; inp.name = 'cotacaoIds'; inp.value = id;
+                    container.appendChild(inp);
+                });
+                new bootstrap.Modal(document.getElementById('modalIntegrar')).show();
+            });
+
+            // CSV Export
+            document.getElementById('btnExportCsv')?.addEventListener('click', function () {
+                var cols = [];
+                var visibleIndexes = [];
+                dt.columns().every(function (idx) {
+                    if (idx === 0) return;
+                    if (dt.column(idx).visible()) {
+                        cols.push('"' + dt.column(idx).header().textContent.trim().replace(/"/g, '""') + '"');
+                        visibleIndexes.push(idx);
+                    }
+                });
+                var csv = [cols.join(';')];
+                dt.rows({ search: 'applied' }).every(function () {
+                    var d = this.data();
+                    var row = visibleIndexes.map(function (idx) {
+                        var cell = typeof d[idx] === 'string' ? d[idx].replace(/<[^>]*>/g, '').trim() : (d[idx] ?? '');
+                        return '"' + String(cell).replace(/"/g, '""') + '"';
+                    });
+                    csv.push(row.join(';'));
+                });
+                var blob = new Blob(['\uFEFF' + csv.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+                var link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'liberacao_pedidos_' + new Date().toISOString().slice(0, 10) + '.csv';
+                link.click();
+                URL.revokeObjectURL(link.href);
+            });
+        })();
+
+        // Filter maps for the new layout
+        // Text/select filters: offcanvas element id → hidden field id
+        var textFilterMap = {
+            filtroPalavra1:     { hid: 'hidFiltroPalavra1',      flt: 'filtroPalavra1' },
+            filtroPalavra2:     { hid: 'hidFiltroPalavra2',      flt: 'filtroPalavra2' },
+            filtroPalavra3:     { hid: 'hidFiltroPalavra3',      flt: 'filtroPalavra3' },
+            filtroContemItem:   { hid: 'hidFiltroContemItem',    flt: 'filtroContemItem' },
+            filtroIntegracaoSAP:{ hid: 'hidFiltroIntegracaoSAP', flt: 'filtroIntegracaoSAP' },
+            filtroValorAbaixo:  { hid: 'hidFiltroValorAbaixo',   flt: 'filtroValorAbaixo' },
+            filtroValorAcima:   { hid: 'hidFiltroValorAcima',    flt: 'filtroValorAcima' },
+            filtroRuptura:      { hid: 'hidFiltroRuptura',       flt: 'rfRuptura' },
+            filtroOrdemCompra:  { hid: 'hidFiltroOrdemCompra',   flt: 'rfOrdemCompra' },
+            filtroFrete:        { hid: 'hidFiltroFrete',         flt: 'rfFrete' },
+            filtroFretePagar:   { hid: 'hidFiltroFretePagar',    flt: 'rfFretePagar' }
+        };
+        // Checkbox filters: campo → { hid: hidden field id, id: checkbox element id }
+        var checkboxFilterMap = {
+            filtroAtrasados:      { hid: 'hidFiltroAtrasados',      id: 'rfAtrasados' },
+            filtroMargemNegativa: { hid: 'hidFiltroMargemNegativa', id: 'rfMargem' }
+        };
+
+        function removeFilter(campo) {
+            // Enforce expression removal order: can't remove 2 if 3 has value, must cascade
+            if (campo === 'filtroPalavra2') {
+                var hid3 = document.getElementById('hidFiltroPalavra3');
+                if (hid3 && hid3.value.trim()) {
+                    // Cascade: shift expr3 → expr2, clear expr3
+                    var hid2 = document.getElementById('hidFiltroPalavra2');
+                    if (hid2) hid2.value = hid3.value;
+                    hid3.value = '';
+                    document.getElementById('formLiberacao').submit();
+                    return;
+                }
+            }
+            if (campo === 'filtroPalavra1') {
+                var hid2 = document.getElementById('hidFiltroPalavra2');
+                var hid3 = document.getElementById('hidFiltroPalavra3');
+                var hid1 = document.getElementById('hidFiltroPalavra1');
+                // Shift up: 2→1, 3→2, clear last
+                if (hid1 && hid2) {
+                    hid1.value = hid2.value || '';
+                    hid2.value = (hid3 && hid3.value) || '';
+                    if (hid3) hid3.value = '';
+                }
+                document.getElementById('formLiberacao').submit();
+                return;
+            }
+            var mt = textFilterMap[campo];
+            if (mt) { var el = document.getElementById(mt.hid); if (el) el.value = ''; }
+            var mr = checkboxFilterMap[campo];
+            if (mr) { var el = document.getElementById(mr.hid); if (el) el.value = '0'; }
+            document.getElementById('formLiberacao').submit();
+        }
+
+        document.getElementById('btnAplicarFiltros')?.addEventListener('click', function () {
+            // Text / select
+            Object.keys(textFilterMap).forEach(function (key) {
+                var m = textFilterMap[key];
+                var hid = document.getElementById(m.hid);
+                var flt = document.getElementById(m.flt);
+                if (hid && flt) hid.value = flt.value;
+            });
+            // Checkbox switches
+            Object.keys(checkboxFilterMap).forEach(function (key) {
+                var m = checkboxFilterMap[key];
+                var hid = document.getElementById(m.hid);
+                var cb = document.getElementById(m.id);
+                if (hid) hid.value = (cb && cb.checked) ? '1' : '0';
+            });
+            document.getElementById('formLiberacao').submit();
+        });
+
+        document.getElementById('btnLimparFiltros')?.addEventListener('click', function () {
+            window.location.href = '@Url.Action("Index", "LiberacaoPedido", new { area = "Comercial" })';
+        });
+
+        // Progressive expression fields
+        (function () {
+            var wrap2 = document.getElementById('wrapExpr2');
+            var wrap3 = document.getElementById('wrapExpr3');
+            var btn2 = document.getElementById('btnAddExpr2');
+            var btn3 = document.getElementById('btnAddExpr3');
+            var btnRem2 = document.getElementById('btnRemExpr2');
+            var btnRem3 = document.getElementById('btnRemExpr3');
+            var flt2 = document.getElementById('filtroPalavra2');
+            var flt3 = document.getElementById('filtroPalavra3');
+
+            function syncState() {
+                var show3 = wrap3.style.display !== 'none';
+                var show2 = wrap2.style.display !== 'none';
+                // "+" on expr1 visible only when expr2 is hidden
+                btn2.style.display = show2 ? 'none' : '';
+                // "-" on expr2 visible only when expr2 is shown and expr3 is hidden (can't remove 2 if 3 exists)
+                btnRem2.style.display = (show2 && !show3) ? '' : 'none';
+                // "+" on expr2 visible only when expr2 is shown but expr3 is hidden
+                btn3.style.display = (show2 && !show3) ? '' : 'none';
+                // "-" on expr3 visible only when expr3 is shown
+                btnRem3.style.display = show3 ? '' : 'none';
+            }
+
+            // Show fields that already have values
+            if (flt3 && flt3.value.trim()) { wrap2.style.display = ''; wrap3.style.display = ''; }
+            else if (flt2 && flt2.value.trim()) { wrap2.style.display = ''; }
+            syncState();
+
+            btn2?.addEventListener('click', function () {
+                wrap2.style.display = '';
+                syncState();
+                flt2?.focus();
+            });
+            btn3?.addEventListener('click', function () {
+                wrap3.style.display = '';
+                syncState();
+                flt3?.focus();
+            });
+            btnRem3?.addEventListener('click', function () {
+                flt3.value = '';
+                wrap3.style.display = 'none';
+                syncState();
+            });
+            btnRem2?.addEventListener('click', function () {
+                flt2.value = '';
+                wrap2.style.display = 'none';
+                syncState();
+            });
+        })();
+    </script>
+}

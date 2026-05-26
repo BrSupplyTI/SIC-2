@@ -1,0 +1,506 @@
+@model SIC.Web.Models.Liberacao.LiberacaoPedidoDetalhesViewModel
+@{
+    // Cultura pt-BR para decimais nos hidden fields.
+    var ci = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    var taxaFormatada = Model.Taxa.ToString("N2", ci);
+    var flagFreteServico = Model.FlagFreteServico == 1 ? 1 : 0;
+}
+
+@* ====================================================================== *@
+@* MODAL - Alterar Observação da Nota Fiscal                                *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-alterarobsnota" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-pencil me-2"></i>Alterar Observação da Nota Fiscal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="AlterarObsNota">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>IMPORTANTE:</strong><br />
+                        - <strong>Não informe endereço de entrega neste campo!</strong> Para informar um endereço de entrega diferente do atual, atualize o endereço do cadastro do Local de Entrega.<br />
+                        - <strong>Não digite as palavras "Entrega" ou "Entregar" nesta observação.</strong> Isto vai causar problemas na integração com as transportadoras.
+                    </div>
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <input type="hidden" name="ObsAntiga" value="@Model.ObsNota" />
+                    <label class="form-label">Observação da Nota Fiscal</label>
+                    <input type="text" class="form-control" name="Observacao" maxlength="200" value="@Model.ObsNota" />
+                    <label class="form-label mt-3">Motivo da Alteração</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo da Alteração" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Alterar Observação</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Alterar Observação do Solicitante                                *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-alterarobscotacao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-pencil me-2"></i>Alterar Observação do Solicitante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="AlterarObsSolicitante">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <input type="hidden" name="ObsAntiga" value="@Model.ObsCotacao" />
+                    <label class="form-label">Observação do Solicitante</label>
+                    <input type="text" class="form-control" name="Observacao" maxlength="200" value="@Model.ObsCotacao" />
+                    <label class="form-label mt-3">Motivo da Alteração</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo da Alteração" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Alterar Observação</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Alterar Observação do Aprovador                                  *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-alterarobsaprovador" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-pencil me-2"></i>Alterar Observação do Aprovador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="AlterarObsAprovador">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <input type="hidden" name="ObsAntiga" value="@Model.ObsAprovacao" />
+                    <label class="form-label">Observação do Aprovador</label>
+                    <input type="text" class="form-control" name="Observacao" maxlength="200" value="@Model.ObsAprovacao" />
+                    <label class="form-label mt-3">Motivo da Alteração</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo da Alteração" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Alterar Observação</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Alterar Ordem de Compra                                          *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-alterarordemcompra" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-pencil me-2"></i>Alterar Ordem de Compra</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="AlterarOrdemCompra">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <input type="hidden" name="OrdemCompraAntiga" value="@Model.OrdemCompra" />
+                    <label class="form-label">Ordem de Compra</label>
+                    <input type="text" class="form-control" name="OrdemCompra" maxlength="30" value="@Model.OrdemCompra" />
+                    <label class="form-label mt-3">Motivo da Alteração</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo da Alteração" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Alterar Ordem</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Alterar Canal de Venda                                           *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-alterarcanalvenda" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-pencil me-2"></i>Alterar Canal de Venda</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="AlterarCanalVenda">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <input type="hidden" name="NmCanalVendaAntigo" value="@Model.NmCanalVenda" />
+                    <label class="form-label">Canal de Venda</label>
+                    <select class="form-select" name="CanalVendaID" required>
+                        <option value=""></option>
+                        @foreach (var canal in Model.CanaisVenda)
+                        {
+                            <option value="@canal.Id">@canal.Nome</option>
+                        }
+                    </select>
+                    <label class="form-label mt-3">Motivo da Alteração</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo da Alteração" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Alterar Canal</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Alterar Categoria                                                *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-alterarcategoria" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-pencil me-2"></i>Alterar Categoria do Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="AlterarCategoria">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>IMPORTANTE:</strong><br />
+                        Esta operação não altera dados de alçada de aprovação relacionada com a categoria nova ou anterior.
+                    </div>
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <input type="hidden" name="NmCategoriaAntiga" value="@Model.NmCategoria" />
+                    <label class="form-label">Categoria</label>
+                    <select class="form-select" name="CategoriaID" required>
+                        <option value=""></option>
+                        @foreach (var cat in Model.Categorias)
+                        {
+                            if (cat.Id == Model.CategoriaID)
+                            {
+                                <option value="@cat.Id" selected>@cat.Nome</option>
+                            }
+                            else
+                            {
+                                <option value="@cat.Id">@cat.Nome</option>
+                            }
+                        }
+                    </select>
+                    <label class="form-label mt-3">Motivo da Alteração</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo da Alteração" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Alterar Categoria</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Alterar Condição de Pagamento                                    *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-alterarcondpagto" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-pencil me-2"></i>Alterar Condição de Pagamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="AlterarCondPagto">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <input type="hidden" name="NmCondPagtoAntiga" value="@Model.NmCondPagto" />
+                    <label class="form-label">Condição de Pagamento</label>
+                    <select class="form-select" name="CondPagtoID" required>
+                        <option value=""></option>
+                        @foreach (var cp in Model.CondicoesPagamento)
+                        {
+                            <option value="@cp.Id">@cp.Nome</option>
+                        }
+                    </select>
+                    <label class="form-label mt-3">Motivo da Alteração</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo da Alteração" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Alterar Cond. Pagto.</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Cobrar Frete                                                     *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-cobrarfrete" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-truck-fast me-2"></i>Cobrar Frete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="CobrarFrete">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <input type="hidden" name="VlrFrete" value="@Model.Taxa.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                    <input type="hidden" name="FlagFreteServico" value="@flagFreteServico" />
+                    <div class="alert alert-warning mb-4">
+                        <strong>IMPORTANTE:</strong><br />
+                        @if (flagFreteServico == 1)
+                        {
+                            <span>O cliente possui cobrança de frete como SERVIÇO.<br />O valor de frete NÃO vai constar na Nota Fiscal!</span>
+                        }
+                        else
+                        {
+                            <span>O valor do frete será aplicado na Nota Fiscal do pedido.</span>
+                        }
+                    </div>
+                    <h6 class="my-4">Tem certeza que vai inserir custo de Frete no Pedido?</h6>
+                    <hr class="border-top border-dashed my-3" />
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="form-label mb-0">Valor do Frete</label>
+                        <h5 class="mb-0">R$ @taxaFormatada</h5>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Cobrar Frete</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Liberar Pedido Marketplace (via modal, confirmação)              *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-libera-marketplace" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-check me-2"></i>Liberar Pedido Marketplace</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="LiberarMarketplaceModal">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <h6>Tem certeza que vai LIBERAR o pedido do Marketplace?</h6>
+                    <p class="text-muted">Caso o cliente possua algum tipo de integração com os seus fornecedores, ela será iniciada a partir desta liberação.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-check me-1"></i>Liberar Pedido</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Cancelar Pedido (BR Supply)                                      *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-cancelar-pedido" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-times me-2"></i>Cancelar Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="CancelarPedido">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <div class="alert alert-warning mb-4">
+                        <strong>IMPORTANTE:</strong><br />
+                        Esta operação não poderá ser desfeita mais tarde!
+                    </div>
+                    <h6 class="my-4">Tem certeza que vai CANCELAR o pedido?</h6>
+                    <label class="form-label">Motivo do Cancelamento</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo do Cancelamento" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-check me-1"></i>Cancelar Pedido</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Voltar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Cancelar Pedido Marketplace                                      *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-cancela-marketplace" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-times me-2"></i>Cancelar Pedido Marketplace</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="CancelarMarketplace">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <div class="alert alert-warning mb-4">
+                        <strong>IMPORTANTE:</strong><br />
+                        Efetue o cancelamento apenas por solicitação do cliente.<br />
+                        Esta operação não poderá ser desfeita mais tarde!
+                    </div>
+                    <h6 class="my-4">Tem certeza que vai CANCELAR o pedido do Marketplace?</h6>
+                    <label class="form-label">Motivo do Cancelamento</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo do Cancelamento" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-check me-1"></i>Cancelar Pedido</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Voltar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Desbloquear Alocações                                            *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-desbloquear-alocacoes" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-lock-open me-2"></i>Desbloquear Alocações do Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="DesbloquearAlocacoes">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <div class="alert alert-warning mb-4">
+                        <strong>IMPORTANTE:</strong><br />
+                        Os itens serão desbloqueados permitindo alocação normal de estoque.<br />
+                        A efetivação da alocação pode demorar até 30 minutos após o desbloqueio.
+                    </div>
+                    <h6 class="my-4">Tem certeza que vai DESBLOQUEAR as alocações bloqueadas?</h6>
+                    <label class="form-label">Motivo</label>
+                    <input type="text" class="form-control" name="Motivo" placeholder="Motivo do Desbloqueio" maxlength="200" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-lock-open me-1"></i>Desbloquear Alocações</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Gerar Novo Pedido com as Rupturas                                *@
+@* ====================================================================== *@
+<div class="modal modal-md fade bs-modal-novo-pedido-rupturas" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-plus me-2"></i>Gerar Novo Pedido com as Rupturas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="GerarPedidoRupturas">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="CotacaoID" value="@Model.CotacaoID" />
+                    <input type="hidden" name="ClienteID" value="@Model.ClienteID" />
+                    <input type="hidden" name="ClienteUsuarioID" value="@Model.ClienteUsuarioID" />
+                    <div class="alert alert-warning mb-4">
+                        <strong>IMPORTANTE:</strong><br />
+                        Será gerado um novo pedido com os itens em ruptura.<br />
+                        Certifique-se de que o pedido atual ficará acima dos parâmetros de pedido mínimo do cliente.
+                    </div>
+                    <h6 class="my-4">Tem certeza que vai gerar um novo pedido com as rupturas?</h6>
+                    <label class="form-label">Selecione o Motivo</label>
+                    <select class="form-select" name="Motivo" required>
+                        <option value=""></option>
+                        <option value="Ruptura Falta de Estoque">Ruptura Falta de Estoque</option>
+                        <option value="Ruptura Pico de Consumo">Ruptura Pico de Consumo</option>
+                        <option value="Ruptura Física">Ruptura Física</option>
+                        <option value="Produto Outlet">Produto Outlet</option>
+                        <option value="Produto Sob Demanda">Produto Sob Demanda</option>
+                        <option value="Item de Outro Estabelecimento">Item de Outro Estabelecimento</option>
+                        <option value="Compra Equivocada (Cliente)">Compra Equivocada (Cliente)</option>
+                        <option value="De/Para">De/Para</option>
+                        <option value="Atendido pelo CD do Cliente">Atendido pelo CD do Cliente</option>
+                        <option value="Entrega Direta do Fornecedor">Entrega Direta do Fornecedor</option>
+                        <option value="Concatenação">Concatenação</option>
+                        <option value="Ruptura Falta de Estoque (NP)">Ruptura Falta de Estoque (NP)</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-warning"><i class="fa-solid fa-plus me-1"></i>Gerar Novo Pedido</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Opções de Frete (read-only, lazy load)                           *@
+@* ====================================================================== *@
+<div class="modal modal-xl fade bs-modal-fretes" tabindex="-1"
+     data-cotacao-id="@Model.CotacaoID">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-truck-fast me-2"></i>Opções de Frete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="fretes-loading" class="text-center text-muted py-4 d-none">
+                    <i class="fa-duotone fa-spinner fa-spin fa-2x"></i>
+                    <p class="mt-2 mb-0">Carregando opções de frete...</p>
+                </div>
+                <div id="fretes-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ====================================================================== *@
+@* MODAL - Detalhes dos Impostos (read-only, lazy load)                     *@
+@* ====================================================================== *@
+<div class="modal modal-xl fade bs-modal-impostos" tabindex="-1"
+     data-cotacao-id="@Model.CotacaoID">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-receipt me-2"></i>Detalhe dos Impostos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="impostos-loading" class="text-center text-muted py-4 d-none">
+                    <i class="fa-duotone fa-spinner fa-spin fa-2x"></i>
+                    <p class="mt-2 mb-0">Carregando detalhamento de impostos...</p>
+                </div>
+                <div id="impostos-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-times me-1"></i>Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>

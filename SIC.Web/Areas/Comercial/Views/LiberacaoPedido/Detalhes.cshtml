@@ -1,0 +1,1295 @@
+@model SIC.Web.Models.Liberacao.LiberacaoPedidoDetalhesViewModel
+@{
+    ViewData["Title"] = $"Pedido {Model.CotacaoID}";
+    var ptBr = new System.Globalization.CultureInfo("pt-BR");
+
+    // Pedido editável: mesmo estabelecimento do usuário logado E status que permite edição (3 = aguardando liberação).
+    // Esta regra pode ser refinada conforme outros status surgirem na análise.
+    var podeEditar = !Model.EstabelecimentoIncompativel && Model.StatusID == 3;
+}
+
+@functions {
+    static string SlaColor(string status) =>
+        string.Equals(status, "Atrasado", StringComparison.OrdinalIgnoreCase) ? "text-danger" : "text-success";
+
+    static string FretePercColor(decimal perc) => perc > 6 ? "text-danger" : "text-success";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
+    <style>
+        .det-section-title {
+            font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+            color: var(--sic-muted); border-bottom: 1px solid var(--sic-border);
+            padding-bottom: .5rem; margin-bottom: 1rem;
+        }
+        .det-card { border: 1px solid var(--sic-border); border-radius: .5rem; background: var(--sic-surface); }
+        .det-card .det-card-header {
+            padding: .65rem 1rem; border-bottom: 1px solid var(--sic-border);
+            background: var(--sic-surface-2); border-radius: .5rem .5rem 0 0;
+        }
+        .det-card .det-card-header h5 {
+            margin: 0; font-size: .9rem; font-weight: 600; color: var(--sic-text);
+            text-transform: uppercase; letter-spacing: .03em;
+        }
+        .det-card .det-card-body { padding: 1rem; }
+
+        .det-row { display: flex; flex-wrap: wrap; gap: .25rem .75rem; padding: .25rem 0; }
+        .det-row .det-label { color: var(--sic-muted); min-width: 180px; font-size: .82rem; }
+        .det-row .det-value { font-weight: 600; color: var(--sic-text); font-size: .85rem; flex: 1; min-width: 0; word-break: break-word; }
+        .det-row + .det-row { border-top: 1px dashed var(--sic-border); }
+
+        .det-kpi { text-align: center; padding: .4rem 0; }
+        .det-kpi small { display: block; color: var(--sic-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+        .det-kpi strong { display: block; font-size: 1rem; color: var(--sic-text); margin-top: .15rem; }
+        .det-kpi-total strong { font-size: 1.25rem; color: var(--bs-primary); }
+
+        .det-pedido-numero { font-size: 2rem; font-weight: 700; color: var(--bs-primary); line-height: 1; }
+        .det-pedido-situacao { font-weight: 600; color: var(--bs-primary); font-size: .9rem; }
+
+        .det-logo-cliente img { max-height: 60px; max-width: 180px; object-fit: contain; }
+
+        .det-table thead th {
+            font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+            color: var(--sic-muted); background: var(--sic-surface-2);
+            border-bottom: 2px solid var(--sic-border); padding: .45rem .6rem; white-space: nowrap;
+        }
+        .det-table tbody td {
+            color: var(--sic-text); border-bottom: 1px solid var(--sic-border);
+            padding: .45rem .6rem; font-size: .82rem; vertical-align: middle;
+        }
+
+        .det-ruptura-preview { font-size: .72rem; color: #997404; display: block; margin-top: .1rem; }
+        .det-followcompras { font-size: .7rem; color: #997404; display: block; margin-top: .15rem; }
+
+        .det-block-warning {
+            background: rgba(220,53,69,.08); border: 1px solid rgba(220,53,69,.3);
+            color: var(--sic-text); border-radius: .5rem; padding: 1.5rem; text-align: center;
+        }
+        .det-block-warning i { font-size: 2.5rem; color: #dc3545; display: block; margin-bottom: .75rem; }
+    </style>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0">
+                        <i class="fa-duotone fa-thin fa-file-invoice me-2 text-br"></i>
+                        Liberação de Pedido <span class="text-br">@Model.CotacaoID</span>
+                    </h2>
+                </div>
+                <p class="text-muted mt-1 mb-0">
+                    Visualização completa do pedido para análise e liberação.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="Index"
+                   class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Voltar
+                </a>
+            </div>
+        </div>
+
+        <!-- Alertas TempData -->
+        @if (TempData["Sucesso"] is string msgSucesso)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-circle-check me-1"></i>@msgSucesso
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Erro"] is string msgErro)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-circle-exclamation me-1"></i>@msgErro
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (Model.EstabelecimentoIncompativel)
+        {
+            <!-- Bloqueio por estabelecimento diferente -->
+            <div class="det-block-warning">
+                <i class="fa-duotone fa-triangle-exclamation"></i>
+                <h5 class="mb-2">Pedido de outro estabelecimento</h5>
+                <p class="mb-0">
+                    O pedido <strong>@Model.CotacaoID</strong> pertence a um estabelecimento diferente do selecionado em sua sessão.
+                    <br />
+                    Para visualizá-lo, troque o estabelecimento no menu superior e acesse novamente.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-3">
+
+                <!-- ============================================================ -->
+                <!-- COLUNA 1                                                     -->
+                <!-- ============================================================ -->
+                <div class="col-12 col-xl-6">
+
+                    <!-- DADOS DO PEDIDO -->
+                    <div class="det-card mb-3">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-file-lines me-2 text-br"></i>Dados do Pedido</h5></div>
+                        <div class="det-card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <small class="text-muted">Número</small>
+                                    <div class="det-pedido-numero">@Model.CotacaoID</div>
+                                    <div class="det-pedido-situacao mt-1">@Model.Situacao</div>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(Model.LogoCliente))
+                                {
+                                    <div class="det-logo-cliente">
+                                        <img src="https://www.supplymanager.com.br/content/images/logotipo/@(Model.ClienteID)/@(Model.LogoCliente)" alt="@Model.RazaoSocialCliente" />
+                                    </div>
+                                }
+                            </div>
+                            <div class="det-row"><span class="det-label">Data / Hora</span><span class="det-value">@Model.DataHoraPedido</span></div>
+                            <div class="det-row"><span class="det-label">Origem</span><span class="det-value">@Model.CompStatusCotacao</span></div>
+                            <div class="det-row"><span class="det-label">Estabelecimento</span><span class="det-value">@Model.Estabelecimento</span></div>
+                            <div class="det-row"><span class="det-label">Cliente</span><span class="det-value">@Model.RazaoSocialCliente</span></div>
+                            <div class="det-row"><span class="det-label">Ordem de Compra</span><span class="det-value">@(string.IsNullOrWhiteSpace(Model.OrdemCompra) ? "—" : Model.OrdemCompra)@if (podeEditar) { <button type="button" class="btn btn-sm btn-link p-0 ms-2 text-primary" data-bs-toggle="modal" data-bs-target=".bs-modal-alterarordemcompra" title="Alterar"><i class="fa-solid fa-pencil"></i></button> }</span></div>
+                            <div class="det-row"><span class="det-label">Usuário</span><span class="det-value">@Model.NmUsuario</span></div>
+                            <div class="det-row"><span class="det-label">E-mail</span><span class="det-value">@Model.EmailUsuario</span></div>
+                            <div class="det-row"><span class="det-label">Forma de Pagamento</span><span class="det-value">@Model.FormaPagamento</span></div>
+                            <div class="det-row"><span class="det-label">Condição de Pagamento</span><span class="det-value">@Model.NmCondPagto@if (podeEditar && Model.PodeAlterarCondPagto) { <button type="button" class="btn btn-sm btn-link p-0 ms-2 text-primary" data-bs-toggle="modal" data-bs-target=".bs-modal-alterarcondpagto" title="Alterar"><i class="fa-solid fa-pencil"></i></button> }</span></div>
+                            <div class="det-row"><span class="det-label">Canal de Venda</span><span class="det-value">@Model.NmCanalVenda@if (podeEditar) { <button type="button" class="btn btn-sm btn-link p-0 ms-2 text-primary" data-bs-toggle="modal" data-bs-target=".bs-modal-alterarcanalvenda" title="Alterar"><i class="fa-solid fa-pencil"></i></button> }</span></div>
+                            <div class="det-row"><span class="det-label">Carteira</span><span class="det-value">@Model.NmCarteira</span></div>
+                            <div class="det-row"><span class="det-label">Categoria</span><span class="det-value">@Model.NmCategoria@if (podeEditar) { <button type="button" class="btn btn-sm btn-link p-0 ms-2 text-primary" data-bs-toggle="modal" data-bs-target=".bs-modal-alterarcategoria" title="Alterar"><i class="fa-solid fa-pencil"></i></button> }</span></div>
+                            <div class="det-row"><span class="det-label">Tipo OV</span><span class="det-value">@Model.TipoOVSAP - @Model.DescTipoOVSAP</span></div>
+                            @if (!string.IsNullOrWhiteSpace(Model.NrContrato))
+                            {
+                                <div class="det-row"><span class="det-label">Núm. Contrato</span><span class="det-value">@Model.NrContrato</span></div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- TOTAIS DO PEDIDO -->
+                    <div class="det-card mb-3">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-sack-dollar me-2 text-br"></i>Totais do Pedido</h5></div>
+                        <div class="det-card-body">
+                            <div class="row g-2 mb-2">
+                                <div class="col-4"><div class="det-kpi"><small>Qt. Itens</small><strong>@Model.QtItens</strong></div></div>
+                                <div class="col-4"><div class="det-kpi"><small>Itens Br Supply</small><strong>@Model.QtItensBRSupply</strong></div></div>
+                                <div class="col-4"><div class="det-kpi"><small>Itens Marketplace</small><strong>@Model.QtItensMarketplace</strong></div></div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-4"><div class="det-kpi"><small>Total Produtos</small><strong>@Model.VlrTotalProdutos.ToString("C2", ptBr)</strong></div></div>
+                                <div class="col-4"><div class="det-kpi"><small>Total Br Supply</small><strong>@Model.VlrTotalBRSupply.ToString("C2", ptBr)</strong></div></div>
+                                <div class="col-4"><div class="det-kpi"><small>Total Marketplace</small><strong>@Model.VlrTotalMarketplace.ToString("C2", ptBr)</strong></div></div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-4"><div class="det-kpi"><small>Frete Cobrado</small><strong>@Model.VlrFrete.ToString("C2", ptBr)</strong></div></div>
+                                <div class="col-4"><div class="det-kpi"><small>Taxa de Serviço</small><strong>@Model.VlrFreteServico.ToString("C2", ptBr)</strong></div></div>
+                                <div class="col-4"><div class="det-kpi det-kpi-total"><small>Total do Pedido</small><strong>@Model.ValorTotalPedido.ToString("C2", ptBr)</strong></div></div>
+                            </div>
+
+                            @if (Model.TemItensBRSupply)
+                            {
+                                <hr class="my-3" />
+                                <div class="row g-2 mb-2">
+                                    <div class="col-4">
+                                        <div class="det-kpi">
+                                            <small>Estoque Alocado</small>
+                                            <strong>
+                                                @if (Model.QtItensAlocados > 0 && Model.QtItensNaoAlocados == 0)
+                                                {
+                                                    <i class="fa-solid fa-check text-success me-1"></i>
+                                                }
+                                                @Model.QtItensAlocados
+                                            </strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="det-kpi">
+                                            <small>Estoque Não Alocado</small>
+                                            <strong>
+                                                @if (Model.QtItensNaoAlocados > 0)
+                                                {
+                                                    <i class="fa-solid fa-xmark text-danger me-1"></i>
+                                                }
+                                                @(Model.QtItensBRSupply - Model.QtItensAlocados)
+                                            </strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="det-kpi">
+                                            <small>Alocação Bloqueada</small>
+                                            <strong>
+                                                @if (Model.QtItensBloqueados > 0)
+                                                {
+                                                    <i class="fa-solid fa-lock text-warning me-1"></i>
+                                                }
+                                                @Model.QtItensBloqueados
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="det-row">
+                                    <span class="det-label">Margem Bruta</span>
+                                    <span class="det-value">@Model.MargemBruta.ToString("N2", ptBr)%</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- DADOS DO CLIENTE -->
+                    <div class="det-card mb-3">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-user-tie me-2 text-br"></i>Dados do Cliente</h5></div>
+                        <div class="det-card-body">
+                            <div class="det-row"><span class="det-label">Razão Social</span><span class="det-value">@Model.RazaoSocialCliente</span></div>
+                            <div class="det-row"><span class="det-label">Nome Abreviado</span><span class="det-value">@Model.NmCliente</span></div>
+                            <div class="det-row"><span class="det-label">Código SAP / ID</span><span class="det-value">@Model.CodERPCliente / @Model.ClienteID</span></div>
+                            <div class="det-row"><span class="det-label">@Model.TipoDocumentoCliente</span><span class="det-value">@Model.CPFCNPJCliente</span></div>
+                            <div class="det-row"><span class="det-label">Inscrição Estadual</span><span class="det-value">@(string.IsNullOrWhiteSpace(Model.InscrEstCliente) ? "—" : Model.InscrEstCliente)</span></div>
+                            <div class="det-row"><span class="det-label">Estado</span><span class="det-value">@Model.NmUFCliente</span></div>
+                            <div class="det-row">
+                                <span class="det-label">Telefone Contato</span>
+                                <span class="det-value">
+                                    @(string.IsNullOrWhiteSpace(Model.TelefoneCliente) ? Html.Raw("<span class=\"text-muted fw-normal\">Não cadastrado</span>") : (object)Model.TelefoneCliente)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DADOS DE FATURAMENTO -->
+                    <div class="det-card mb-3">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-file-invoice-dollar me-2 text-br"></i>Dados de Faturamento</h5></div>
+                        <div class="det-card-body">
+                            <div class="det-row"><span class="det-label">Cliente</span><span class="det-value">@Model.RazaoSocialEndereco</span></div>
+                            <div class="det-row"><span class="det-label">@Model.TipoDocumentoEndereco</span><span class="det-value">@Model.CPFCNPJEndereco</span></div>
+                            <div class="det-row"><span class="det-label">Cód. SAP</span><span class="det-value">@(string.IsNullOrWhiteSpace(Model.CodERPEndereco) ? "—" : Model.CodERPEndereco)</span></div>
+                            <div class="det-row"><span class="det-label">Endereço</span><span class="det-value">@Model.RuaEndereco, @Model.NumeroEndereco@(string.IsNullOrWhiteSpace(Model.ComplementoEndereco) ? "" : $", {Model.ComplementoEndereco}")</span></div>
+                            <div class="det-row"><span class="det-label">Bairro</span><span class="det-value">@Model.BairroEndereco</span></div>
+                            <div class="det-row"><span class="det-label">Cidade</span><span class="det-value">@Model.CidadeEndereco / @Model.UFEndereco</span></div>
+                            <div class="det-row"><span class="det-label">CEP</span><span class="det-value">@Model.CEPEndereco</span></div>
+                        </div>
+                    </div>
+
+                    <!-- DADOS DE ENTREGA -->
+                    <div class="det-card mb-3">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-truck me-2 text-br"></i>Dados de Entrega</h5></div>
+                        <div class="det-card-body">
+                            <div class="det-row"><span class="det-label">Local de Entrega</span><span class="det-value">@Model.NmLocalEntrega</span></div>
+                            <div class="det-row"><span class="det-label">Cód. Controle</span><span class="det-value">@(string.IsNullOrWhiteSpace(Model.CdControle) ? "—" : Model.CdControle)</span></div>
+                            <div class="det-row"><span class="det-label">Tipo de Destino</span><span class="det-value">@Model.TipoEnderecoEntrega</span></div>
+                            @if (Model.FlagEnderecoDirerente == 1)
+                            {
+                                <div class="det-row"><span class="det-label">Endereço</span><span class="det-value">@Model.RuaEntrega, @Model.NumeroEntrega@(string.IsNullOrWhiteSpace(Model.ComplementoEntrega) ? "" : $", {Model.ComplementoEntrega}")</span></div>
+                                <div class="det-row"><span class="det-label">Bairro</span><span class="det-value">@Model.BairroEntrega</span></div>
+                                <div class="det-row"><span class="det-label">Cidade</span><span class="det-value">@Model.CidadeEntrega / @Model.UFEntrega</span></div>
+                                <div class="det-row"><span class="det-label">CEP</span><span class="det-value">@Model.CEPEntrega</span></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.ObsLocalEntrega))
+                            {
+                                <div class="det-row"><span class="det-label">Observação do Local</span><span class="det-value">@Model.ObsLocalEntrega</span></div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- COLUNA 2                                                     -->
+                <!-- ============================================================ -->
+                <div class="col-12 col-xl-6">
+
+                    <!-- VALIDAÇÃO DO PEDIDO -->
+                    <div class="det-card mb-3">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-clipboard-check me-2 text-br"></i>Validação do Pedido</h5></div>
+                        <div class="det-card-body">
+                            @{
+                                var semItens = Model.SemItens;
+                                var soMarketplace = !Model.TemItensBRSupply && Model.TemItensMarketplace;
+                                var analise = Model.Analise;
+                            }
+
+                            @if (semItens)
+                            {
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="fa-solid fa-xmark me-1"></i>O pedido não contém itens.
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            }
+                            else if (soMarketplace)
+                            {
+                                <div class="alert alert-secondary alert-dismissible fade show" role="alert">
+                                    <i class="fa-solid fa-check me-1"></i>O pedido contém apenas itens Marketplace.
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                                if (Model.StatusID == 3)
+                                {
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        <i class="fa-solid fa-check me-1"></i>Este pedido está pronto para ser liberado!
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <i class="fa-solid fa-xmark me-1"></i>Este pedido não está pendente de liberação comercial!
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                }
+                            }
+                            else if (Model.TemItensBRSupply && analise is not null)
+                            {
+                                foreach (var erro in analise.Erros)
+                                {
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <i class="fa-solid fa-circle-exclamation me-1"></i>@erro
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                }
+                                foreach (var alerta in analise.Alertas)
+                                {
+                                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i>@alerta
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                }
+                                if (analise.PedidoPronto)
+                                {
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        <i class="fa-solid fa-check me-1"></i>Este pedido está pronto para ser liberado!
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                }
+                            }
+
+                            @* Botões de ação — regras herdadas do PHP original *@
+                            @if (Model.PodeIntegrarSAP || Model.PodeCobrarFrete || Model.PodeLiberarMarketplace)
+                            {
+                                <hr class="my-3" />
+                                <div class="d-flex flex-wrap gap-2">
+                                    @if (Model.PodeIntegrarSAP)
+                                    {
+                                        <form method="post" asp-area="Comercial" asp-controller="LiberacaoPedido" asp-action="IntegrarPedido" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="cotacaoId" value="@Model.CotacaoID" />
+                                            <button type="submit" class="btn btn-warning"
+                                                    onclick="return confirm('Confirma o envio do pedido @Model.CotacaoID para integração com o SAP?');">
+                                                <i class="fa-duotone fa-cloud-arrow-up me-1"></i>Integrar SAP
+                                            </button>
+                                        </form>
+                                    }
+                                    @if (Model.PodeCobrarFrete)
+                                    {
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target=".bs-modal-cobrarfrete">
+                                            <i class="fa-duotone fa-truck-fast me-1"></i>Cobrar Frete
+                                        </button>
+                                    }
+                                    @if (Model.PodeLiberarMarketplace)
+                                    {
+                                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target=".bs-modal-libera-marketplace">
+                                            <i class="fa-duotone fa-check me-1"></i>Liberar Pedido Marketplace
+                                        </button>
+                                    }
+                                </div>
+                            }
+
+                            @if (Model.FlagAdmin)
+                            {
+                                <div class="mt-4 p-2 border rounded bg-body-tertiary">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <i class="fa-duotone fa-comment-question text-muted"></i>
+                                        <strong class="small text-muted text-uppercase">Hash de Suporte</strong>
+                                    </div>
+                                    <small class="text-body-secondary font-monospace">@Model.HashSuporte</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @* Card: Outras Ações (botões que abrem modais secundários) *@
+                    <div class="det-card mb-3">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-ellipsis-vertical me-2 text-br"></i>Outras Ações</h5></div>
+                        <div class="det-card-body">
+                            <div class="d-flex flex-wrap gap-2">
+                                @* Consultas read-only *@
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target=".bs-modal-fretes">
+                                    <i class="fa-duotone fa-truck-fast me-1"></i>Opções de Frete
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target=".bs-modal-impostos">
+                                    <i class="fa-duotone fa-receipt me-1"></i>Impostos
+                                </button>
+
+                                @* Ações de estado — pedido editável *@
+                                @if (podeEditar && Model.TemItensBRSupply)
+                                {
+                                    if (Model.PodeGerarPedidoRupturas && Model.TemRupturaTotal == false && Model.QtItensNaoAlocados > 0)
+                                    {
+                                        <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target=".bs-modal-novo-pedido-rupturas">
+                                            <i class="fa-duotone fa-plus me-1"></i>Novo Pedido c/ Rupturas
+                                        </button>
+                                    }
+                                    if (Model.PodeDesbloquearAlocacoes && Model.QtItensBloqueados > 0)
+                                    {
+                                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target=".bs-modal-desbloquear-alocacoes">
+                                            <i class="fa-duotone fa-lock-open me-1"></i>Desbloquear Alocações
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target=".bs-modal-cancelar-pedido">
+                                        <i class="fa-duotone fa-times me-1"></i>Cancelar Pedido
+                                    </button>
+                                }
+                                @if (podeEditar && !Model.TemItensBRSupply && Model.TemItensMarketplace)
+                                {
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target=".bs-modal-cancela-marketplace">
+                                        <i class="fa-duotone fa-times me-1"></i>Cancelar Pedido Marketplace
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INTEGRAÇÃO SAP (placeholder — lista completa virá em fase posterior) -->
+                    <div class="det-card mb-3">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-plug me-2 text-br"></i>Integração SAP</h5></div>
+                        <div class="det-card-body">
+                            @if (Model.QtFilaSAP > 0)
+                            {
+                                <div class="det-row"><span class="det-label">Qt. na Fila SAP</span><span class="det-value">@Model.QtFilaSAP</span></div>
+                                <div class="alert alert-info mb-0 mt-2" role="alert">
+                                    <i class="fa-solid fa-circle-info me-1"></i>
+                                    O detalhamento das OVs integradas com SAP será exibido na próxima fase.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-secondary mb-0" role="alert">
+                                    <i class="fa-solid fa-hourglass me-1"></i>
+                                    O pedido ainda não está integrado com o SAP.
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (Model.TemItensBRSupply)
+                    {
+                        <!-- PROGRAMAÇÃO DE ENTREGA -->
+                        <div class="det-card mb-3">
+                            <div class="det-card-header"><h5><i class="fa-duotone fa-calendar-days me-2 text-br"></i>Programação de Entrega</h5></div>
+                            <div class="det-card-body">
+                                @if (Model.TemRupturaTotal)
+                                {
+                                    <div class="alert alert-secondary mb-0" role="alert">
+                                        <i class="fa-duotone fa-hexagon-exclamation me-1"></i>
+                                        Todos os itens estão em ruptura. Não há programação possível.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="det-row"><span class="det-label">Data do Pedido</span><span class="det-value">@Model.DataPedido</span></div>
+                                    <div class="det-row"><span class="det-label">Data da Aprovação</span><span class="det-value">@Model.DataHoraUltimaAprovacao</span></div>
+                                    <div class="det-row"><span class="det-label">Data Limite Liberação</span><span class="det-value">@Model.DataProgLiberacao</span></div>
+                                    <div class="det-row"><span class="det-label">Data Limite Embarque</span><span class="det-value">@Model.DataProgEmbarque</span></div>
+                                    <div class="det-row"><span class="det-label">Data Entrega Prevista</span><span class="det-value">@Model.DataProgEntrega</span></div>
+                                    <div class="det-row"><span class="det-label">Data Limite do SLA</span><span class="det-value">@Model.DataSLACliente</span></div>
+                                    <div class="det-row">
+                                        <span class="det-label">Situação SLA</span>
+                                        <span class="det-value @SlaColor(Model.StatusSLACliente)">
+                                            @Model.StatusSLACliente
+                                            @if (string.Equals(Model.StatusSLACliente, "Atrasado", StringComparison.OrdinalIgnoreCase) && Model.DiasAtrasoSLACliente > 0)
+                                            {
+                                                <text> (@Model.DiasAtrasoSLACliente @(Model.DiasAtrasoSLACliente == 1 ? "dia" : "dias"))</text>
+                                            }
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- PREVISÃO DE FRETE -->
+                        @if (!Model.TemRupturaTotal && Model.QtItensBloqueados != Model.QtItensBRSupply)
+                        {
+                            <div class="det-card mb-3">
+                                <div class="det-card-header"><h5><i class="fa-duotone fa-truck-fast me-2 text-br"></i>Previsão de Frete</h5></div>
+                                <div class="det-card-body">
+                                    @if (Model.TransportadoraID > 0)
+                                    {
+                                        <div class="det-row"><span class="det-label">Transportadora</span><span class="det-value">@Model.NmTransportadora</span></div>
+                                        <div class="det-row"><span class="det-label">Destino</span><span class="det-value">@Model.CidadeEntrega / @Model.UFEntrega</span></div>
+                                        <div class="det-row"><span class="det-label">Peso</span><span class="det-value">@Model.Peso.ToString("N2", ptBr) Kg</span></div>
+                                        <div class="det-row">
+                                            <span class="det-label">Prazo Considerado</span>
+                                            <span class="det-value">@Model.PrazoEntregaTransp @(Model.PrazoEntregaTransp == 1 ? "dia útil" : "dias úteis")</span>
+                                        </div>
+                                        <div class="det-row">
+                                            <span class="det-label">Prazo Total</span>
+                                            <span class="det-value">@Model.PrazoEntregaCalc @(Model.PrazoEntregaCalc == 1 ? "dia útil" : "dias úteis")</span>
+                                        </div>
+                                        <div class="det-row">
+                                            <span class="det-label">Valor do Frete</span>
+                                            <span class="det-value">
+                                                @Model.VlrFreteCalc.ToString("C2", ptBr)
+                                                (<span class="@FretePercColor(Model.PercentualFrete)">@Model.PercentualFrete.ToString("N2", ptBr)%</span>)
+                                            </span>
+                                        </div>
+                                        <div class="det-row"><span class="det-label">Agrupado</span><span class="det-value">@Model.FreteAgrupado</span></div>
+                                        @if (!string.IsNullOrWhiteSpace(Model.ObsCalcFrete))
+                                        {
+                                            <div class="det-row"><span class="det-label">Observação do Cálculo</span><span class="det-value">@Model.ObsCalcFrete</span></div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-secondary mb-0" role="alert">
+                                            <i class="fa-solid fa-hourglass me-1"></i>
+                                            O frete deste pedido ainda não está calculado.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- OBSERVAÇÕES -->
+                        <div class="det-card mb-3">
+                            <div class="det-card-header"><h5><i class="fa-duotone fa-note-sticky me-2 text-br"></i>Observações do Pedido</h5></div>
+                            <div class="det-card-body">
+                                <div class="det-row"><span class="det-label">Obs. da Nota Fiscal</span><span class="det-value">@(string.IsNullOrWhiteSpace(Model.ObsNota) ? "—" : Model.ObsNota)@if (podeEditar) { <button type="button" class="btn btn-sm btn-link p-0 ms-2 text-primary" data-bs-toggle="modal" data-bs-target=".bs-modal-alterarobsnota" title="Alterar"><i class="fa-solid fa-pencil"></i></button> }</span></div>
+                                <div class="det-row"><span class="det-label">Obs. do Solicitante</span><span class="det-value">@(string.IsNullOrWhiteSpace(Model.ObsCotacao) ? "—" : Model.ObsCotacao)@if (podeEditar && Model.PodeAlterarObsSolicitante) { <button type="button" class="btn btn-sm btn-link p-0 ms-2 text-primary" data-bs-toggle="modal" data-bs-target=".bs-modal-alterarobscotacao" title="Alterar"><i class="fa-solid fa-pencil"></i></button> }</span></div>
+                                <div class="det-row"><span class="det-label">Obs. do Aprovador</span><span class="det-value">@(string.IsNullOrWhiteSpace(Model.ObsAprovacao) ? "—" : Model.ObsAprovacao)@if (podeEditar && Model.PodeAlterarObsAprovador) { <button type="button" class="btn btn-sm btn-link p-0 ms-2 text-primary" data-bs-toggle="modal" data-bs-target=".bs-modal-alterarobsaprovador" title="Alterar"><i class="fa-solid fa-pencil"></i></button> }</span></div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- PARÂMETROS DO CLIENTE -->
+                    <div class="det-card mb-3">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-gears me-2 text-br"></i>Parâmetros do Cliente</h5></div>
+                        <div class="det-card-body">
+                            <div class="det-row"><span class="det-label">Pedido Mínimo</span><span class="det-value">@Model.Bloqueio.ToString("C2", ptBr)</span></div>
+                            <div class="det-row"><span class="det-label">Mínimo Isenção de Taxa</span><span class="det-value">@Model.Minimo.ToString("C2", ptBr)</span></div>
+                            <div class="det-row"><span class="det-label">Taxa de Entrega</span><span class="det-value">@Model.Taxa.ToString("C2", ptBr)</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- LINHA: ITENS BR SUPPLY (full width)                          -->
+                <!-- ============================================================ -->
+                @if (Model.TemItensBRSupply)
+                {
+                    <div class="col-12">
+                        <div class="det-card mb-3"
+                             id="card-itens-brsupply"
+                             data-cotacao-id="@Model.CotacaoID"
+                             data-status-id="@Model.StatusID"
+                             data-qt-fila-sap="@Model.QtFilaSAP"
+                             data-qt-brsupply="@Model.QtItensBRSupply"
+                             data-qt-marketplace="@Model.QtItensMarketplace"
+                             data-flag-nao-editar-pedido-com-oc="@Model.FlagNaoEditarPedidoComOC">
+                            <div class="det-card-header"><h5><i class="fa-duotone fa-boxes-stacked me-2 text-br"></i>Itens Br Supply</h5></div>
+                            <div class="det-card-body">
+                                <div id="itens-brsupply-loading" class="text-center text-muted py-4">
+                                    <i class="fa-duotone fa-spinner fa-spin fa-2x"></i>
+                                    <p class="mt-2 mb-0">Carregando itens...</p>
+                                </div>
+                                <div id="itens-brsupply-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- ============================================================ -->
+                <!-- LINHA: ITENS MARKETPLACE (full width)                        -->
+                <!-- ============================================================ -->
+                @if (Model.TemItensMarketplace)
+                {
+                    <div class="col-12">
+                        <div class="det-card mb-3" id="card-itens-marketplace" data-cotacao-id="@Model.CotacaoID">
+                            <div class="det-card-header"><h5><i class="fa-duotone fa-store me-2 text-br"></i>Itens Marketplace</h5></div>
+                            <div class="det-card-body">
+                                <div id="itens-marketplace-loading" class="text-center text-muted py-4">
+                                    <i class="fa-duotone fa-spinner fa-spin fa-2x"></i>
+                                    <p class="mt-2 mb-0">Carregando itens...</p>
+                                </div>
+                                <div id="itens-marketplace-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- ============================================================ -->
+                <!-- LINHA: LOGS (full width) — Fase 4                             -->
+                <!-- ============================================================ -->
+                <div class="col-12">
+                    <div class="det-card mb-3" id="card-logs" data-cotacao-id="@Model.CotacaoID">
+                        <div class="det-card-header"><h5><i class="fa-duotone fa-clock-rotate-left me-2 text-br"></i>Registros de Log</h5></div>
+                        <div class="det-card-body">
+                            <ul class="nav nav-tabs" id="logsTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="tab-cotlog-btn" data-bs-toggle="tab" data-bs-target="#tab-cotlog" type="button" role="tab">
+                                        <i class="fa-duotone fa-file-lines me-1"></i>Log do Pedido
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tab-backoffice-btn" data-bs-toggle="tab" data-bs-target="#tab-backoffice" type="button" role="tab">
+                                        <i class="fa-duotone fa-user-gear me-1"></i>BackOffice
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tab-detalhado-btn" data-bs-toggle="tab" data-bs-target="#tab-detalhado" type="button" role="tab">
+                                        <i class="fa-duotone fa-microscope me-1"></i>Detalhado de Itens
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content pt-3" id="logsTabsContent">
+                                <div class="tab-pane fade show active" id="tab-cotlog" role="tabpanel">
+                                    <div id="logs-cotlog-loading" class="text-center text-muted py-4">
+                                        <i class="fa-duotone fa-spinner fa-spin fa-2x"></i>
+                                        <p class="mt-2 mb-0">Carregando registros...</p>
+                                    </div>
+                                    <div id="logs-cotlog-content"></div>
+                                </div>
+
+                                <div class="tab-pane fade" id="tab-backoffice" role="tabpanel">
+                                    <div id="logs-backoffice-loading" class="text-center text-muted py-4 d-none">
+                                        <i class="fa-duotone fa-spinner fa-spin fa-2x"></i>
+                                        <p class="mt-2 mb-0">Carregando registros...</p>
+                                    </div>
+                                    <div id="logs-backoffice-content"></div>
+                                </div>
+
+                                <div class="tab-pane fade" id="tab-detalhado" role="tabpanel">
+                                    <div id="logs-detalhado-loading" class="text-center text-muted py-4 d-none">
+                                        <i class="fa-duotone fa-spinner fa-spin fa-2x"></i>
+                                        <p class="mt-2 mb-0">Carregando registros...</p>
+                                    </div>
+                                    <div id="logs-detalhado-content"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        }
+    </div>
+</div>
+
+@* Modais de ação e consulta (Fase 3) *@
+@await Html.PartialAsync("_Modais", Model)
+
+@* Modais de item (Fase 5) *@
+@await Html.PartialAsync("_ModaisItem", Model)
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            // Formata número (pt-BR) com duas casas decimais.
+            const fmtMoney = (v) => 'R$ ' + Number(v ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const fmtMoneyRaw = (v) => Number(v ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const fmtPerc = (v) => Number(v ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+            const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+            // -------- Lazy load: Opções de Frete --------
+            const modalFretes = document.querySelector('.bs-modal-fretes');
+            if (modalFretes) {
+                let loaded = false;
+                modalFretes.addEventListener('show.bs.modal', async function () {
+                    if (loaded) return;
+                    const cotId = this.getAttribute('data-cotacao-id');
+                    const loading = this.querySelector('#fretes-loading');
+                    const content = this.querySelector('#fretes-content');
+                    loading.classList.remove('d-none');
+                    content.innerHTML = '';
+                    try {
+                        const resp = await fetch(`@Url.Action("OpcoesFreteJson", "LiberacaoPedido", new { Area = "Comercial" })?cotacaoId=${cotId}`);
+                        const data = await resp.json();
+                        content.innerHTML = renderFretes(data);
+                        loaded = true;
+                    } catch (e) {
+                        content.innerHTML = '<div class="alert alert-danger">Erro ao carregar opções de frete.</div>';
+                    } finally {
+                        loading.classList.add('d-none');
+                    }
+                });
+            }
+
+            function renderFretes(items) {
+                if (!items || items.length === 0)
+                    return '<div class="alert alert-secondary mb-0">Nenhuma opção de frete calculada para este pedido.</div>';
+
+                let html = '<table class="table table-sm"><thead><tr>' +
+                    '<th class="text-start">TRANSPORTADORA</th>' +
+                    '<th class="text-center">PRAZO LOG.</th>' +
+                    '<th class="text-center">PRAZO COM.</th>' +
+                    '<th class="text-end">TAXA EXTRA</th>' +
+                    '<th class="text-end">VALOR DO FRETE</th>' +
+                    '<th class="text-center">ITENS REST.</th>' +
+                    '<th class="text-start">REGRAS</th></tr></thead><tbody>';
+
+                for (const r of items) {
+                    let cor = '';
+                    let regra = '';
+                    if (r.flagObrigatoriaCanalVenda === 1) { regra = 'Preferência no Canal de Venda'; cor = 'text-brsupply'; }
+                    if (r.flagClienteRestrito === 1) { regra = 'Bloqueada para o Cliente'; cor = 'text-danger'; }
+                    if (r.flagClienteFixo === 1) { regra = 'Fixa no Cadastro do Cliente'; cor = 'text-warning'; }
+                    if (r.qtItensRestritos > 0) { cor = 'text-danger'; }
+
+                    html += `<tr>
+                        <td class="text-start align-middle ${cor}">${escapeHtml(r.nomeTransportadora)}</td>
+                        <td class="text-center align-middle ${cor}">${r.prazoLogistico} dia(s)</td>
+                        <td class="text-center align-middle ${cor}">${r.prazoComercial} dia(s)</td>
+                        <td class="text-end align-middle ${cor}">${fmtMoney(r.taxaExtra)}</td>
+                        <td class="text-end fw-600 align-middle ${cor}">${fmtMoney(r.valorFrete)}</td>
+                        <td class="text-center align-middle ${cor}">${r.qtItensRestritos}</td>
+                        <td class="text-start align-middle ${cor}">${escapeHtml(regra)}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                return html;
+            }
+
+            // -------- Lazy load: Impostos --------
+            const modalImpostos = document.querySelector('.bs-modal-impostos');
+            if (modalImpostos) {
+                let loaded = false;
+                modalImpostos.addEventListener('show.bs.modal', async function () {
+                    if (loaded) return;
+                    const cotId = this.getAttribute('data-cotacao-id');
+                    const loading = this.querySelector('#impostos-loading');
+                    const content = this.querySelector('#impostos-content');
+                    loading.classList.remove('d-none');
+                    content.innerHTML = '';
+                    try {
+                        const resp = await fetch(`@Url.Action("ImpostosJson", "LiberacaoPedido", new { Area = "Comercial" })?cotacaoId=${cotId}`);
+                        const data = await resp.json();
+                        content.innerHTML = renderImpostos(data);
+                        loaded = true;
+                    } catch (e) {
+                        content.innerHTML = '<div class="alert alert-danger">Erro ao carregar detalhamento de impostos.</div>';
+                    } finally {
+                        loading.classList.add('d-none');
+                    }
+                });
+            }
+
+            function renderImpostos(items) {
+                if (!items || items.length === 0)
+                    return '<div class="alert alert-secondary mb-0">Nenhum item encontrado para detalhamento.</div>';
+
+                let html = '<table class="table table-sm table-striped"><thead><tr>' +
+                    '<th class="text-center">Item</th>' +
+                    '<th class="text-center">Qtde</th>' +
+                    '<th class="text-end">Vlr.Unit.</th>' +
+                    '<th class="text-end">Markup</th>' +
+                    '<th class="text-end">ICMS</th>' +
+                    '<th class="text-end">IPI</th>' +
+                    '<th class="text-end">PIS</th>' +
+                    '<th class="text-end">COFINS</th>' +
+                    '<th class="text-end">FCP</th>' +
+                    '<th class="text-end">ST (R$)</th>' +
+                    '<th class="text-end">ISS (R$)</th>' +
+                    '<th class="text-end">ICMS Partilha</th>' +
+                    '<th class="text-end">Margem</th>' +
+                    '<th class="text-end">LB / ROL</th>' +
+                    '</tr></thead><tbody>';
+
+                for (const r of items) {
+                    html += `<tr>
+                        <td class="text-center"><strong>${escapeHtml(r.cdItem)}</strong><br /><span class="text-muted small">${escapeHtml(r.nmItemAbrev)}...</span></td>
+                        <td class="text-center">${r.qtItem}</td>
+                        <td class="text-end">${fmtMoney(r.vlrUnitario)}</td>
+                        <td class="text-end">${fmtPerc(r.mkuP)}</td>
+                        <td class="text-end"><strong>${fmtMoney(r.valorICMS)}</strong><br /><small>${fmtPerc(r.percentualICMS)}</small></td>
+                        <td class="text-end"><strong>${fmtMoney(r.valorIPI)}</strong><br /><small>${fmtPerc(r.percentualIPI)}</small></td>
+                        <td class="text-end"><strong>${fmtMoney(r.valorPIS)}</strong><br /><small>${fmtPerc(r.percentualPIS)}</small></td>
+                        <td class="text-end"><strong>${fmtMoney(r.valorCOFINS)}</strong><br /><small>${fmtPerc(r.percentualCOFINS)}</small></td>
+                        <td class="text-end"><strong>${fmtMoney(r.valorFundoCombPobreza)}</strong><br /><small>${fmtPerc(r.percentualFCP)}</small></td>
+                        <td class="text-end"><strong>${fmtMoney(r.valorST)}</strong></td>
+                        <td class="text-end"><strong>${fmtMoney(r.valorISS)}</strong></td>
+                        <td class="text-end"><small>Orig: ${fmtMoney(r.valorICMSPartilhaOrigem)}<br />Dest: ${fmtMoney(r.valorICMSPartilhaDestino)}</small></td>
+                        <td class="text-end">${fmtPerc(r.margemCalculada)}</td>
+                        <td class="text-end"><small>LB: ${fmtMoney(r.lB)}<br />ROL: ${fmtMoney(r.rOL)}</small></td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                return html;
+            }
+
+            // ==================================================================
+            //  LOGS (Fase 4) — 3 tabs com lazy load + DataTables
+            // ==================================================================
+            const cardLogs = document.getElementById('card-logs');
+            if (cardLogs) {
+                const cotId = cardLogs.getAttribute('data-cotacao-id');
+                const urlCotLog = `@Url.Action("CotLogJson", "LiberacaoPedido", new { Area = "Comercial" })?cotacaoId=${cotId}`;
+                const urlBackOffice = `@Url.Action("BackOfficeLogJson", "LiberacaoPedido", new { Area = "Comercial" })?cotacaoId=${cotId}`;
+                const urlDetalhado = `@Url.Action("CotLogDetalhadoJson", "LiberacaoPedido", new { Area = "Comercial" })?cotacaoId=${cotId}`;
+
+                const tabsState = { cotlog: false, backoffice: false, detalhado: false };
+
+                async function carregarLog(chave, url, renderer, contentId, loadingId) {
+                    if (tabsState[chave]) return;
+                    const content = document.getElementById(contentId);
+                    const loading = document.getElementById(loadingId);
+                    loading.classList.remove('d-none');
+                    content.innerHTML = '';
+                    try {
+                        const resp = await fetch(url);
+                        const data = await resp.json();
+                        content.innerHTML = renderer(data);
+                        // Inicializa DataTables se houver tabela renderizada
+                        const tbl = content.querySelector('table');
+                        if (tbl && typeof window.jQuery !== 'undefined' && window.jQuery.fn.DataTable) {
+                            window.jQuery(tbl).DataTable({
+                                pageLength: 10,
+                                order: [[0, 'desc']],
+                                language: {
+                                    url: 'https://cdn.datatables.net/plug-ins/2.3.4/i18n/pt-BR.json'
+                                }
+                            });
+                        }
+                        tabsState[chave] = true;
+                    } catch (e) {
+                        content.innerHTML = '<div class="alert alert-danger">Erro ao carregar registros.</div>';
+                    } finally {
+                        loading.classList.add('d-none');
+                    }
+                }
+
+                // Renderizadores ---------------------------------------------------
+
+                function badgeTipoOperacao(tipo) {
+                    switch ((tipo || '').toUpperCase()) {
+                        case 'A': return '<span class="badge bg-success">A</span>';
+                        case 'R': return '<span class="badge bg-info">R</span>';
+                        case 'E': return '<span class="badge bg-danger">E</span>';
+                        default:  return `<span class="badge bg-secondary">${escapeHtml(tipo)}</span>`;
+                    }
+                }
+
+                function renderCotLog(items) {
+                    if (!items || items.length === 0)
+                        return '<div class="alert alert-secondary mb-0">Nenhum registro encontrado.</div>';
+
+                    let html = '<table class="table table-sm table-striped" style="width:100%"><thead><tr>' +
+                        '<th style="width:140px">Data/Hora</th>' +
+                        '<th style="width:70px" class="text-center">Tipo</th>' +
+                        '<th style="width:180px">Usuário</th>' +
+                        '<th>Modificação</th>' +
+                        '</tr></thead><tbody>';
+                    for (const r of items) {
+                        html += `<tr>
+                            <td>${fmtDateTime(r.dtOperacao)}</td>
+                            <td class="text-center">${badgeTipoOperacao(r.tipoOperacao)}</td>
+                            <td>${escapeHtml(r.nmUsuario)}</td>
+                            <td><small>${escapeHtml(r.modificacao)}</small></td>
+                        </tr>`;
+                    }
+                    html += '</tbody></table>';
+                    return html;
+                }
+
+                function renderBackOffice(items) {
+                    if (!items || items.length === 0)
+                        return '<div class="alert alert-secondary mb-0">Nenhum registro encontrado.</div>';
+
+                    let html = '<table class="table table-sm table-striped" style="width:100%"><thead><tr>' +
+                        '<th style="width:140px">Data/Hora</th>' +
+                        '<th style="width:180px">Usuário</th>' +
+                        '<th>Ação</th>' +
+                        '<th>Motivo</th>' +
+                        '</tr></thead><tbody>';
+                    for (const r of items) {
+                        html += `<tr>
+                            <td>${fmtDateTime(r.dataHora)}</td>
+                            <td>${escapeHtml(r.nmUsuario)}</td>
+                            <td><small>${escapeHtml(r.dsAcao)}</small></td>
+                            <td><small>${escapeHtml(r.motivo)}</small></td>
+                        </tr>`;
+                    }
+                    html += '</tbody></table>';
+                    return html;
+                }
+
+                function renderDetalhado(items) {
+                    if (!items || items.length === 0)
+                        return '<div class="alert alert-secondary mb-0">Nenhum registro detalhado encontrado.</div>';
+
+                    let html = '<table class="table table-sm table-striped" style="width:100%"><thead><tr>' +
+                        '<th style="width:140px">Data/Hora</th>' +
+                        '<th style="width:70px" class="text-center">Op.</th>' +
+                        '<th style="width:160px">Usuário</th>' +
+                        '<th>Item Antigo</th>' +
+                        '<th>Item Novo</th>' +
+                        '<th>Motivo</th>' +
+                        '</tr></thead><tbody>';
+
+                    for (const r of items) {
+                        const oldItem = r.oldItemID
+                            ? `<strong>${escapeHtml(r.oldCdItem)}</strong> — ${escapeHtml(r.oldNmItem)}` +
+                              (r.oldQtItem != null ? `<br /><small>Qt: ${r.oldQtItem}${r.oldVlrFinal != null ? ' · R$ ' + Number(r.oldVlrFinal).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : ''}</small>` : '')
+                            : '<span class="text-muted">—</span>';
+
+                        const newItem = r.newItemID
+                            ? `<strong>${escapeHtml(r.newCdItem)}</strong> — ${escapeHtml(r.newNmItem)}` +
+                              (r.newQtItem != null ? `<br /><small>Qt: ${r.newQtItem}${r.newVlrFinal != null ? ' · R$ ' + Number(r.newVlrFinal).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : ''}</small>` : '')
+                            : '<span class="text-muted">—</span>';
+
+                        html += `<tr>
+                            <td>${fmtDateTime(r.dataHora)}</td>
+                            <td class="text-center">${badgeOperacaoDetalhada(r.operacao)}</td>
+                            <td>${escapeHtml(r.nmUsuario)}</td>
+                            <td>${oldItem}</td>
+                            <td>${newItem}</td>
+                            <td><small>${escapeHtml(r.motivo)}</small></td>
+                        </tr>`;
+                    }
+                    html += '</tbody></table>';
+                    return html;
+                }
+
+                function badgeOperacaoDetalhada(op) {
+                    switch ((op || '').toUpperCase()) {
+                        case 'A': return '<span class="badge bg-info" title="Alterar">A</span>';
+                        case 'T': return '<span class="badge bg-warning" title="Trocar">T</span>';
+                        case 'E': return '<span class="badge bg-danger" title="Excluir">E</span>';
+                        default:  return `<span class="badge bg-secondary">${escapeHtml(op)}</span>`;
+                    }
+                }
+
+                function fmtDateTime(iso) {
+                    if (!iso) return '';
+                    const d = new Date(iso);
+                    if (isNaN(d.getTime())) return escapeHtml(iso);
+                    const pad = (n) => String(n).padStart(2, '0');
+                    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                }
+
+                // Carrega a primeira aba imediatamente (já é a ativa).
+                carregarLog('cotlog', urlCotLog, renderCotLog, 'logs-cotlog-content', 'logs-cotlog-loading');
+
+                // Lazy load nas demais.
+                document.getElementById('tab-backoffice-btn').addEventListener('shown.bs.tab', () =>
+                    carregarLog('backoffice', urlBackOffice, renderBackOffice, 'logs-backoffice-content', 'logs-backoffice-loading'));
+
+                document.getElementById('tab-detalhado-btn').addEventListener('shown.bs.tab', () =>
+                    carregarLog('detalhado', urlDetalhado, renderDetalhado, 'logs-detalhado-content', 'logs-detalhado-loading'));
+            }
+
+            // ==================================================================
+            //  ITENS BR SUPPLY + MARKETPLACE (Fase 5) — lazy load + DataTables
+            // ==================================================================
+            const cardBrSupply = document.getElementById('card-itens-brsupply');
+            if (cardBrSupply) {
+                const cotId = cardBrSupply.getAttribute('data-cotacao-id');
+                const statusId = parseInt(cardBrSupply.getAttribute('data-status-id') || '0', 10);
+                const qtFilaSap = parseInt(cardBrSupply.getAttribute('data-qt-fila-sap') || '0', 10);
+                const qtBrSupply = parseInt(cardBrSupply.getAttribute('data-qt-brsupply') || '0', 10);
+                const qtMarketplace = parseInt(cardBrSupply.getAttribute('data-qt-marketplace') || '0', 10);
+                const flagNaoEditarOc = parseInt(cardBrSupply.getAttribute('data-flag-nao-editar-pedido-com-oc') || '0', 10);
+
+                const url = `@Url.Action("ItensBrSupplyJson", "LiberacaoPedido", new { Area = "Comercial" })?cotacaoId=${cotId}`;
+
+                fetch(url).then(r => r.json()).then(items => {
+                    document.getElementById('itens-brsupply-loading').classList.add('d-none');
+                    document.getElementById('itens-brsupply-content').innerHTML = renderItensBrSupply(items, statusId, qtFilaSap, qtBrSupply, qtMarketplace, flagNaoEditarOc, cotId);
+
+                    // Ativa DataTables
+                    const tbl = document.getElementById('TableItensBrSupply');
+                    if (tbl && window.jQuery && window.jQuery.fn.DataTable) {
+                        window.jQuery(tbl).DataTable({
+                            pageLength: 10,
+                            order: [[5, 'asc']],
+                            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Todos']],
+                            columnDefs: [
+                                { targets: [7, 8, 9], orderable: false, searchable: false }
+                            ],
+                            language: { url: 'https://cdn.datatables.net/plug-ins/2.3.4/i18n/pt-BR.json' }
+                        });
+                    }
+
+                    // Conecta botões aos modais
+                    bindBotoesItem();
+                }).catch(() => {
+                    document.getElementById('itens-brsupply-loading').classList.add('d-none');
+                    document.getElementById('itens-brsupply-content').innerHTML = '<div class="alert alert-danger">Erro ao carregar itens.</div>';
+                });
+            }
+
+            const cardMkt = document.getElementById('card-itens-marketplace');
+            if (cardMkt) {
+                const cotId = cardMkt.getAttribute('data-cotacao-id');
+                const url = `@Url.Action("ItensMarketplaceJson", "LiberacaoPedido", new { Area = "Comercial" })?cotacaoId=${cotId}`;
+                fetch(url).then(r => r.json()).then(items => {
+                    document.getElementById('itens-marketplace-loading').classList.add('d-none');
+                    document.getElementById('itens-marketplace-content').innerHTML = renderItensMarketplace(items);
+                    const tbl = document.getElementById('TableItensMarketplace');
+                    if (tbl && window.jQuery && window.jQuery.fn.DataTable) {
+                        window.jQuery(tbl).DataTable({
+                            pageLength: 10,
+                            order: [[0, 'asc']],
+                            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Todos']],
+                            language: { url: 'https://cdn.datatables.net/plug-ins/2.3.4/i18n/pt-BR.json' }
+                        });
+                    }
+                }).catch(() => {
+                    document.getElementById('itens-marketplace-loading').classList.add('d-none');
+                    document.getElementById('itens-marketplace-content').innerHTML = '<div class="alert alert-danger">Erro ao carregar itens Marketplace.</div>';
+                });
+            }
+
+            // Render: itens BR Supply -----------------------------------------
+            function renderItensBrSupply(items, statusId, qtFilaSap, qtBrSupply, qtMarketplace, flagNaoEditarOc, cotId) {
+                if (!items || items.length === 0)
+                    return '<div class="alert alert-secondary mb-0">Nenhum item encontrado.</div>';
+
+                let html = '<table class="table table-sm table-striped" id="TableItensBrSupply" style="width:100%"><thead><tr>' +
+                    '<th class="text-center">CÓD</th>' +
+                    '<th>NOME</th>' +
+                    '<th class="text-center">QUANT</th>' +
+                    '<th class="text-end">VLR.UNIT.</th>' +
+                    '<th class="text-end">VLR.TOTAL</th>' +
+                    '<th class="text-center">ALOCAÇÃO</th>' +
+                    '<th class="text-end">MARGEM</th>' +
+                    '<th class="text-center">EDITA</th>' +
+                    '<th class="text-center">TROCA</th>' +
+                    '<th class="text-center">EXCLUI</th>' +
+                    '</tr></thead><tbody>';
+
+                for (const it of items) {
+                    // Situação visual (ruptura)
+                    let situacao = escapeHtml(it.situacaoItem);
+                    if (it.flagRuptura === 1) {
+                        const prev = it.previsao ? escapeHtml(it.previsao) : 'Sem previsão';
+                        situacao = `<span class="text-danger" title="Qtde. Disponível: ${it.qtDisponivel}"><i class="fa-duotone fa-exclamation-triangle"></i> Ruptura</span><br /><span class="text-warning">${prev}</span>`;
+                    }
+
+                    // Margem
+                    const margem = (it.margem && it.margem.trim() !== '' && it.margem.trim() !== '%')
+                        ? escapeHtml(it.margem)
+                        : '<span class="text-muted">Não Calc.</span>';
+
+                    // Follow compras (só se não alocado)
+                    const followCompras = (it.flagAlocaPedido === 0 && it.dsFollowCompras)
+                        ? `<br /><span class="text-warning" style="font-size:10px">${escapeHtml(it.dsFollowCompras)}</span>`
+                        : '';
+
+                    // Botões (conversão fiel do PHP)
+                    let btnEditar, btnTrocar, btnExcluir;
+                    const podeEditar = (statusId === 3 && it.flagAlocaPedido !== 2 && flagNaoEditarOc === 0);
+                    if (podeEditar) {
+                        if (qtFilaSap === 0) {
+                            btnTrocar = `<button type="button" class="btn btn-sm btn-warning btnTrocarItem" data-id="${it.cotacaoItemID}" data-pedido="${cotId}" data-itemid="${it.itemID}" data-cditem="${escapeAttr(it.cdItem)}" data-nmitem="${escapeAttr(it.nmItem)}" data-qtitem="${it.qtItem}" data-vlrunit="${fmtMoneyRaw(it.vlrUnit)}" data-custo="${fmtMoneyRaw(it.vlrCusto)}" data-ordem="${escapeAttr(it.ordem)}" data-sequencia="${escapeAttr(it.sequencia)}"><i class="fa-duotone fa-arrows-rotate"></i></button>`;
+                            btnEditar = `<button type="button" class="btn btn-sm btn-info btnEditarItem" data-id="${it.cotacaoItemID}" data-pedido="${cotId}" data-itemid="${it.itemID}" data-cditem="${escapeAttr(it.cdItem)}" data-nmitem="${escapeAttr(it.nmItem)}" data-qtitem="${it.qtItem}" data-vlrunit="${fmtMoneyRaw(it.vlrUnit)}" data-ordem="${escapeAttr(it.ordem)}" data-sequencia="${escapeAttr(it.sequencia)}"><i class="fa-duotone fa-pencil"></i></button>`;
+                        } else {
+                            btnTrocar = '<button type="button" class="btn btn-sm btn-secondary disabled"><i class="fa-duotone fa-ban"></i></button>';
+                            btnEditar = `<button type="button" class="btn btn-sm btn-info btnEditarItemOV" data-id="${it.cotacaoItemID}" data-pedido="${cotId}" data-cditem="${escapeAttr(it.cdItem)}" data-nmitem="${escapeAttr(it.nmItem)}" data-qtitem="${it.qtItem}" data-vlrunit="${fmtMoneyRaw(it.vlrUnit)}" data-ordem="${escapeAttr(it.ordem)}" data-sequencia="${escapeAttr(it.sequencia)}"><i class="fa-duotone fa-pencil"></i></button>`;
+                        }
+                    } else {
+                        btnEditar = '<button type="button" class="btn btn-sm btn-secondary disabled"><i class="fa-duotone fa-ban"></i></button>';
+                        btnTrocar = '<button type="button" class="btn btn-sm btn-secondary disabled"><i class="fa-duotone fa-ban"></i></button>';
+                    }
+
+                    const podeExcluir = ((qtBrSupply > 1) || (qtBrSupply === 1 && qtMarketplace > 0)) && (qtFilaSap === 0);
+                    if (podeExcluir) {
+                        btnExcluir = `<button type="button" class="btn btn-sm btn-danger btnExcluirItem" data-id="${it.cotacaoItemID}" data-pedido="${cotId}" data-itemid="${it.itemID}" data-cditem="${escapeAttr(it.cdItem)}" data-nmitem="${escapeAttr(it.nmItem)}" data-qtitem="${it.qtItem}" data-vlrunit="${fmtMoneyRaw(it.vlrUnit)}"><i class="fa-duotone fa-trash-alt"></i></button>`;
+                    } else {
+                        btnExcluir = '<button type="button" class="btn btn-sm btn-secondary disabled"><i class="fa-duotone fa-ban"></i></button>';
+                    }
+
+                    html += `<tr>
+                        <td class="text-center align-middle"><strong>${escapeHtml(it.cdItem)}</strong></td>
+                        <td class="align-middle">${escapeHtml(it.nmItem)}${followCompras}</td>
+                        <td class="text-center align-middle">${it.qtItem}</td>
+                        <td class="text-end align-middle">${fmtMoney(it.vlrUnit)}</td>
+                        <td class="text-end align-middle">${fmtMoney(it.vlrTotal)}</td>
+                        <td class="text-center align-middle" data-order="${it.orderBy}">${situacao}</td>
+                        <td class="text-end align-middle">${margem}</td>
+                        <td class="text-center align-middle">${btnEditar}</td>
+                        <td class="text-center align-middle">${btnTrocar}</td>
+                        <td class="text-center align-middle">${btnExcluir}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                return html;
+            }
+
+            function renderItensMarketplace(items) {
+                if (!items || items.length === 0)
+                    return '<div class="alert alert-secondary mb-0">Nenhum item encontrado.</div>';
+
+                let html = '<table class="table table-sm table-striped" id="TableItensMarketplace" style="width:100%"><thead><tr>' +
+                    '<th class="text-center">CÓD.</th>' +
+                    '<th>NOME</th>' +
+                    '<th>FORNECEDOR</th>' +
+                    '<th class="text-center">QUANT.</th>' +
+                    '<th class="text-end">VLR.UNIT.</th>' +
+                    '<th class="text-end">VLR.TOTAL</th>' +
+                    '</tr></thead><tbody>';
+                for (const it of items) {
+                    html += `<tr>
+                        <td class="text-center align-middle">${escapeHtml(it.cdItem)}</td>
+                        <td class="align-middle">${escapeHtml(it.nmItem)}</td>
+                        <td class="align-middle">${escapeHtml(it.nmFornecedor)}</td>
+                        <td class="text-center align-middle">${it.qtItem}</td>
+                        <td class="text-end align-middle">${fmtMoney(it.vlrUnit)}</td>
+                        <td class="text-end align-middle">${fmtMoney(it.vlrTotal)}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                return html;
+            }
+
+            // Bind dos 4 botões
+            function bindBotoesItem() {
+                document.querySelectorAll('.btnEditarItem').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        setVal('#EdtCotacaoItemID', this.dataset.id);
+                        setVal('#EdtCotacaoID', this.dataset.pedido);
+                        setVal('#EdtItemIDOld', this.dataset.itemid || '0');
+                        setText('#EdtCdItem', this.dataset.cditem);
+                        setText('#EdtNmItem', this.dataset.nmitem);
+                        setVal('#EdtQtItem', this.dataset.qtitem);
+                        setVal('#EdtVlrUnit', this.dataset.vlrunit);
+                        setVal('#EdtOrdem', this.dataset.ordem);
+                        setVal('#EdtSequencia', this.dataset.sequencia);
+                        setVal('#EdtCdItemOld', this.dataset.cditem);
+                        setVal('#EdtNmItemOld', this.dataset.nmitem);
+                        setVal('#EdtQtItemOld', this.dataset.qtitem);
+                        setVal('#EdtVlrUnitOld', this.dataset.vlrunit);
+                        setVal('#EdtOrdemOld', this.dataset.ordem);
+                        setVal('#EdtSequenciaOld', this.dataset.sequencia);
+                        new bootstrap.Modal(document.getElementById('modalEditarItem')).show();
+                    });
+                });
+
+                document.querySelectorAll('.btnEditarItemOV').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        setVal('#EdtOVCotacaoItemID', this.dataset.id);
+                        setVal('#EdtOVCotacaoID', this.dataset.pedido);
+                        setText('#EdtOVCdItem', this.dataset.cditem);
+                        setText('#EdtOVNmItem', this.dataset.nmitem);
+                        setVal('#EdtOVOrdem', this.dataset.ordem);
+                        setVal('#EdtOVSequencia', this.dataset.sequencia);
+                        setVal('#EdtOVCdItemOld', this.dataset.cditem);
+                        setVal('#EdtOVNmItemOld', this.dataset.nmitem);
+                        setVal('#EdtOVOrdemOld', this.dataset.ordem);
+                        setVal('#EdtOVSequenciaOld', this.dataset.sequencia);
+                        new bootstrap.Modal(document.getElementById('modalEditarItemComOV')).show();
+                    });
+                });
+
+                document.querySelectorAll('.btnExcluirItem').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        setVal('#DelCotacaoItemID', this.dataset.id);
+                        setVal('#DelCotacaoID', this.dataset.pedido);
+                        setVal('#DelItemID', this.dataset.itemid);
+                        setText('#DelCdItem', this.dataset.cditem);
+                        setText('#DelNmItem', this.dataset.nmitem);
+                        setText('#DelQtItem', this.dataset.qtitem);
+                        setText('#DelVlrUnit', this.dataset.vlrunit);
+                        setVal('#DelCdItemOld', this.dataset.cditem);
+                        setVal('#DelNmItemOld', this.dataset.nmitem);
+                        setVal('#DelQtItemOld', this.dataset.qtitem);
+                        setVal('#DelVlrUnitOld', this.dataset.vlrunit);
+                        new bootstrap.Modal(document.getElementById('modalExcluirItem')).show();
+                    });
+                });
+
+                document.querySelectorAll('.btnTrocarItem').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const idCotacaoItem = this.dataset.id;
+                        setVal('#AltCotacaoItemID', idCotacaoItem);
+                        setVal('#AltCotacaoID', this.dataset.pedido);
+                        setVal('#AltItemID', this.dataset.itemid);
+                        setText('#AltCdItem', this.dataset.cditem);
+                        setText('#AltNmItem', this.dataset.nmitem);
+                        setText('#AltQtItem', this.dataset.qtitem);
+                        setText('#AltVlrUnit', this.dataset.vlrunit);
+                        setText('#AltCusto', this.dataset.custo || '0,00');
+                        setVal('#AltCdItemOld', this.dataset.cditem);
+                        setVal('#AltNmItemOld', this.dataset.nmitem);
+
+                        document.getElementById('divItensDubstitutos').innerHTML =
+                            '<div class="row"><div class="col"><button type="button" class="btn btn-warning mt-2 ms-2" id="btnBuscarCompativeis" data-id="' + idCotacaoItem + '"><i class="fa-solid fa-arrows-rotate"></i> Buscar Itens Compatíveis</button></div><div class="col"><p class="text-muted float-end mt-3">Serão listados apenas itens do mesmo segmento, família e sub-família, com estoque suficiente.</p></div></div>';
+
+                        // Esconde o botão "Confirmar" até escolher substituto
+                        document.querySelectorAll('.btnTrocarItemFinal').forEach(b => b.classList.add('d-none'));
+
+                        new bootstrap.Modal(document.getElementById('modalTrocarItem')).show();
+                    });
+                });
+            }
+
+            // Click no botão "Buscar Itens Compatíveis" (delegado) -------------
+            // Conversão fiel de comercial_ajax_buscar_itens_compativeis.php
+            document.addEventListener('click', async function (e) {
+                const btn = e.target.closest('#btnBuscarCompativeis');
+                if (!btn) return;
+                const idCotacaoItem = btn.getAttribute('data-id');
+                const url = `@Url.Action("ItensCompativeisJson", "LiberacaoPedido", new { Area = "Comercial" })?cotacaoItemId=${idCotacaoItem}`;
+                const div = document.getElementById('divItensDubstitutos');
+                div.innerHTML = '<div class="text-center text-muted py-3"><i class="fa-duotone fa-spinner fa-spin fa-2x"></i><p class="mt-2 mb-0">Buscando itens compatíveis...</p></div>';
+
+                try {
+                    const resp = await fetch(url);
+                    const data = await resp.json();
+                    const itens = data?.itens ?? [];
+                    const flagAut = data?.flagTrocaItemAutomatica ?? 0;
+                    const msgAnalise = data?.mensagemAnalise ?? '';
+
+                    let html = '';
+
+                    if (itens.length === 0) {
+                        html += '<div class="alert alert-danger" role="alert"><i class="fa-duotone fa-times me-1"></i>Não há itens compatíveis e/ou com estoque suficiente</div>';
+                        document.querySelectorAll('.btnTrocarItemFinal').forEach(b => b.classList.add('d-none'));
+                    } else {
+                        // Select de substituto (mesmo padrão do PHP)
+                        let options = '<option></option>';
+                        for (const it of itens) {
+                            options += `<option value="${it.itemID}">${escapeHtml(it.cdItem)} - ${escapeHtml(it.nmItem)} [${fmtMoney(it.vlrCusto)}]</option>`;
+                        }
+                        html += '<label class="form-label">Selecione o Item Substituto <span class="text-danger">*</span></label>';
+                        html += `<select class="form-select mb-3" name="ItemSubstitutoID" id="ItemSubstitutoID" required>${options}</select>`;
+
+                        // Switch de troca automática (somente quando flag == 2)
+                        if (flagAut === 2) {
+                            html += '<div class="form-check form-switch mb-3">' +
+                                '<input class="form-check-input" type="checkbox" role="switch" value="true" name="FlagTrocaAutomatica" id="FlagTrocaAutomatica" />' +
+                                '<label class="form-check-label" for="FlagTrocaAutomatica">Trocar automaticamente em pedidos futuros deste mesmo cliente</label>' +
+                                '</div>';
+                        }
+
+                        document.querySelectorAll('.btnTrocarItemFinal').forEach(b => b.classList.remove('d-none'));
+                    }
+
+                    // Mensagem de análise (warnings separados por '|')
+                    if (msgAnalise && msgAnalise.trim() !== '') {
+                        const partes = msgAnalise.split('|').map(p => p.trim()).filter(p => p.length > 0);
+                        if (partes.length > 0) {
+                            let warn = '<div class="alert alert-warning mb-0" role="alert">';
+                            for (const p of partes) {
+                                warn += `<i class="fa-duotone fa-exclamation-triangle me-1"></i>${escapeHtml(p)}<br />`;
+                            }
+                            warn += '</div>';
+                            html += warn;
+                        }
+                    }
+
+                    div.innerHTML = html;
+                } catch {
+                    div.innerHTML = '<div class="alert alert-danger mb-0">Erro ao buscar itens compatíveis.</div>';
+                }
+            });
+
+            // Helpers ---------------------------------------------------------
+            function setVal(sel, v) { const el = document.querySelector(sel); if (el) el.value = v ?? ''; }
+            function setText(sel, v) { const el = document.querySelector(sel); if (el) el.textContent = v ?? ''; }
+            function escapeAttr(s) { return String(s ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+        })();
+    </script>
+}

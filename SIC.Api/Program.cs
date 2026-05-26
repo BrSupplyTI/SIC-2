@@ -10,6 +10,7 @@ using SIC.Infrastructure.Repositories;
 using SIC.Infrastructure.Repositories.Admin;
 using SIC.Infrastructure.Repositories.PrePedidosPDF;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -37,6 +38,19 @@ builder.Services.AddScoped<IPrePedidoPDFCommandRepository, SqlPrePedidoPDFComman
 builder.Services.AddScoped<IPrePedidoPDFQueryService, PrePedidoPDFQueryService>();
 builder.Services.AddScoped<IPrePedidoPDFCommandService, PrePedidoPDFCommandService>();
 builder.Services.AddHttpClient<IPrePedidoPDFIntegrationService, PrePedidoPDFIntegrationService>();
+
+// Liberação de Pedidos
+builder.Services.AddScoped<ILiberacaoPedidoRepository, SqlLiberacaoPedidoRepository>();
+builder.Services.AddScoped<ILiberacaoPedidoDetalheRepository, SqlLiberacaoPedidoDetalheRepository>();
+builder.Services.AddScoped<ILiberacaoPedidoQueryRepository, SqlLiberacaoPedidoQueryRepository>();
+builder.Services.AddScoped<ILiberacaoPedidoCommandRepository, SqlLiberacaoPedidoCommandRepository>();
+builder.Services.AddScoped<ILiberacaoPedidoItemCommandRepository, SqlLiberacaoPedidoItemCommandRepository>();
+builder.Services.AddScoped<ILiberacaoPedidoService, LiberacaoPedidoService>();
+builder.Services.AddScoped<ILiberacaoPedidoAcoesService, LiberacaoPedidoAcoesService>();
+
+// Permissões (genérico — usado por várias telas)
+builder.Services.AddScoped<IPermissaoRepository, SqlPermissaoRepository>();
+builder.Services.AddScoped<IPermissaoService, PermissaoService>();
 
 // Admin
 builder.Services.AddScoped<IAdminNoticeRepository, SqlAdminNoticeRepository>();

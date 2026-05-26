@@ -1,14 +1,20 @@
 using SIC.Api.Services;
 using SIC.Api.Services.Admin;
+using SIC.Api.Services.Cotacao;
 using SIC.Api.Services.PrePedidosPDF;
+using SIC.Api.Services.Propostas;
 using SIC.Domain.Abstractions;
 using SIC.Domain.Abstractions.Admin;
+using SIC.Domain.Abstractions.Cotacao;
 using SIC.Domain.Abstractions.PrePedidosPDF;
+using SIC.Domain.Abstractions.Propostas;
 using SIC.Infrastructure.Integrations;
 using SIC.Infrastructure.Integrations.PrePedidosPDF;
 using SIC.Infrastructure.Repositories;
 using SIC.Infrastructure.Repositories.Admin;
+using SIC.Infrastructure.Repositories.Cotacao;
 using SIC.Infrastructure.Repositories.PrePedidosPDF;
+using SIC.Infrastructure.Repositories.Propostas;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,22 +45,16 @@ builder.Services.AddScoped<IPrePedidoPDFQueryService, PrePedidoPDFQueryService>(
 builder.Services.AddScoped<IPrePedidoPDFCommandService, PrePedidoPDFCommandService>();
 builder.Services.AddHttpClient<IPrePedidoPDFIntegrationService, PrePedidoPDFIntegrationService>();
 
-// Liberação de Pedidos
-builder.Services.AddScoped<ILiberacaoPedidoRepository, SqlLiberacaoPedidoRepository>();
-builder.Services.AddScoped<ILiberacaoPedidoDetalheRepository, SqlLiberacaoPedidoDetalheRepository>();
-builder.Services.AddScoped<ILiberacaoPedidoQueryRepository, SqlLiberacaoPedidoQueryRepository>();
-builder.Services.AddScoped<ILiberacaoPedidoCommandRepository, SqlLiberacaoPedidoCommandRepository>();
-builder.Services.AddScoped<ILiberacaoPedidoItemCommandRepository, SqlLiberacaoPedidoItemCommandRepository>();
-builder.Services.AddScoped<ILiberacaoPedidoService, LiberacaoPedidoService>();
-builder.Services.AddScoped<ILiberacaoPedidoAcoesService, LiberacaoPedidoAcoesService>();
-
-// Permissões (genérico — usado por várias telas)
-builder.Services.AddScoped<IPermissaoRepository, SqlPermissaoRepository>();
-builder.Services.AddScoped<IPermissaoService, PermissaoService>();
-
 // Admin
 builder.Services.AddScoped<IAdminNoticeRepository, SqlAdminNoticeRepository>();
 builder.Services.AddScoped<IAdminNoticeService, AdminNoticeService>();
+builder.Services.AddScoped<IPropostaQueryRepository, SqlPropostaQueryRepository>();
+builder.Services.AddScoped<IPropostaQueryService, PropostaQueryService>();
+builder.Services.AddHostedService<CodificacaoBackgroundService>();
+builder.Services.AddScoped<ICotacaoQueryRepository, SqlCotacaoQueryRepository>();
+builder.Services.AddScoped<ICotacaoQueryService, CotacaoQueryService>();
+builder.Services.AddScoped<ICotacaoCommandRepository, SqlCotacaoCommandRepository>();
+builder.Services.AddScoped<ICotacaoCommandService, CotacaoCommandService>();
 
 var app = builder.Build();
 

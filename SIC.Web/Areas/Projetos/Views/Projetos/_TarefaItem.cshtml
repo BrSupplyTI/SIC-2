@@ -1,0 +1,516 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoTarefaItemVm
+@{
+    var podeEditar = ViewData["PodeEditar"] is true;
+    var statusList = ViewData["TarefaStatusDisponiveis"] as IReadOnlyList<SIC.Web.Areas.Projetos.Models.ProjetoTarefaStatusItemVm> ?? [];
+    var prioridadeList = ViewData["TarefaPrioridadesDisponiveis"] as IReadOnlyList<SIC.Web.Areas.Projetos.Models.ProjetoTarefaPrioridadeItemVm> ?? [];
+    var participantesList = ViewData["Participantes"] as IReadOnlyList<SIC.Web.Areas.Projetos.Models.ProjetoParticipanteItemVm> ?? [];
+    var rowCssClass = podeEditar ? "tarefa-row tarefa-draggable" : "tarefa-row";
+    var draggableAttr = podeEditar ? "true" : "false";
+}
+
+<div class="@rowCssClass" data-tarefa-id="@Model.ProjetoTarefaID"
+     data-nm-tarefa="@Model.NmTarefa"
+     data-ds-tarefa="@Model.DsTarefa"
+     data-status-id="@Model.ProjetoTarefaStatusID"
+     data-prioridade-id="@Model.ProjetoTarefaPrioridadeID"
+     data-dt-inicio="@Model.DtInicio"
+     data-dt-previsao-fim="@Model.DtPrevisaoFim"
+     data-dt-fim-real="@Model.DtFimReal"
+     data-responsavel-id="@Model.UsuarioResponsavelID"
+     draggable="@draggableAttr">
+    @if (podeEditar)
+    {
+        <span class="tarefa-drag-handle" title="Arraste para reordenar">
+            <i class="fa-solid fa-grip-vertical"></i>
+        </span>
+    }
+    <span class="tarefa-col-expand">
+        @if (Model.SubTarefas.Count > 0)
+        {
+            <button type="button" class="btn btn-sm btn-link p-0 tarefa-toggle-subtarefas" data-tarefa-id="@Model.ProjetoTarefaID" title="Expandir subtarefas">
+                <i class="fa-solid fa-chevron-right text-muted tarefa-chevron"></i>
+            </button>
+        }
+    </span>
+    <span class="tarefa-col-nome">
+        @if (podeEditar)
+        {
+            <div class="tarefa-nome-editable-wrapper">
+                <span class="fw-semibold tarefa-nome-text" data-tarefa-id="@Model.ProjetoTarefaID">@Model.NmTarefa</span>
+                <button type="button" class="btn btn-sm btn-link p-0 tarefa-nome-edit-trigger" data-tarefa-id="@Model.ProjetoTarefaID" title="Editar nome">
+                    <i class="fa-solid fa-pen" style="font-size: 0.65rem;"></i>
+                </button>
+                <input type="text" class="tarefa-nome-input d-none" data-tarefa-id="@Model.ProjetoTarefaID" maxlength="200" />
+            </div>
+        }
+        else
+        {
+            <span class="fw-semibold tarefa-nome-text">@Model.NmTarefa</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.DsTarefa))
+        {
+            <small class="text-muted d-block text-truncate tarefa-descricao-text" style="max-width: 320px;" title="Clique para ver detalhes">@Model.DsTarefa</small>
+        }
+    </span>
+    <span class="tarefa-col-status">
+        @if (podeEditar && statusList.Count > 0)
+        {
+            <div class="dropdown d-inline-flex">
+                <span class="tarefa-badge-status tarefa-status-trigger" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                      style="background: color-mix(in srgb, @Model.CdCorStatus 18%, transparent); color: @Model.CdCorStatus; cursor: pointer;">
+                    <i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> @Model.NmStatus
+                    <i class="fa-solid fa-caret-down ms-1" style="font-size: 0.5rem; opacity: 0.7;"></i>
+                </span>
+                <ul class="dropdown-menu tarefa-status-dropdown-menu">
+                    @foreach (var s in statusList)
+                    {
+                        <li>
+                            @if (s.ProjetoTarefaStatusID == Model.ProjetoTarefaStatusID)
+                            {
+                                <span class="dropdown-item d-flex align-items-center gap-2 disabled">
+                                    <i class="fa-solid fa-circle" style="font-size: 0.4rem; color: @s.CdCor;"></i>
+                                    <span>@s.NmStatus</span>
+                                    <i class="fa-solid fa-check ms-auto text-success" style="font-size: 0.7rem;"></i>
+                                </span>
+                            }
+                            else
+                            {
+                                <button type="button" class="dropdown-item btn-alterar-status-rapido d-flex align-items-center gap-2"
+                                        data-tarefa-id="@Model.ProjetoTarefaID"
+                                        data-status-id="@s.ProjetoTarefaStatusID">
+                                    <i class="fa-solid fa-circle" style="font-size: 0.4rem; color: @s.CdCor;"></i>
+                                    <span>@s.NmStatus</span>
+                                </button>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        else
+        {
+            <span class="tarefa-badge-status" style="background: color-mix(in srgb, @Model.CdCorStatus 18%, transparent); color: @Model.CdCorStatus;">
+                <i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> @Model.NmStatus
+            </span>
+        }
+    </span>
+    <span class="tarefa-col-prioridade">
+        @if (podeEditar && prioridadeList.Count > 0)
+        {
+            <div class="dropdown d-inline-flex">
+                <span class="tarefa-badge-prioridade tarefa-prioridade-trigger" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                      style="background: color-mix(in srgb, @Model.CdCorPrioridade 18%, transparent); color: @Model.CdCorPrioridade; cursor: pointer;">
+                    <i class="fa-solid fa-flag" style="font-size: 0.55rem;"></i> @Model.NmPrioridade
+                    <i class="fa-solid fa-caret-down ms-1" style="font-size: 0.5rem; opacity: 0.7;"></i>
+                </span>
+                <ul class="dropdown-menu tarefa-prioridade-dropdown-menu">
+                    @foreach (var p in prioridadeList)
+                    {
+                        <li>
+                            @if (p.ProjetoTarefaPrioridadeID == Model.ProjetoTarefaPrioridadeID)
+                            {
+                                <span class="dropdown-item d-flex align-items-center gap-2 disabled">
+                                    <i class="fa-solid fa-flag" style="font-size: 0.4rem; color: @p.CdCor;"></i>
+                                    <span>@p.NmPrioridade</span>
+                                    <i class="fa-solid fa-check ms-auto text-success" style="font-size: 0.7rem;"></i>
+                                </span>
+                            }
+                            else
+                            {
+                                <button type="button" class="dropdown-item btn-alterar-prioridade-rapido d-flex align-items-center gap-2"
+                                        data-tarefa-id="@Model.ProjetoTarefaID"
+                                        data-prioridade-id="@p.ProjetoTarefaPrioridadeID">
+                                    <i class="fa-solid fa-flag" style="font-size: 0.4rem; color: @p.CdCor;"></i>
+                                    <span>@p.NmPrioridade</span>
+                                </button>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        else
+        {
+            <span class="tarefa-badge-prioridade" style="background: color-mix(in srgb, @Model.CdCorPrioridade 18%, transparent); color: @Model.CdCorPrioridade;">
+                <i class="fa-solid fa-flag" style="font-size: 0.55rem;"></i> @Model.NmPrioridade
+            </span>
+        }
+    </span>
+    <span class="tarefa-col-responsavel">
+        @if (podeEditar && participantesList.Count > 0)
+        {
+            <div class="dropdown d-inline-flex">
+                <span class="tarefa-responsavel-trigger" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                      style="font-size: 0.78rem; cursor: pointer;" title="Alterar responsável">
+                    @if (!string.IsNullOrWhiteSpace(Model.NmResponsavel))
+                    {
+                        <span class="text-muted"><i class="fa-solid fa-user me-1"></i>@Model.NmResponsavel</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted" style="opacity: 0.5;"><i class="fa-solid fa-user-plus me-1"></i>Atribuir</span>
+                    }
+                    <i class="fa-solid fa-caret-down ms-1 text-muted" style="font-size: 0.5rem; opacity: 0.7;"></i>
+                </span>
+                <ul class="dropdown-menu tarefa-responsavel-dropdown-menu">
+                    <li>
+                        <button type="button" class="dropdown-item btn-alterar-responsavel-rapido d-flex align-items-center gap-2 @(Model.UsuarioResponsavelID == null ? "disabled" : "")"
+                                data-tarefa-id="@Model.ProjetoTarefaID" data-responsavel-id="">
+                            <i class="fa-solid fa-user-xmark text-muted" style="font-size: 0.65rem;"></i>
+                            <span class="text-muted">Sem responsável</span>
+                            @if (Model.UsuarioResponsavelID == null)
+                            {
+                                <i class="fa-solid fa-check ms-auto text-success" style="font-size: 0.7rem;"></i>
+                            }
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    @foreach (var part in participantesList)
+                    {
+                        <li>
+                            @if (Model.UsuarioResponsavelID == part.UsuarioID)
+                            {
+                                <span class="dropdown-item d-flex align-items-center gap-2 disabled">
+                                    <i class="fa-solid fa-user" style="font-size: 0.55rem;"></i>
+                                    <span>@part.NmUsuario</span>
+                                    <i class="fa-solid fa-check ms-auto text-success" style="font-size: 0.7rem;"></i>
+                                </span>
+                            }
+                            else
+                            {
+                                <button type="button" class="dropdown-item btn-alterar-responsavel-rapido d-flex align-items-center gap-2"
+                                        data-tarefa-id="@Model.ProjetoTarefaID"
+                                        data-responsavel-id="@part.UsuarioID">
+                                    <i class="fa-solid fa-user" style="font-size: 0.55rem;"></i>
+                                    <span>@part.NmUsuario</span>
+                                </button>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(Model.NmResponsavel))
+        {
+            <span class="text-muted" style="font-size: 0.78rem;" title="Responsável">
+                <i class="fa-solid fa-user me-1"></i>@Model.NmResponsavel
+            </span>
+        }
+        else
+        {
+            <span class="text-muted" style="font-size: 0.75rem; opacity: 0.5;">—</span>
+        }
+    </span>
+    <span class="tarefa-col-prazo">
+        @if (podeEditar)
+        {
+            string dtPrevisaoIso = "";
+            if (!string.IsNullOrWhiteSpace(Model.DtPrevisaoFim))
+            {
+                var partes = Model.DtPrevisaoFim.Split('/');
+                if (partes.Length == 3)
+                {
+                    dtPrevisaoIso = $"{partes[2]}-{partes[1]}-{partes[0]}";
+                }
+            }
+            <span class="tarefa-prazo-inline" title="Alterar prazo">
+                <i class="fa-solid fa-calendar-check me-1 text-muted" style="font-size: 0.7rem;"></i>
+                <input type="date" class="tarefa-inline-date-input"
+                       data-tarefa-id="@Model.ProjetoTarefaID"
+                       value="@dtPrevisaoIso" />
+            </span>
+        }
+        else if (!string.IsNullOrWhiteSpace(Model.DtPrevisaoFim))
+        {
+            <span class="text-muted" style="font-size: 0.78rem;" title="Prazo">
+                <i class="fa-solid fa-calendar-check me-1"></i>@Model.DtPrevisaoFim
+            </span>
+        }
+        else
+        {
+            <span class="text-muted" style="font-size: 0.75rem; opacity: 0.5;">—</span>
+        }
+    </span>
+    <span class="tarefa-col-progresso">
+        @if (Model.SubTarefas.Count > 0)
+        {
+            var concluidoId = (statusList.FirstOrDefault(s => s.NmStatus.Equals("Concluído", StringComparison.OrdinalIgnoreCase))?.ProjetoTarefaStatusID) ?? 0;
+            var subTotal = Model.SubTarefas.Count;
+            var subDone = Model.SubTarefas.Count(s => s.ProjetoTarefaStatusID == concluidoId);
+            var subPct = (int)Math.Round(subDone * 100.0 / subTotal);
+            var barColor = subPct == 100 ? "#198754" : subPct >= 50 ? "var(--sic-brand, #0d6efd)" : "#ffc107";
+            <div class="tarefa-progress-inline" title="@subDone de @subTotal subtarefas concluídas (@subPct%)">
+                <div class="tarefa-progress-bar-bg">
+                    <div class="tarefa-progress-bar-fill" style="width: @subPct%; background: @barColor;"></div>
+                </div>
+                <span class="tarefa-progress-label">@subDone/@subTotal</span>
+            </div>
+        }
+        else
+        {
+            <span class="text-muted" style="font-size: 0.75rem; opacity: 0.5;">—</span>
+        }
+    </span>
+    @if (podeEditar)
+    {
+        <span class="tarefa-col-acoes">
+            <button type="button" class="btn btn-sm btn-link p-0 btn-editar-tarefa" title="Editar tarefa"
+                    data-tarefa-id="@Model.ProjetoTarefaID"
+                    data-nm-tarefa="@Model.NmTarefa"
+                    data-ds-tarefa="@Model.DsTarefa"
+                    data-status-id="@Model.ProjetoTarefaStatusID"
+                    data-prioridade-id="@Model.ProjetoTarefaPrioridadeID"
+                    data-dt-inicio="@Model.DtInicio"
+                    data-dt-previsao-fim="@Model.DtPrevisaoFim"
+                    data-dt-fim-real="@Model.DtFimReal"
+                    data-responsavel-id="@Model.UsuarioResponsavelID">
+                <i class="fa-solid fa-pen text-muted" style="font-size: 0.75rem;"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-link p-0 ms-2 btn-excluir-tarefa" title="Excluir tarefa"
+                    data-tarefa-id="@Model.ProjetoTarefaID"
+                    data-nm-tarefa="@Model.NmTarefa">
+                <i class="fa-solid fa-trash-can text-danger" style="font-size: 0.75rem;"></i>
+            </button>
+        </span>
+    }
+</div>
+
+@if (Model.SubTarefas.Count > 0)
+{
+    <div class="tarefa-subtarefas-container d-none" id="subtarefas-@Model.ProjetoTarefaID">
+        @foreach (var sub in Model.SubTarefas)
+        {
+            <div class="tarefa-row tarefa-row-sub" data-tarefa-id="@sub.ProjetoTarefaID"
+                 data-nm-tarefa="@sub.NmTarefa"
+                 data-ds-tarefa="@sub.DsTarefa"
+                 data-status-id="@sub.ProjetoTarefaStatusID"
+                 data-prioridade-id="@sub.ProjetoTarefaPrioridadeID"
+                 data-dt-inicio="@sub.DtInicio"
+                 data-dt-previsao-fim="@sub.DtPrevisaoFim"
+                 data-dt-fim-real="@sub.DtFimReal"
+                 data-responsavel-id="@sub.UsuarioResponsavelID">
+                <span class="tarefa-col-expand"></span>
+                <span class="tarefa-col-nome">
+                    @if (podeEditar)
+                    {
+                        <div class="tarefa-nome-editable-wrapper">
+                            <span class="fw-semibold tarefa-nome-text" data-tarefa-id="@sub.ProjetoTarefaID" style="font-size: 0.84rem;">@sub.NmTarefa</span>
+                            <button type="button" class="btn btn-sm btn-link p-0 tarefa-nome-edit-trigger" data-tarefa-id="@sub.ProjetoTarefaID" title="Editar nome">
+                                <i class="fa-solid fa-pen" style="font-size: 0.65rem;"></i>
+                            </button>
+                            <input type="text" class="tarefa-nome-input d-none" data-tarefa-id="@sub.ProjetoTarefaID" maxlength="200" />
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="fw-semibold tarefa-nome-text" style="font-size: 0.84rem;">@sub.NmTarefa</span>
+                    }
+                </span>
+                <span class="tarefa-col-status">
+                    @if (podeEditar && statusList.Count > 0)
+                    {
+                        <div class="dropdown d-inline-flex">
+                            <span class="tarefa-badge-status tarefa-status-trigger" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                  style="background: color-mix(in srgb, @sub.CdCorStatus 18%, transparent); color: @sub.CdCorStatus; cursor: pointer;">
+                                <i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> @sub.NmStatus
+                                <i class="fa-solid fa-caret-down ms-1" style="font-size: 0.5rem; opacity: 0.7;"></i>
+                            </span>
+                            <ul class="dropdown-menu tarefa-status-dropdown-menu">
+                                @foreach (var s in statusList)
+                                {
+                                    <li>
+                                        @if (s.ProjetoTarefaStatusID == sub.ProjetoTarefaStatusID)
+                                        {
+                                            <span class="dropdown-item d-flex align-items-center gap-2 disabled">
+                                                <i class="fa-solid fa-circle" style="font-size: 0.4rem; color: @s.CdCor;"></i>
+                                                <span>@s.NmStatus</span>
+                                                <i class="fa-solid fa-check ms-auto text-success" style="font-size: 0.7rem;"></i>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="dropdown-item btn-alterar-status-rapido d-flex align-items-center gap-2"
+                                                    data-tarefa-id="@sub.ProjetoTarefaID"
+                                                    data-status-id="@s.ProjetoTarefaStatusID">
+                                                <i class="fa-solid fa-circle" style="font-size: 0.4rem; color: @s.CdCor;"></i>
+                                                <span>@s.NmStatus</span>
+                                            </button>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="tarefa-badge-status" style="background: color-mix(in srgb, @sub.CdCorStatus 18%, transparent); color: @sub.CdCorStatus;">
+                            <i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> @sub.NmStatus
+                        </span>
+                    }
+                </span>
+                <span class="tarefa-col-prioridade">
+                    @if (podeEditar && prioridadeList.Count > 0)
+                    {
+                        <div class="dropdown d-inline-flex">
+                            <span class="tarefa-badge-prioridade tarefa-prioridade-trigger" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                  style="background: color-mix(in srgb, @sub.CdCorPrioridade 18%, transparent); color: @sub.CdCorPrioridade; cursor: pointer;">
+                                <i class="fa-solid fa-flag" style="font-size: 0.55rem;"></i> @sub.NmPrioridade
+                                <i class="fa-solid fa-caret-down ms-1" style="font-size: 0.5rem; opacity: 0.7;"></i>
+                            </span>
+                            <ul class="dropdown-menu tarefa-prioridade-dropdown-menu">
+                                @foreach (var p in prioridadeList)
+                                {
+                                    <li>
+                                        @if (p.ProjetoTarefaPrioridadeID == sub.ProjetoTarefaPrioridadeID)
+                                        {
+                                            <span class="dropdown-item d-flex align-items-center gap-2 disabled">
+                                                <i class="fa-solid fa-flag" style="font-size: 0.4rem; color: @p.CdCor;"></i>
+                                                <span>@p.NmPrioridade</span>
+                                                <i class="fa-solid fa-check ms-auto text-success" style="font-size: 0.7rem;"></i>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="dropdown-item btn-alterar-prioridade-rapido d-flex align-items-center gap-2"
+                                                    data-tarefa-id="@sub.ProjetoTarefaID"
+                                                    data-prioridade-id="@p.ProjetoTarefaPrioridadeID">
+                                                <i class="fa-solid fa-flag" style="font-size: 0.4rem; color: @p.CdCor;"></i>
+                                                <span>@p.NmPrioridade</span>
+                                            </button>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="tarefa-badge-prioridade" style="background: color-mix(in srgb, @sub.CdCorPrioridade 18%, transparent); color: @sub.CdCorPrioridade;">
+                            <i class="fa-solid fa-flag" style="font-size: 0.55rem;"></i> @sub.NmPrioridade
+                        </span>
+                    }
+                </span>
+                <span class="tarefa-col-responsavel">
+                    @if (podeEditar && participantesList.Count > 0)
+                    {
+                        <div class="dropdown d-inline-flex">
+                            <span class="tarefa-responsavel-trigger" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                  style="font-size: 0.78rem; cursor: pointer;" title="Alterar responsável">
+                                @if (!string.IsNullOrWhiteSpace(sub.NmResponsavel))
+                                {
+                                    <span class="text-muted"><i class="fa-solid fa-user me-1"></i>@sub.NmResponsavel</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" style="opacity: 0.5;"><i class="fa-solid fa-user-plus me-1"></i>Atribuir</span>
+                                }
+                                <i class="fa-solid fa-caret-down ms-1 text-muted" style="font-size: 0.5rem; opacity: 0.7;"></i>
+                            </span>
+                            <ul class="dropdown-menu tarefa-responsavel-dropdown-menu">
+                                <li>
+                                    <button type="button" class="dropdown-item btn-alterar-responsavel-rapido d-flex align-items-center gap-2 @(sub.UsuarioResponsavelID == null ? "disabled" : "")"
+                                            data-tarefa-id="@sub.ProjetoTarefaID" data-responsavel-id="">
+                                        <i class="fa-solid fa-user-xmark text-muted" style="font-size: 0.65rem;"></i>
+                                        <span class="text-muted">Sem responsável</span>
+                                        @if (sub.UsuarioResponsavelID == null)
+                                        {
+                                            <i class="fa-solid fa-check ms-auto text-success" style="font-size: 0.7rem;"></i>
+                                        }
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                @foreach (var part in participantesList)
+                                {
+                                    <li>
+                                        @if (sub.UsuarioResponsavelID == part.UsuarioID)
+                                        {
+                                            <span class="dropdown-item d-flex align-items-center gap-2 disabled">
+                                                <i class="fa-solid fa-user" style="font-size: 0.55rem;"></i>
+                                                <span>@part.NmUsuario</span>
+                                                <i class="fa-solid fa-check ms-auto text-success" style="font-size: 0.7rem;"></i>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="dropdown-item btn-alterar-responsavel-rapido d-flex align-items-center gap-2"
+                                                    data-tarefa-id="@sub.ProjetoTarefaID"
+                                                    data-responsavel-id="@part.UsuarioID">
+                                                <i class="fa-solid fa-user" style="font-size: 0.55rem;"></i>
+                                                <span>@part.NmUsuario</span>
+                                            </button>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(sub.NmResponsavel))
+                    {
+                        <span class="text-muted" style="font-size: 0.78rem;">
+                            <i class="fa-solid fa-user me-1"></i>@sub.NmResponsavel
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="text-muted" style="font-size: 0.75rem; opacity: 0.5;">—</span>
+                    }
+                </span>
+                <span class="tarefa-col-prazo">
+                    @if (podeEditar)
+                    {
+                        string subDtPrevisaoIso = "";
+                        if (!string.IsNullOrWhiteSpace(sub.DtPrevisaoFim))
+                        {
+                            var partesSub = sub.DtPrevisaoFim.Split('/');
+                            if (partesSub.Length == 3)
+                            {
+                                subDtPrevisaoIso = $"{partesSub[2]}-{partesSub[1]}-{partesSub[0]}";
+                            }
+                        }
+                        <span class="tarefa-prazo-inline" title="Alterar prazo">
+                            <i class="fa-solid fa-calendar-check me-1 text-muted" style="font-size: 0.7rem;"></i>
+                            <input type="date" class="tarefa-inline-date-input"
+                                   data-tarefa-id="@sub.ProjetoTarefaID"
+                                   value="@subDtPrevisaoIso" />
+                        </span>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(sub.DtPrevisaoFim))
+                    {
+                        <span class="text-muted" style="font-size: 0.78rem;">
+                            <i class="fa-solid fa-calendar-check me-1"></i>@sub.DtPrevisaoFim
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="text-muted" style="font-size: 0.75rem; opacity: 0.5;">—</span>
+                    }
+                </span>
+                <span class="tarefa-col-progresso">
+                    <span class="text-muted" style="font-size: 0.75rem; opacity: 0.5;">—</span>
+                </span>
+                @if (podeEditar)
+                {
+                    <span class="tarefa-col-acoes">
+                        <button type="button" class="btn btn-sm btn-link p-0 btn-editar-tarefa" title="Editar tarefa"
+                                data-tarefa-id="@sub.ProjetoTarefaID"
+                                data-nm-tarefa="@sub.NmTarefa"
+                                data-ds-tarefa="@sub.DsTarefa"
+                                data-status-id="@sub.ProjetoTarefaStatusID"
+                                data-prioridade-id="@sub.ProjetoTarefaPrioridadeID"
+                                data-dt-inicio="@sub.DtInicio"
+                                data-dt-previsao-fim="@sub.DtPrevisaoFim"
+                                data-dt-fim-real="@sub.DtFimReal"
+                                data-responsavel-id="@sub.UsuarioResponsavelID">
+                            <i class="fa-solid fa-pen text-muted" style="font-size: 0.75rem;"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-link p-0 ms-2 btn-excluir-tarefa" title="Excluir tarefa"
+                                data-tarefa-id="@sub.ProjetoTarefaID"
+                                data-nm-tarefa="@sub.NmTarefa">
+                            <i class="fa-solid fa-trash-can text-danger" style="font-size: 0.75rem;"></i>
+                        </button>
+                    </span>
+                }
+            </div>
+        }
+    </div>
+}

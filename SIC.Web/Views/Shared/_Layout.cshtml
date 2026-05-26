@@ -89,6 +89,7 @@
                             <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
                         </button>
                         <div class="sidebar-submenu" id="sidebarMenuCorporativo">
+                            <a class="nav-link" asp-area="Projetos" asp-controller="Projetos" asp-action="Index" data-sic-nav><i class="fa-duotone fa-thin fa-diagram-project me-2"></i>Projetos</a>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-phone me-2"></i>Ramais<span class="badge-soon">Em breve</span></span>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-mobile me-2"></i>Celulares<span class="badge-soon">Em breve</span></span>
                         </div>
@@ -103,7 +104,9 @@
                             <a class="nav-link" asp-area="Comercial" asp-controller="Comercial" asp-action="AdmClientes" data-sic-nav><i class="fa-duotone fa-user-tie me-2"></i>Adm. de Clientes</a>
                             <a class="nav-link" asp-area="Comercial" asp-controller="Comercial" asp-action="AdmPedidos" data-sic-nav><i class="fa-duotone fa-box me-2"></i>Adm. de Pedidos</a>
                             <a class="nav-link" asp-area="" asp-controller="PrePedidosPDF" asp-action="List" data-sic-nav><i class="fa-duotone fa-file-lines me-2"></i>Pedidos ERP</a>
-                            <a class="nav-link" href="https://intranet.brsupply.com.br/intranet/html/valida_login.php?u=@User.FindFirst("sic_login")?.Value&h=@base64&redirect=comercial/gestao_adm_cad_clientes.php"><i class="fa-duotone fa-plug me-2"></i>Integrações</a>
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-box me-2"></i>Adm. de Pedidos<span class="badge-soon">Em breve</span></span>
+                            <a class="nav-link" href="https://intranet.brsupply.com.br/intranet/html/valida_login.php?u=@User.FindFirst("sic_login")?.Value&h=@base64&redirect=comercial/gestao_adm_cad_clientes.php"><i class="fa-duotone fa-user-tie me-2"></i>Adm. de Clientes</a>
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-plug me-2"></i>Integrações<span class="badge-soon">Em breve</span></span>
                         </div>
                     </div>
 
@@ -113,9 +116,12 @@
                             <i class="fa-solid fa-chevron-down sidebar-group-chevron"></i>
                         </button>
                         <div class="sidebar-submenu" id="sidebarMenuNovosNegocios">
-                            <a class="nav-link" asp-area="" asp-controller="Propostas" asp-action="CadastroProposta" data-sic-nav><i class="fa-duotone fa-circle-plus me-2"></i>Cadastro de Proposta</a>
-                            @* <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-box me-2"></i>Propostas<span class="badge-soon">Em breve</span></span>
-                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-file-xls me-2"></i>Lista de Itens<span class="badge-soon">Em breve</span></span>
+                            @* <a class="nav-link" asp-area="" asp-controller="Propostas" asp-action="CadastroProposta" data-sic-nav><i class="fa-duotone fa-circle-plus me-2"></i>Cadastro de Proposta</a>
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-box me-2"></i>Propostas<span class="badge-soon">Em breve</span></span>
+                            <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-file-xls me-2"></i>Lista de Itens<span class="badge-soon">Em breve</span></span> *@
+                            <a class="nav-link" asp-controller="Propostas" asp-action="CadastroProposta" data-sic-nav><i class="fa-duotone fa-circle-plus me-2"></i>Cadastro de Proposta</a>
+                            <a class="nav-link" asp-controller="Propostas" asp-action="Lista" data-sic-nav><i class="fa-duotone fa-box me-2"></i>Propostas</a>
+                            @* <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-file-xls me-2"></i>Lista de Itens<span class="badge-soon">Em breve</span></span>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-circle-user me-2"></i>Consulta Cliente<span class="badge-soon">Em breve</span></span>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-diagram-project me-2"></i>Projetos<span class="badge-soon">Em breve</span></span>
                             <span class="nav-link nav-link-disabled"><i class="fa-duotone fa-down me-2"></i>Repositório de Arquivos<span class="badge-soon">Em breve</span></span>
@@ -302,6 +308,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.SIC_BASE_URL = '@(Context.Request.PathBase.HasValue ? Context.Request.PathBase.Value : "")';
+        window.sicUrl = function (path) {
+            if (!path) return window.SIC_BASE_URL;
+            return window.SIC_BASE_URL + (path.charAt(0) === '/' ? path : '/' + path);
+        };
+    </script>
     <form id="avatarUploadForm" method="post" asp-area="" asp-controller="Account" asp-action="AvatarUpload" enctype="multipart/form-data" class="d-none">
         @Html.AntiForgeryToken()
         <input id="avatarFileInput" name="avatarFile" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />

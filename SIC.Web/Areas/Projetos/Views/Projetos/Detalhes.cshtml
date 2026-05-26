@@ -1,0 +1,352 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoDetalhesViewModel
+@using SIC.Web.Areas.Projetos.Models
+@{
+    ViewData["Title"] = Model.NmProjeto;
+
+    var podeEditar = Model.IsAdmin || Model.UsuarioCriadorID == Model.UsuarioLogadoID;
+    var concluidoStatusId = Model.TarefaStatusDisponiveis
+        .FirstOrDefault(s => s.NmStatus.Equals("Concluído", StringComparison.OrdinalIgnoreCase))
+        ?.ProjetoTarefaStatusID ?? 0;
+    var papeisDisponiveis = ProjetoPapeisDisponiveis.Todos;
+
+    string ToIsoDate(string? brDate)
+    {
+        if (string.IsNullOrWhiteSpace(brDate)) return string.Empty;
+        return DateTime.TryParseExact(brDate, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var dt)
+            ? dt.ToString("yyyy-MM-dd") : string.Empty;
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/projetos/detalhes.css" asp-append-version="true" />
+}
+
+<div class="projeto-page-container" id="detalhesConteudo" data-projeto-id="@Model.ProjetoID" data-concluido-status-id="@concluidoStatusId" data-usuario-logado-id="@Model.UsuarioLogadoID">
+    <partial name="_DetalhesConteudo" model="Model" />
+</div>
+
+@if (podeEditar)
+{
+<!-- Modal Nova Tarefa -->
+<div class="modal fade" id="modalNovaTarefa" tabindex="-1" aria-labelledby="modalNovaTarefaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formNovaTarefa" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalNovaTarefaLabel">
+                        <i class="fa-duotone fa-thin fa-circle-plus me-2 text-br"></i>Nova Tarefa
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="ntProjetoID" value="@Model.ProjetoID" />
+
+                    <div class="mb-3">
+                        <label for="ntNmTarefa" class="form-label">Nome da Tarefa <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="ntNmTarefa" maxlength="200" required />
+                        <div class="invalid-feedback">O nome da tarefa é obrigatório.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ntDsTarefa" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="ntDsTarefa" rows="3" maxlength="2000"></textarea>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="ntProjetoTarefaStatusID" class="form-label">Status</label>
+                            <select class="form-select" id="ntProjetoTarefaStatusID">
+                                @foreach (var s in Model.TarefaStatusDisponiveis)
+                                {
+                                    <option value="@s.ProjetoTarefaStatusID">@s.NmStatus</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="ntProjetoTarefaPrioridadeID" class="form-label">Prioridade</label>
+                            <select class="form-select" id="ntProjetoTarefaPrioridadeID">
+                                @foreach (var p in Model.TarefaPrioridadesDisponiveis)
+                                {
+                                    <option value="@p.ProjetoTarefaPrioridadeID"
+                                            selected="@(p.ProjetoTarefaPrioridadeID == 2)">@p.NmPrioridade</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="ntDtInicio" class="form-label">Data de Início</label>
+                            <input type="date" class="form-control" id="ntDtInicio" />
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="ntDtPrevisaoFim" class="form-label">Previsão de Término</label>
+                            <input type="date" class="form-control" id="ntDtPrevisaoFim" />
+                            <div class="invalid-feedback">A previsão de término não pode ser anterior à data de início.</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ntProjetoTarefaPaiID" class="form-label">Tarefa Pai <small class="text-muted">(opcional — para subtarefa)</small></label>
+                        <select class="form-select" id="ntProjetoTarefaPaiID">
+                            <option value="">Nenhuma (tarefa raiz)</option>
+                            @foreach (var t in Model.Tarefas)
+                            {
+                                <option value="@t.ProjetoTarefaID">@t.NmTarefa</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarNovaTarefa">
+                        <i class="fa-solid fa-check me-1"></i>Criar Tarefa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Drawer Detalhes da Tarefa (offcanvas) -->
+<div class="offcanvas offcanvas-end tarefa-drawer" tabindex="-1" id="drawerEditarTarefa" aria-labelledby="drawerEditarTarefaLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="drawerEditarTarefaLabel">
+            <i class="fa-duotone fa-thin fa-circle-info me-2 text-br"></i>Detalhes da Tarefa
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <form id="formEditarTarefa" novalidate>
+            <input type="hidden" id="etProjetoTarefaID" />
+
+            <!-- Nome da tarefa (inline editable) -->
+            <div class="tarefa-drawer-section">
+                <label for="etNmTarefa" class="tarefa-drawer-label">Nome da Tarefa <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-lg border-0 px-0 fw-semibold" id="etNmTarefa" maxlength="200" required placeholder="Nome da tarefa" />
+                <div class="invalid-feedback">O nome da tarefa é obrigatório.</div>
+            </div>
+
+            <!-- Descrição -->
+            <div class="tarefa-drawer-section">
+                <label for="etDsTarefa" class="tarefa-drawer-label">Descrição</label>
+                <textarea class="form-control border-0 px-0" id="etDsTarefa" rows="3" maxlength="2000" placeholder="Adicionar descrição..."></textarea>
+            </div>
+
+            <!-- Propriedades em grid -->
+            <div class="tarefa-drawer-section">
+                <div class="tarefa-drawer-props">
+                    <div class="tarefa-drawer-prop">
+                        <span class="tarefa-drawer-prop-icon"><i class="fa-solid fa-circle-dot"></i></span>
+                        <span class="tarefa-drawer-prop-label">Status</span>
+                        <select class="form-select form-select-sm tarefa-drawer-prop-value" id="etProjetoTarefaStatusID">
+                            @foreach (var s in Model.TarefaStatusDisponiveis)
+                            {
+                                <option value="@s.ProjetoTarefaStatusID">@s.NmStatus</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="tarefa-drawer-prop">
+                        <span class="tarefa-drawer-prop-icon"><i class="fa-solid fa-flag"></i></span>
+                        <span class="tarefa-drawer-prop-label">Prioridade</span>
+                        <select class="form-select form-select-sm tarefa-drawer-prop-value" id="etProjetoTarefaPrioridadeID">
+                            @foreach (var p in Model.TarefaPrioridadesDisponiveis)
+                            {
+                                <option value="@p.ProjetoTarefaPrioridadeID">@p.NmPrioridade</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="tarefa-drawer-prop">
+                        <span class="tarefa-drawer-prop-icon"><i class="fa-solid fa-user"></i></span>
+                        <span class="tarefa-drawer-prop-label">Responsável</span>
+                        <select class="form-select form-select-sm tarefa-drawer-prop-value" id="etUsuarioResponsavelID">
+                            <option value="">— Nenhum —</option>
+                            @foreach (var p in Model.Participantes)
+                            {
+                                <option value="@p.UsuarioID">@p.NmUsuario</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="tarefa-drawer-prop">
+                        <span class="tarefa-drawer-prop-icon"><i class="fa-solid fa-calendar"></i></span>
+                        <span class="tarefa-drawer-prop-label">Início</span>
+                        <input type="date" class="form-control form-control-sm tarefa-drawer-prop-value" id="etDtInicio" />
+                    </div>
+                    <div class="tarefa-drawer-prop">
+                        <span class="tarefa-drawer-prop-icon"><i class="fa-solid fa-calendar-check"></i></span>
+                        <span class="tarefa-drawer-prop-label">Prev. Término</span>
+                        <input type="date" class="form-control form-control-sm tarefa-drawer-prop-value" id="etDtPrevisaoFim" />
+                        <div class="invalid-feedback">A previsão de término não pode ser anterior à data de início.</div>
+                    </div>
+                    <div class="tarefa-drawer-prop">
+                        <span class="tarefa-drawer-prop-icon"><i class="fa-solid fa-calendar-xmark"></i></span>
+                        <span class="tarefa-drawer-prop-label">Término Real</span>
+                        <input type="date" class="form-control form-control-sm tarefa-drawer-prop-value" id="etDtFimReal" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtarefas -->
+            <div class="tarefa-drawer-section d-none" id="drawerSubtarefasSection">
+                <label class="tarefa-drawer-label">Subtarefas</label>
+                <div id="drawerSubtarefasList"></div>
+            </div>
+
+            <!-- Histórico da Tarefa -->
+            <div class="tarefa-drawer-section" id="drawerHistoricoSection">
+                <label class="tarefa-drawer-label d-flex align-items-center justify-content-between">
+                    <span><i class="fa-solid fa-clock-rotate-left me-1"></i>Histórico</span>
+                    <button type="button" class="btn btn-sm btn-link p-0 text-muted" id="btnToggleHistoricoDrawer" title="Mostrar/ocultar">
+                        <i class="fa-solid fa-chevron-down" id="iconToggleHistoricoDrawer" style="font-size: 0.7rem;"></i>
+                    </button>
+                </label>
+                <div id="drawerHistoricoList" class="drawer-historico-list"></div>
+            </div>
+
+            <!-- Footer com ações -->
+            <div class="tarefa-drawer-footer">
+                <button type="button" class="btn btn-outline-danger btn-sm" id="btnExcluirTarefaDrawer" title="Excluir tarefa">
+                    <i class="fa-solid fa-trash-can me-1"></i>Excluir
+                </button>
+                <button type="submit" class="btn btn-primary btn-sm" id="btnSalvarEditarTarefa">
+                    <i class="fa-solid fa-check me-1"></i>Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Projeto -->
+<div class="modal fade" id="modalEditarProjeto" tabindex="-1" aria-labelledby="modalEditarProjetoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarProjeto" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarProjetoLabel">
+                        <i class="fa-duotone fa-thin fa-pen-to-square me-2 text-br"></i>Editar Projeto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="epProjetoID" value="@Model.ProjetoID" />
+
+                    <div class="mb-3">
+                        <label for="epNmProjeto" class="form-label">Nome do Projeto <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="epNmProjeto" maxlength="200" required
+                               value="@Model.NmProjeto" />
+                        <div class="invalid-feedback">O nome do projeto é obrigatório.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="epDsProjeto" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="epDsProjeto" rows="3" maxlength="2000">@Model.DsProjeto</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="epProjetoStatusID" class="form-label">Status</label>
+                        <select class="form-select" id="epProjetoStatusID">
+                            @foreach (var s in Model.StatusDisponiveis)
+                            {
+                                <option value="@s.ProjetoStatusID" selected="@(Model.ProjetoStatusID == s.ProjetoStatusID)">@s.NmStatus</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-4">
+                            <label for="epDtInicio" class="form-label">Início</label>
+                            <input type="date" class="form-control" id="epDtInicio" value="@ToIsoDate(Model.DtInicio)" />
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <label for="epDtPrevisaoFim" class="form-label">Prev. Término</label>
+                            <input type="date" class="form-control" id="epDtPrevisaoFim" value="@ToIsoDate(Model.DtPrevisaoFim)" />
+                            <div class="invalid-feedback">A previsão de término não pode ser anterior à data de início.</div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <label for="epDtFimReal" class="form-label">Término Real</label>
+                            <input type="date" class="form-control" id="epDtFimReal" value="@ToIsoDate(Model.DtFimReal)" />
+                        </div>
+                    </div>
+
+                    <hr class="my-3" />
+                    <div class="mb-2">
+                        <label class="form-label mb-0">
+                            <i class="fa-solid fa-tags me-1 text-muted"></i>Campos personalizados
+                            <small class="text-muted fw-normal">(opcional, até 4)</small>
+                        </label>
+                    </div>
+                    <div id="epCamposExtras">
+                        @for (var i = 1; i <= 4; i++)
+                        {
+                            var campo = Model.CamposExtras.FirstOrDefault(c => c.Ordem == i);
+                            <div class="row g-2 mb-2 ep-campo-extra" data-ordem="@i">
+                                <div class="col-5">
+                                    <input type="text" class="form-control form-control-sm ep-campo-nome" maxlength="100" placeholder="Nome do campo @i" value="@(campo?.NmCampo ?? string.Empty)" />
+                                </div>
+                                <div class="col-7">
+                                    <input type="text" class="form-control form-control-sm ep-campo-valor" maxlength="500" placeholder="Valor" value="@(campo?.VlCampo ?? string.Empty)" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarEditarProjeto">
+                        <i class="fa-solid fa-check me-1"></i>Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL ADICIONAR PARTICIPANTE ===== -->
+<div class="modal fade" id="modalAdicionarParticipante" tabindex="-1" aria-labelledby="lblModalAdicionarParticipante" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lblModalAdicionarParticipante">
+                    <i class="fa-solid fa-user-plus me-2 text-br"></i>Adicionar Participante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="apProjetoID" value="@Model.ProjetoID" />
+                <input type="hidden" id="apUsuarioID" value="" />
+                <div class="mb-3">
+                    <label for="apBuscaUsuario" class="form-label">Usuário</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="apBuscaUsuario" placeholder="Digite para buscar..." autocomplete="off" />
+                        <div id="apResultadosBusca" class="ap-autocomplete-dropdown d-none"></div>
+                    </div>
+                    <div class="invalid-feedback">Selecione um usuário da lista.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="apNmPapel" class="form-label">Papel no Projeto</label>
+                    <div class="input-group projeto-papel-select-wrapper">
+                        <span class="input-group-text projeto-papel-preview" id="apNmPapelPreview" aria-hidden="true">
+                            <i class="fa-solid fa-user-tag"></i>
+                        </span>
+                        <select class="form-select" id="apNmPapel" aria-describedby="apNmPapelHelp">
+                            <option value="">Selecione um papel...</option>
+                            @foreach (var papel in papeisDisponiveis)
+                            {
+                                <option value="@papel.Nome" data-icone="@papel.Icone" data-descricao="@papel.Descricao">
+                                    @papel.Nome
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div id="apNmPapelHelp" class="form-text projeto-papel-descricao">
+                        <i class="fa-solid fa-circle-info me-1"></i><span>Escolha o papel que este participante terá no projeto.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarParticipante">
+                    <i class="fa-solid fa-check me-1"></i>Adicionar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+@section Scripts {
+    <script src="~/js/projetos/detalhes.js" asp-append-version="true"></script>
+}

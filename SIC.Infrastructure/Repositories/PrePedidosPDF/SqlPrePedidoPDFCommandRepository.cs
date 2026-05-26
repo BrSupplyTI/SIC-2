@@ -102,6 +102,54 @@ public sealed class SqlPrePedidoPDFCommandRepository(IConfiguration configuratio
             },
             cancellationToken);
 
+    public Task<bool> UpdateVlrUnitAsync(
+        int prePedidoItemId,
+        int prePedidoId,
+        decimal vlrUnit,
+        string descricao,
+        CancellationToken cancellationToken = default)
+        => ExecuteAsync(
+            """
+            UPDATE Integracao_Clientes.dbo.PDF_PrePedidoItem
+               SET ValorUnitario = @ValorUnitario
+             WHERE PDFPrePedidoItemID = @PDFPrePedidoItemID;
+
+            INSERT INTO Integracao_Clientes.dbo.PDF_PrePedidoLog (Mensagem, CriadoEm, PDFPrePedidoID, Tipo)
+            VALUES (@Mensagem, GETDATE(), @PDFPrePedidoID, 'Atualização');
+            """,
+            parameters =>
+            {
+                parameters.AddWithValue("@ValorUnitario", vlrUnit);
+                parameters.AddWithValue("@PDFPrePedidoItemID", prePedidoItemId);
+                parameters.AddWithValue("@PDFPrePedidoID", prePedidoId);
+                parameters.AddWithValue("@Mensagem", $"Valor unitário atualizado para o item: {descricao} - Novo Valor: {vlrUnit}");
+            },
+            cancellationToken);
+
+    public Task<bool> UpdateObsAsync(
+        int prePedidoId,
+        string obsNota,
+        string obsComprador,
+        CancellationToken cancellationToken = default)
+        => ExecuteAsync(
+            """
+            UPDATE Integracao_Clientes.dbo.PDF_PrePedido
+               SET ObsNota       = @ObsNota,
+                   ObsComprador  = @ObsComprador
+             WHERE PDFPrePedidoID = @PDFPrePedidoID;
+
+            INSERT INTO Integracao_Clientes.dbo.PDF_PrePedidoLog (Mensagem, CriadoEm, PDFPrePedidoID, Tipo)
+            VALUES (@Mensagem, GETDATE(), @PDFPrePedidoID, 'Atualização');
+            """,
+            parameters =>
+            {
+                parameters.AddWithValue("@ObsNota", (object?)obsNota ?? DBNull.Value);
+                parameters.AddWithValue("@ObsComprador", (object?)obsComprador ?? DBNull.Value);
+                parameters.AddWithValue("@PDFPrePedidoID", prePedidoId);
+                parameters.AddWithValue("@Mensagem", "Observações atualizadas.");
+            },
+            cancellationToken);
+
     public Task<bool> CancelarAsync(
         int prePedidoId,
         CancellationToken cancellationToken = default)

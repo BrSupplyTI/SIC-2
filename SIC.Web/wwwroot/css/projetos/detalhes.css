@@ -1,0 +1,3126 @@
+/* ============================================
+   Projetos – Detalhes
+   Alinhado com o design system SIC
+   ============================================ */
+
+/* ====== MODERNIZAÇÃO 2.0: Hero, Metrics, Tabs, Toolbar ====== */
+
+/* --- Modal: papel do participante (select com preview) --- */
+.projeto-papel-select-wrapper .projeto-papel-preview {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 10%, transparent);
+    color: var(--sic-brand, #FF782D);
+    border-color: var(--sic-border);
+    min-width: 2.6rem;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.projeto-papel-select-wrapper .projeto-papel-preview i {
+    font-size: 0.95rem;
+}
+
+[data-bs-theme="dark"] .projeto-papel-select-wrapper .projeto-papel-preview {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 18%, transparent);
+}
+
+.projeto-papel-descricao {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 1.4rem;
+}
+
+.projeto-papel-descricao i {
+    opacity: 0.7;
+}
+
+/* --- Container principal da página --- */
+.projeto-page-container {
+    margin: 0 auto;
+    padding: 0.5rem 0 2rem;
+}
+
+/* --- Breadcrumb minimalista --- */
+.projeto-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--sic-muted, #6b7280);
+}
+
+.projeto-breadcrumb-link {
+    color: var(--sic-muted, #6b7280);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.3rem;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.projeto-breadcrumb-link:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 10%, transparent);
+    color: var(--sic-brand, #FF782D);
+}
+
+.projeto-breadcrumb-sep {
+    font-size: 0.55rem;
+    opacity: 0.5;
+}
+
+.projeto-breadcrumb-current {
+    font-weight: 500;
+    color: var(--sic-text, #374151);
+    padding: 0.2rem 0.5rem;
+    background: var(--sic-surface-2, #f3f4f6);
+    border-radius: 0.3rem;
+    font-family: ui-monospace, 'SF Mono', Monaco, monospace;
+    font-size: 0.72rem;
+}
+
+/* --- Hero header --- */
+.projeto-hero {
+    position: relative;
+    background: var(--sic-surface, #ffffff);
+    border: 1px solid #cbd5e1;
+    border-radius: 0.85rem;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.projeto-hero-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: var(--sic-brand, #FF782D);
+    box-shadow: 0 1px 6px color-mix(in srgb, var(--sic-brand, #FF782D) 35%, transparent);
+}
+
+.projeto-hero-content {
+    padding: 1.5rem 1.75rem;
+}
+
+.projeto-hero-title-area {
+    min-width: 0;
+    flex: 1;
+}
+
+.projeto-hero-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--sic-text, #111827);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.projeto-hero-id {
+    display: inline-block;
+    font-family: ui-monospace, 'SF Mono', Monaco, monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--sic-brand, #FF782D);
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sic-brand, #FF782D) 30%, transparent);
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.35rem;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+    letter-spacing: 0;
+}
+
+.projeto-hero-description {
+    font-size: 0.88rem;
+    color: var(--sic-muted, #6b7280);
+    margin-top: 0.4rem;
+    line-height: 1.5;
+    max-width: 720px;
+}
+
+.projeto-hero-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--status-color, var(--sic-brand, #FF782D));
+    background: color-mix(in srgb, var(--status-color, var(--sic-brand, #FF782D)) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--status-color, var(--sic-brand, #FF782D)) 28%, transparent);
+    white-space: nowrap;
+}
+
+.projeto-hero-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--status-color, var(--sic-brand, #FF782D));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--status-color, var(--sic-brand, #FF782D)) 25%, transparent);
+}
+
+/* --- Botões "ghost" (estilo Linear/Notion) --- */
+.projeto-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--sic-text, #374151);
+    background: var(--sic-surface, #ffffff);
+    border: 1px solid var(--sic-border, #e5e7eb);
+    border-radius: 0.5rem;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.projeto-btn-ghost:hover {
+    background: var(--sic-surface-2, #f9fafb);
+    border-color: color-mix(in srgb, var(--sic-border, #e5e7eb) 70%, var(--sic-text, #111827) 30%);
+    color: var(--sic-text, #111827);
+}
+
+.projeto-btn-ghost:active {
+    transform: scale(0.98);
+}
+
+.projeto-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--sic-brand, #FF782D);
+    border: 1px solid var(--sic-brand, #FF782D);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--sic-brand, #FF782D) 30%, transparent);
+    transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.projeto-btn-primary:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 88%, #000);
+    border-color: color-mix(in srgb, var(--sic-brand, #FF782D) 88%, #000);
+    color: #ffffff;
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--sic-brand, #FF782D) 40%, transparent);
+}
+
+.projeto-btn-primary:active {
+    transform: scale(0.98);
+}
+
+.projeto-btn-primary i {
+    font-size: 0.75rem;
+}
+
+/* --- Grid de métricas modernas --- */
+.projeto-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.85rem;
+}
+
+.projeto-metric-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 1rem 1.1rem;
+    background: var(--sic-surface, #ffffff);
+    border: 1px solid var(--sic-border, #e5e7eb);
+    border-radius: 0.75rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+
+.projeto-metric-card:hover {
+    border-color: color-mix(in srgb, var(--sic-border, #e5e7eb) 60%, var(--sic-text, #111827) 40%);
+    box-shadow: var(--sic-shadow, 0 4px 12px rgba(0, 0, 0, 0.05));
+    transform: translateY(-1px);
+}
+
+.projeto-metric-card.projeto-metric-alert {
+    border-color: color-mix(in srgb, #ef4444 35%, transparent);
+    background: linear-gradient(135deg, var(--sic-surface, #ffffff) 0%, color-mix(in srgb, #ef4444 5%, transparent) 100%);
+}
+
+.projeto-metric-icon {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.6rem;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+/* Cores semânticas dos ícones — respeitam tema claro/escuro via opacidade do bg */
+.projeto-metric-icon--brand {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 14%, transparent);
+    color: var(--sic-brand, #FF782D);
+}
+
+.projeto-metric-icon--success {
+    background: color-mix(in srgb, #10b981 14%, transparent);
+    color: #10b981;
+}
+
+.projeto-metric-icon--info {
+    background: color-mix(in srgb, #3b82f6 14%, transparent);
+    color: #3b82f6;
+}
+
+.projeto-metric-icon--warning {
+    background: color-mix(in srgb, #f59e0b 14%, transparent);
+    color: #f59e0b;
+}
+
+.projeto-metric-icon--danger {
+    background: color-mix(in srgb, #ef4444 14%, transparent);
+    color: #ef4444;
+}
+
+.projeto-metric-icon--muted {
+    background: color-mix(in srgb, var(--sic-muted, #6b7280) 14%, transparent);
+    color: var(--sic-muted, #6b7280);
+}
+
+/* No tema escuro, aumenta a opacidade do background para ganhar contraste */
+[data-bs-theme="dark"] .projeto-metric-icon--brand {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 22%, transparent);
+}
+
+[data-bs-theme="dark"] .projeto-metric-icon--success {
+    background: color-mix(in srgb, #10b981 22%, transparent);
+    color: #34d399;
+}
+
+[data-bs-theme="dark"] .projeto-metric-icon--info {
+    background: color-mix(in srgb, #3b82f6 22%, transparent);
+    color: #60a5fa;
+}
+
+[data-bs-theme="dark"] .projeto-metric-icon--warning {
+    background: color-mix(in srgb, #f59e0b 22%, transparent);
+    color: #fbbf24;
+}
+
+[data-bs-theme="dark"] .projeto-metric-icon--danger {
+    background: color-mix(in srgb, #ef4444 22%, transparent);
+    color: #f87171;
+}
+
+[data-bs-theme="dark"] .projeto-metric-icon--muted {
+    background: color-mix(in srgb, var(--sic-muted, #9ca3af) 18%, transparent);
+}
+
+.projeto-metric-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.projeto-metric-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--sic-muted, #6b7280);
+    margin-bottom: 0.2rem;
+}
+
+.projeto-metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--sic-text, #111827);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.projeto-metric-value-sm {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--sic-text, #111827);
+    line-height: 1.2;
+    margin-top: 0.15rem;
+}
+
+.projeto-metric-value-suffix {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--sic-muted, #6b7280);
+    margin-left: 0.15rem;
+}
+
+.projeto-metric-sub {
+    font-size: 0.74rem;
+    color: var(--sic-muted, #6b7280);
+    margin-top: 0.3rem;
+}
+
+/* Variantes de destaque para valores/sub-textos */
+.projeto-metric-value--danger {
+    color: #ef4444;
+}
+
+[data-bs-theme="dark"] .projeto-metric-value--danger {
+    color: #f87171;
+}
+
+.projeto-metric-sub--danger {
+    color: #ef4444;
+}
+
+[data-bs-theme="dark"] .projeto-metric-sub--danger {
+    color: #f87171;
+}
+
+.projeto-metric-progress-inline {
+    height: 4px;
+    background: var(--sic-border, #e5e7eb);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.projeto-metric-progress-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+.projeto-metric-avatars {
+    display: flex;
+    align-items: center;
+    margin-top: 0.35rem;
+}
+
+.projeto-metric-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--sic-brand, #FF782D), var(--sic-brand-dark, #ff5e2d));
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--sic-surface, #ffffff);
+    margin-left: -6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.projeto-metric-avatar:first-child {
+    margin-left: 0;
+}
+
+.projeto-metric-avatar-more {
+    background: var(--sic-surface-2, #e5e7eb);
+    color: var(--sic-muted, #6b7280);
+    border-color: var(--sic-surface, #ffffff);
+}
+
+/* --- Tabs modernos (pill-style) --- */
+.projeto-tabs-wrapper {
+    border: 1px solid #cbd5e1;
+    background: #e2e8f0;
+    border-radius: 0.6rem;
+    padding: 0.3rem;
+    margin-top: 1.5rem;
+}
+
+.projeto-tabs-modern {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.projeto-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    background: transparent;
+    border: none;
+    border-radius: 0.45rem;
+    transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.projeto-tab-btn i {
+    font-size: 0.9rem;
+    color: #64748b;
+    transition: color 0.15s ease;
+}
+
+.projeto-tab-btn:hover:not(.active) {
+    color: var(--sic-text, #111827);
+    background: #f1f5f9;
+}
+
+.projeto-tab-btn:hover:not(.active) i {
+    color: var(--sic-brand, #FF782D);
+}
+
+.projeto-tab-btn.active {
+    color: var(--sic-brand, #FF782D);
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1), 0 0 0 1px #cbd5e1 inset;
+    font-weight: 700;
+}
+
+.projeto-tab-btn.active i {
+    color: var(--sic-brand, #FF782D);
+}
+
+.projeto-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    padding: 0 0.45rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #cbd5e1;
+    color: #334155;
+    border-radius: 999px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.projeto-tab-btn.active .projeto-tab-badge {
+    background: var(--sic-brand, #FF782D);
+    color: #ffffff;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--sic-brand, #FF782D) 45%, transparent);
+}
+
+/* --- Toolbar --- */
+.projeto-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 0.5rem;
+}
+
+.projeto-toolbar-left,
+.projeto-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* --- Empty state --- */
+.projeto-empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: linear-gradient(135deg, var(--sic-surface, #ffffff) 0%, var(--sic-surface-2, #f9fafb) 100%);
+    border: 1px dashed var(--sic-border, #e5e7eb);
+    border-radius: 0.75rem;
+}
+
+.projeto-empty-icon {
+    font-size: 2.5rem;
+    color: var(--sic-muted, #9ca3af);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.projeto-empty-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--sic-text, #374151);
+    margin-bottom: 0.35rem;
+}
+
+.projeto-empty-text {
+    font-size: 0.85rem;
+    color: var(--sic-muted, #6b7280);
+    margin: 0 auto;
+    max-width: 420px;
+    line-height: 1.5;
+}
+
+/* --- Participantes grid --- */
+.projeto-participantes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 0.85rem;
+}
+
+/* Em telas médias/pequenas, uma coluna só para não apertar */
+@media (max-width: 767.98px) {
+    .projeto-participantes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Info grid (aba Informações) --- */
+.projeto-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.85rem;
+    padding-top: 0.5rem;
+}
+
+.projeto-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 1rem 1.1rem;
+    background: var(--sic-surface, #ffffff);
+    border: 1px solid var(--sic-border, #e5e7eb);
+    border-radius: 0.6rem;
+    transition: border-color 0.15s ease;
+}
+
+.projeto-info-item:hover {
+    border-color: color-mix(in srgb, var(--sic-border, #e5e7eb) 60%, var(--sic-text, #111827) 40%);
+}
+
+.projeto-info-icon {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 12%, transparent);
+    color: var(--sic-brand, #FF782D);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.projeto-info-icon-success {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+}
+
+.projeto-info-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.projeto-info-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--sic-muted, #6b7280);
+    margin-bottom: 0.2rem;
+}
+
+.projeto-info-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--sic-text, #111827);
+    word-break: break-word;
+}
+
+/* --- Responsividade --- */
+@media (max-width: 575.98px) {
+    .projeto-hero-content {
+        padding: 1.15rem 1.15rem;
+    }
+
+    .projeto-hero-title {
+        font-size: 1.15rem;
+    }
+
+    .projeto-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+
+    .projeto-metric-card {
+        padding: 0.8rem 0.85rem;
+        gap: 0.6rem;
+    }
+
+    .projeto-metric-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+
+    .projeto-metric-value {
+        font-size: 1.2rem;
+    }
+
+    .projeto-tab-btn {
+        padding: 0.6rem 0.7rem;
+        font-size: 0.78rem;
+    }
+
+    .projeto-tab-btn span:not(.projeto-tab-badge) {
+        display: none;
+    }
+}
+
+/* ====== Ajustes finos para tema escuro ====== */
+[data-bs-theme="dark"] .projeto-hero {
+    background: var(--sic-surface);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    border-color: var(--sic-border);
+}
+
+[data-bs-theme="dark"] .projeto-metric-card {
+    background: var(--sic-surface);
+}
+
+[data-bs-theme="dark"] .projeto-metric-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    border-color: color-mix(in srgb, var(--sic-border) 50%, var(--sic-muted) 50%);
+}
+
+[data-bs-theme="dark"] .projeto-metric-card.projeto-metric-alert {
+    background: linear-gradient(135deg, var(--sic-surface) 0%, color-mix(in srgb, #ef4444 10%, var(--sic-surface)) 100%);
+    border-color: color-mix(in srgb, #ef4444 45%, transparent);
+}
+
+[data-bs-theme="dark"] .projeto-info-item {
+    background: var(--sic-surface);
+}
+
+[data-bs-theme="dark"] .projeto-info-item:hover {
+    border-color: color-mix(in srgb, var(--sic-border) 50%, var(--sic-muted) 50%);
+}
+
+[data-bs-theme="dark"] .projeto-empty-state {
+    background: linear-gradient(135deg, var(--sic-surface) 0%, var(--sic-surface-2) 100%);
+}
+
+[data-bs-theme="dark"] .projeto-btn-ghost {
+    background: var(--sic-surface);
+    color: var(--sic-text);
+}
+
+[data-bs-theme="dark"] .projeto-btn-ghost:hover {
+    background: var(--sic-surface-2);
+}
+
+[data-bs-theme="dark"] .projeto-tab-btn {
+    color: var(--sic-muted);
+}
+
+[data-bs-theme="dark"] .projeto-tab-btn i {
+    color: var(--sic-muted);
+}
+
+[data-bs-theme="dark"] .projeto-tabs-wrapper {
+    background: var(--sic-surface-2);
+    border-color: var(--sic-border);
+}
+
+[data-bs-theme="dark"] .projeto-tab-btn:hover:not(.active) {
+    background: color-mix(in srgb, var(--sic-surface) 70%, var(--sic-surface-2) 30%);
+    color: var(--sic-text);
+}
+
+[data-bs-theme="dark"] .projeto-tab-btn.active {
+    background: var(--sic-surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--sic-border) inset;
+}
+
+[data-bs-theme="dark"] .projeto-tab-badge {
+    background: var(--sic-surface);
+    color: var(--sic-muted);
+}
+
+[data-bs-theme="dark"] .projeto-breadcrumb-current {
+    background: var(--sic-surface-2);
+    color: var(--sic-text);
+}
+
+[data-bs-theme="dark"] .projeto-metric-progress-inline {
+    background: var(--sic-surface-2);
+}
+
+/* ====== Quick cards (métricas) [LEGADO] ====== */
+.projeto-quick-card {
+    min-height: 80px;
+    transition: border-color 0.2s ease;
+}
+
+.projeto-quick-card:hover {
+    border-color: var(--sic-brand) !important;
+}
+
+/* ====== Tarefa Groups (Group by Status) ======
+   Cada grupo é um card "elevado" com header colorido e rows bem separadas.
+   Fundo neutro da página faz os grupos se destacarem. */
+
+.tarefa-group {
+    margin-bottom: 1rem;
+    background: var(--sic-surface, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--sic-border, #dfe6ef) 65%, var(--sic-text, #1f2937) 35%);
+    border-radius: 0.65rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+/* Libera overflow quando qualquer dropdown dentro do grupo está aberto,
+   para que status/prioridade/responsável apareçam por cima das outras rows. */
+.tarefa-group:has(.dropdown-menu.show) {
+    overflow: visible;
+}
+
+.tarefa-group:hover {
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+.tarefa-group:last-child {
+    margin-bottom: 0;
+}
+
+[data-bs-theme="dark"] .tarefa-group {
+    background: var(--sic-surface);
+    border-color: var(--sic-border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Tema claro: borda padrão mais visível (sem afetar o escuro) */
+[data-bs-theme="light"] .tarefa-group,
+:root:not([data-bs-theme="dark"]) .tarefa-group {
+    border-color: #cbd5e1;
+}
+
+[data-bs-theme="dark"] .tarefa-group:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    border-color: color-mix(in srgb, var(--sic-border) 60%, var(--sic-muted) 40%);
+}
+
+/* Header do grupo — fundo ligeiramente diferenciado, sem borda lateral agressiva */
+.tarefa-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1rem;
+    background: #eef2f7;
+    border-bottom: 1px solid #cbd5e1;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+}
+
+.tarefa-group-header:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 6%, #eef2f7);
+}
+
+[data-bs-theme="dark"] .tarefa-group-header {
+    background: color-mix(in srgb, var(--sic-surface-2) 70%, var(--sic-surface) 30%);
+}
+
+[data-bs-theme="dark"] .tarefa-group-header:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 8%, var(--sic-surface-2));
+}
+
+/* Quando grupo está colapsado, remove a borda inferior */
+.tarefa-group.collapsed .tarefa-group-header {
+    border-bottom: none;
+}
+
+.tarefa-group-chevron {
+    font-size: 0.65rem;
+    color: var(--sic-muted, #6c757d);
+    transition: transform 0.2s ease;
+}
+
+.tarefa-group-header[aria-expanded="false"] .tarefa-group-chevron {
+    transform: rotate(-90deg);
+}
+
+.tarefa-group-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 0%, transparent);
+}
+
+.tarefa-group-title {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--sic-text, #1f2937);
+    letter-spacing: -0.005em;
+}
+
+.tarefa-group-count {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.15em 0.55em;
+    border-radius: 1rem;
+    min-width: 1.4em;
+    text-align: center;
+    background: var(--sic-surface, #ffffff);
+    color: var(--sic-muted);
+    border: 1px solid var(--sic-border);
+}
+
+[data-bs-theme="dark"] .tarefa-group-count {
+    background: var(--sic-surface-2);
+    color: var(--sic-text);
+}
+
+.tarefa-group-body {
+    transition: max-height 0.25s ease;
+    overflow: hidden;
+}
+
+/* Allow dropdowns (status/prioridade/responsável) to overflow group/table when open */
+.tarefa-group-body:has(.dropdown-menu.show) {
+    overflow: visible;
+}
+
+.tarefa-group.collapsed .tarefa-group-body {
+    display: none;
+}
+
+.tarefa-group-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.1rem;
+    font-size: 0.82rem;
+    color: var(--sic-muted, #6b7280);
+    font-style: italic;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    opacity: 0.75;
+}
+
+/* Groups: nested table ajusta bordas para encaixar no card */
+.tarefa-group .tarefa-table {
+    border-radius: 0;
+    border: none;
+    border-top: none;
+}
+
+/* ====== Tarefa table (Lista view) ====== */
+.tarefa-table {
+    border: 1px solid var(--sic-border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--sic-surface);
+}
+
+.tarefa-table:has(.dropdown-menu.show) {
+    overflow: visible;
+}
+
+/* Header das colunas — mais sutil, menor destaque */
+.tarefa-table-header {
+    display: grid;
+    grid-template-columns: 2rem 1fr 8.5rem 7rem 8rem 7rem 6rem 4rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    background: transparent;
+    border-bottom: 1px solid var(--sic-border);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sic-muted, #9ca3af);
+}
+
+[data-bs-theme="dark"] .tarefa-table-header {
+    color: color-mix(in srgb, var(--sic-muted) 80%, var(--sic-text) 20%);
+}
+
+/* Row — separador delicado entre linhas */
+.tarefa-row {
+    display: grid;
+    grid-template-columns: 2rem 1fr 8.5rem 7rem 8rem 7rem 6rem 4rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border) 60%, transparent);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    position: relative;
+    background: var(--sic-surface);
+}
+
+.tarefa-row:last-child {
+    border-bottom: none;
+}
+
+.tarefa-row:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 4%, var(--sic-surface));
+}
+
+[data-bs-theme="dark"] .tarefa-row:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 8%, var(--sic-surface));
+}
+
+/* Ensure row with open dropdown stacks above siblings */
+.tarefa-row:has(.dropdown-menu.show) {
+    z-index: 10;
+}
+
+/* Subtarefa — recuo + fundo levemente diferenciado */
+.tarefa-row-sub {
+    padding-left: 2.75rem;
+    background: color-mix(in srgb, var(--sic-surface-2) 50%, var(--sic-surface));
+}
+
+.tarefa-row-sub:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 5%, var(--sic-surface-2));
+}
+
+[data-bs-theme="dark"] .tarefa-row-sub {
+    background: color-mix(in srgb, var(--sic-surface-2) 70%, var(--sic-surface));
+}
+
+[data-bs-theme="dark"] .tarefa-row-sub:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 10%, var(--sic-surface-2));
+}
+
+.tarefa-col-expand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+}
+
+.tarefa-col-nome {
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* Prevent content from overflowing into neighboring grid cells.
+   Do NOT add overflow:hidden to status/prioridade/responsavel because
+   their dropdowns must be able to escape the cell. For prazo, the date
+   input has width constraints to fit within its cell. */
+.tarefa-col-status,
+.tarefa-col-prioridade,
+.tarefa-col-responsavel,
+.tarefa-col-prazo {
+    min-width: 0;
+}
+
+.tarefa-col-prazo {
+    overflow: hidden;
+}
+
+.tarefa-nome-text {
+    font-size: 0.86rem;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tarefa-col-acoes {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.tarefa-row:hover .tarefa-col-acoes {
+    opacity: 1;
+}
+
+.tarefa-chevron {
+    transition: transform 0.2s ease;
+    font-size: 0.7rem;
+}
+
+.tarefa-chevron.rotated {
+    transform: rotate(90deg);
+}
+
+/* Sub-tarefas container */
+.tarefa-subtarefas-container {
+    border-left: 3px solid color-mix(in srgb, var(--sic-brand, #0d6efd) 25%, transparent);
+    margin-left: 1rem;
+}
+
+/* ====== Tarefa badges ====== */
+.tarefa-badge-status,
+.tarefa-badge-prioridade {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2em 0.55em;
+    border-radius: 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    white-space: nowrap;
+}
+
+/* ====== Status dropdown (quick change) ====== */
+.tarefa-status-trigger:hover {
+    opacity: 0.85;
+}
+
+.tarefa-status-dropdown-menu {
+    min-width: 10rem;
+    font-size: 0.82rem;
+    padding: 0.25rem 0;
+    z-index: 1055;
+}
+
+.tarefa-status-dropdown-menu .dropdown-item {
+    font-size: 0.82rem;
+    padding: 0.35rem 0.75rem;
+}
+
+.tarefa-status-dropdown-menu .dropdown-item:hover:not(.disabled) {
+    background: var(--sic-surface-2);
+}
+
+.tarefa-status-dropdown-menu .dropdown-item.disabled {
+    opacity: 0.7;
+    background: color-mix(in srgb, var(--sic-brand) 8%, transparent);
+}
+
+/* ====== Participante card (moderno) ====== */
+.participante-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--sic-surface, #ffffff);
+    border: 1px solid var(--sic-border, #dfe6ef);
+    border-radius: 0.7rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.participante-card:hover {
+    border-color: color-mix(in srgb, var(--sic-border) 55%, var(--sic-brand) 45%);
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+}
+
+[data-bs-theme="dark"] .participante-card {
+    background: var(--sic-surface);
+    border-color: var(--sic-border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme="dark"] .participante-card:hover {
+    border-color: color-mix(in srgb, var(--sic-border) 55%, var(--sic-brand) 45%);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Destaque especial para o criador do projeto */
+.participante-card--criador {
+    border-color: color-mix(in srgb, var(--sic-brand, #FF782D) 30%, var(--sic-border));
+    background: linear-gradient(135deg, var(--sic-surface) 0%, color-mix(in srgb, var(--sic-brand, #FF782D) 3%, var(--sic-surface)) 100%);
+}
+
+[data-bs-theme="dark"] .participante-card--criador {
+    background: linear-gradient(135deg, var(--sic-surface) 0%, color-mix(in srgb, var(--sic-brand, #FF782D) 8%, var(--sic-surface)) 100%);
+    border-color: color-mix(in srgb, var(--sic-brand, #FF782D) 40%, var(--sic-border));
+}
+
+/* ---- Parte esquerda: avatar + nome + papel ---- */
+.participante-card-main {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.participante-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    letter-spacing: 0.02em;
+}
+
+.participante-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.participante-nome {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--sic-text, #1f2937);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    line-height: 1.25;
+    min-width: 0;
+}
+
+.participante-nome-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.participante-badge-criador {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    font-size: 0.62rem;
+    color: var(--sic-brand, #FF782D);
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 15%, transparent);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.participante-papel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: var(--sic-muted, #6b7280);
+    background: var(--sic-surface-2, #f3f4f6);
+    border: 1px solid var(--sic-border, #e5e7eb);
+    border-radius: 999px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-bs-theme="dark"] .participante-papel {
+    background: var(--sic-surface-2);
+    border-color: var(--sic-border);
+    color: var(--sic-muted);
+}
+
+.participante-papel-icon {
+    font-size: 0.7rem;
+    flex-shrink: 0;
+    color: var(--sic-brand, #FF782D);
+}
+
+.participante-papel--empty {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.participante-papel--empty .participante-papel-icon {
+    color: var(--sic-muted, #9ca3af);
+}
+
+/* ---- Parte direita: data + ações ---- */
+.participante-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.participante-data {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.76rem;
+    color: var(--sic-muted, #6b7280);
+    white-space: nowrap;
+}
+
+.participante-data i {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.participante-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid var(--sic-border);
+}
+
+.participante-action-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--sic-muted, #6b7280);
+    border-radius: 0.35rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.participante-action-btn i {
+    font-size: 0.75rem;
+}
+
+.participante-action-btn:hover {
+    background: var(--sic-surface-2, #f3f4f6);
+    color: var(--sic-text, #1f2937);
+    border-color: var(--sic-border);
+}
+
+[data-bs-theme="dark"] .participante-action-btn:hover {
+    background: var(--sic-surface-2);
+    color: var(--sic-text);
+}
+
+.participante-action-btn--danger:hover {
+    background: color-mix(in srgb, #ef4444 12%, transparent);
+    color: #ef4444;
+    border-color: color-mix(in srgb, #ef4444 30%, transparent);
+}
+
+[data-bs-theme="dark"] .participante-action-btn--danger:hover {
+    background: color-mix(in srgb, #ef4444 18%, transparent);
+    color: #f87171;
+    border-color: color-mix(in srgb, #ef4444 40%, transparent);
+}
+
+/* ---- Responsivo: em mobile, empilha meta abaixo ---- */
+@media (max-width: 575.98px) {
+    .participante-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .participante-card-meta {
+        justify-content: space-between;
+        padding-left: 3.5rem; /* alinha com texto, depois do avatar */
+    }
+
+    .participante-actions {
+        padding-left: 0;
+        border-left: none;
+    }
+}
+
+/* ====== Histórico / Timeline ====== */
+.historico-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding-top: 0.25rem;
+}
+
+.historico-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.historico-search {
+    position: relative;
+    flex: 1 1 280px;
+    max-width: 360px;
+}
+
+.historico-search > i {
+    position: absolute;
+    left: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--sic-muted, #6b7280);
+    font-size: 0.78rem;
+    pointer-events: none;
+}
+
+.historico-search .form-control {
+    padding-left: 2rem;
+    padding-right: 2rem;
+    font-size: 0.82rem;
+}
+
+.historico-search-clear {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--sic-muted, #6b7280);
+    font-size: 0.78rem;
+    padding: 0.15rem 0.35rem;
+    cursor: pointer;
+    border-radius: 0.3rem;
+}
+
+.historico-search-clear:hover {
+    background: var(--sic-surface-2, #f1f5f9);
+    color: var(--sic-text, #111827);
+}
+
+.historico-info {
+    font-size: 0.78rem;
+    color: var(--sic-text, #111827);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.historico-info .text-muted {
+    font-weight: 500;
+}
+
+.historico-timeline {
+    position: relative;
+    padding-left: 1.4rem;
+    border-left: 2px solid var(--sic-border, #e5e7eb);
+    margin-left: 0.4rem;
+}
+
+.historico-grupo {
+    position: relative;
+    margin-bottom: 0.85rem;
+}
+
+.historico-grupo:last-child {
+    margin-bottom: 0;
+}
+
+.historico-grupo-header {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: -0.4rem;
+    margin-bottom: 0.5rem;
+    padding: 0.2rem 0.6rem;
+    background: var(--sic-surface-2, #eef2f7);
+    border: 1px solid var(--sic-border, #cbd5e1);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--sic-text, #111827);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.historico-grupo-header i {
+    color: var(--sic-brand, #FF782D);
+    font-size: 0.7rem;
+}
+
+.historico-grupo-count {
+    background: var(--sic-brand, #FF782D);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    min-width: 1.2rem;
+    text-align: center;
+}
+
+.historico-item {
+    position: relative;
+    padding: 0.25rem 0 0.25rem 0.1rem;
+    transition: background 0.15s ease;
+}
+
+.historico-item-hidden {
+    display: none !important;
+}
+
+.historico-item::before {
+    content: "";
+    position: absolute;
+    left: -1.85rem;
+    top: 0.6rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--sic-brand, #FF782D);
+    border: 2px solid var(--sic-surface, #ffffff);
+    box-shadow: 0 0 0 1px var(--sic-border, #cbd5e1);
+    z-index: 1;
+}
+
+.historico-item-content {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.historico-item .historico-acao {
+    flex: 1 1 auto;
+    color: var(--sic-text, #111827);
+}
+
+.historico-item .historico-usuario {
+    font-weight: 600;
+    color: var(--sic-brand, #FF782D);
+}
+
+.historico-item .historico-data {
+    font-size: 0.72rem;
+    color: var(--sic-muted, #6b7280);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.historico-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.4rem;
+    border-top: 1px dashed var(--sic-border, #e5e7eb);
+    flex-wrap: wrap;
+}
+
+.historico-footer-info {
+    font-size: 0.75rem;
+}
+
+.historico-mostrar-mais-count {
+    font-size: 0.72rem;
+    opacity: 0.8;
+    margin-left: 0.15rem;
+}
+
+.historico-vazio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--sic-muted, #6b7280);
+    background: var(--sic-surface-2, #f8fafc);
+    border: 1px dashed var(--sic-border, #cbd5e1);
+    border-radius: 0.5rem;
+}
+
+.historico-vazio i {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+[data-bs-theme="dark"] .historico-timeline {
+    border-left-color: var(--sic-border);
+}
+
+[data-bs-theme="dark"] .historico-grupo-header {
+    background: var(--sic-surface-2);
+    border-color: var(--sic-border);
+    color: var(--sic-text);
+}
+
+[data-bs-theme="dark"] .historico-item::before {
+    border-color: var(--sic-surface);
+    box-shadow: 0 0 0 1px var(--sic-border);
+}
+
+[data-bs-theme="dark"] .historico-vazio {
+    background: var(--sic-surface-2);
+    border-color: var(--sic-border);
+}
+
+/* ====== Progress bar (detalhes) ====== */
+.projeto-detalhe-progress {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--sic-border);
+}
+
+.projeto-detalhe-progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+/* ====== Tabs ====== */
+.projeto-tabs {
+    border-bottom: 2px solid var(--sic-border, #dee2e6);
+}
+
+.projeto-tabs .nav-link {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--sic-muted, #6c757d);
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    padding: 0.6rem 1rem;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.projeto-tabs .nav-link:hover {
+    color: var(--sic-brand, #0d6efd);
+    border-bottom-color: color-mix(in srgb, var(--sic-brand, #0d6efd) 40%, transparent);
+}
+
+.projeto-tabs .nav-link.active {
+    color: var(--sic-brand, #0d6efd);
+    border-bottom-color: var(--sic-brand, #0d6efd);
+    background: transparent;
+}
+
+.projeto-tabs .nav-link .badge {
+    font-size: 0.65rem;
+    vertical-align: middle;
+}
+
+.projeto-tab-content {
+    padding: 1.25rem 0 0;
+}
+
+/* ====== Kanban Board ====== */
+.kanban-board {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    min-height: 200px;
+}
+
+.kanban-column {
+    flex: 1 1 0;
+    min-width: 220px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    background: var(--sic-surface-2, #f8f9fa);
+    border-radius: 0.5rem;
+    border: 1px solid var(--sic-border);
+}
+
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--sic-border);
+}
+
+.kanban-column-body {
+    flex: 1;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 80px;
+    transition: background 0.15s ease;
+}
+
+.kanban-column-body.kanban-drag-over {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 8%, transparent);
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+.kanban-card {
+    background: var(--sic-surface, #fff);
+    border: 1px solid var(--sic-border);
+    border-radius: 0.4rem;
+    padding: 0.6rem 0.7rem;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.kanban-card.kanban-draggable {
+    cursor: grab;
+}
+
+.kanban-card.kanban-draggable:active {
+    cursor: grabbing;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.kanban-card.kanban-dragging {
+    opacity: 0.5;
+    transform: scale(0.97);
+}
+
+.kanban-card-title {
+    font-size: 0.84rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    line-height: 1.3;
+}
+
+.kanban-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+
+.kanban-card-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15em 0.45em;
+    border-radius: 0.3rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+}
+
+.kanban-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+    padding-top: 0.3rem;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+}
+
+.kanban-card-date {
+    font-size: 0.7rem;
+    color: var(--sic-muted, #6c757d);
+}
+
+.kanban-card-date i {
+    font-size: 0.6rem;
+}
+
+.kanban-card-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 12%, transparent);
+    color: var(--sic-brand, #0d6efd);
+    font-size: 0.6rem;
+    margin-left: auto;
+    cursor: default;
+    flex-shrink: 0;
+}
+
+.kanban-card-responsavel:hover {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 22%, transparent);
+}
+
+.kanban-card-subtarefa-badge {
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: var(--sic-muted, #6c757d);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    margin-bottom: 0.2rem;
+}
+
+.kanban-card-subtask-count {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--sic-muted, #6c757d);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+}
+
+.kanban-card.kanban-filtered-out {
+    display: none !important;
+}
+
+/* Unified filters bar (Lista + Kanban) */
+.tarefa-filters .form-select,
+.tarefa-filters .form-control {
+    font-size: 0.78rem;
+}
+
+/* Lista: filtered-out rows */
+.tarefa-row.tarefa-filtered-out {
+    display: none !important;
+}
+
+/* Quick filter chips */
+.tarefa-quick-filter {
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 0.25em 0.7em;
+    border-radius: 1rem;
+    border: 1px solid #cbd5e1;
+    background: var(--sic-surface, #ffffff);
+    color: #334155;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.tarefa-quick-filter:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 10%, #ffffff);
+    border-color: color-mix(in srgb, var(--sic-brand, #FF782D) 45%, #cbd5e1);
+    color: var(--sic-brand, #FF782D);
+}
+
+.tarefa-quick-filter.active {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 16%, #ffffff);
+    border-color: var(--sic-brand, #FF782D);
+    color: var(--sic-brand, #FF782D);
+    font-weight: 700;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--sic-brand, #FF782D) 25%, transparent);
+}
+
+[data-bs-theme="dark"] .tarefa-quick-filter {
+    border-color: var(--sic-border);
+    background: var(--sic-surface);
+    color: var(--sic-text);
+}
+
+[data-bs-theme="dark"] .tarefa-quick-filter:hover {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 14%, var(--sic-surface));
+    border-color: color-mix(in srgb, var(--sic-brand, #FF782D) 45%, var(--sic-border));
+    color: var(--sic-brand, #FF782D);
+}
+
+[data-bs-theme="dark"] .tarefa-quick-filter.active {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 22%, var(--sic-surface));
+    border-color: var(--sic-brand, #FF782D);
+    color: var(--sic-brand, #FF782D);
+}
+
+.kanban-empty-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    border: 2px dashed var(--sic-border);
+    border-radius: 0.4rem;
+    opacity: 0.6;
+}
+
+/* ====== Kanban: Subtarefas embutidas no card ====== */
+
+/* Container da seção de subtarefas dentro do card */
+.kanban-subtask-section {
+    margin-top: 0.4rem;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+    padding-top: 0.3rem;
+}
+
+/* Header com toggle e progresso */
+.kanban-subtask-header {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    padding: 0.15rem 0;
+    user-select: none;
+    transition: color 0.15s ease;
+}
+
+.kanban-subtask-header:hover {
+    color: var(--sic-brand, #0d6efd);
+}
+
+.kanban-subtask-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+.kanban-subtask-toggle[aria-expanded="false"] {
+    transform: rotate(-90deg);
+}
+
+.kanban-subtask-progress {
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--sic-muted, #6c757d);
+}
+
+/* Barra de progresso compacta */
+.kanban-subtask-progress-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--sic-border, #dee2e6);
+    border-radius: 2px;
+    overflow: hidden;
+    max-width: 60px;
+}
+
+.kanban-subtask-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--sic-brand, #0d6efd);
+    transition: width 0.3s ease;
+}
+
+/* Lista de subtarefas */
+.kanban-subtask-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+.kanban-subtask-list:has(.kanban-subtask-status-menu.show),
+.kanban-subtask-list:has(.kanban-subtask-search-popover.show) {
+    overflow: visible;
+}
+
+.kanban-subtask-list.collapsed {
+    display: none;
+}
+
+/* Cada item de subtarefa */
+.kanban-subtask-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.3rem 0 0.3rem 0.45rem;
+    border-left: 2px solid var(--sic-border, #dee2e6);
+    transition: background 0.15s ease, border-color 0.15s ease;
+    position: relative;
+}
+
+.kanban-subtask-item + .kanban-subtask-item {
+    border-top: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 50%, transparent);
+}
+
+.kanban-subtask-item:hover {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 4%, transparent);
+}
+
+/* Título da subtarefa */
+.kanban-subtask-title {
+    font-size: 0.76rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--sic-text, #212529);
+    word-break: break-word;
+}
+
+/* Linha de ações: status + responsável */
+.kanban-subtask-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+}
+
+/* Dropdown trigger de status */
+.kanban-subtask-status-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+}
+
+.kanban-subtask-status-trigger:hover {
+    border-color: var(--sic-border, #dee2e6);
+    background: var(--sic-surface-2, #f8f9fa);
+}
+
+.kanban-subtask-status-trigger .fa-caret-down {
+    font-size: 0.55rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.kanban-subtask-status-trigger:hover .fa-caret-down {
+    opacity: 1;
+}
+
+/* Menu de opções de status */
+.kanban-subtask-status-menu {
+    position: absolute;
+    z-index: 1060;
+    background: var(--sic-surface, #fff);
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.35rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    padding: 0.25rem 0;
+    min-width: 140px;
+    display: none;
+    animation: kanbanSubtaskMenuFadeIn 0.12s ease;
+}
+
+.kanban-subtask-status-menu.show {
+    display: block;
+}
+
+@keyframes kanbanSubtaskMenuFadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.kanban-subtask-status-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    color: var(--sic-text, #212529);
+}
+
+.kanban-subtask-status-option:hover {
+    background: var(--sic-hover, #f0f4ff);
+}
+
+.kanban-subtask-status-option.active {
+    font-weight: 600;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 8%, transparent);
+}
+
+.kanban-subtask-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Responsável da subtarefa */
+.kanban-subtask-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 12%, transparent);
+    color: var(--sic-brand, #0d6efd);
+    font-size: 0.55rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.kanban-subtask-responsavel:hover {
+    border-color: var(--sic-border, #dee2e6);
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 22%, transparent);
+}
+
+/* Botão adicionar responsável (quando vazio) */
+.kanban-subtask-btn-responsavel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.62rem;
+    padding: 0.1rem 0.25rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    margin-left: auto;
+    opacity: 0;
+}
+
+.kanban-subtask-item:hover .kanban-subtask-btn-responsavel {
+    opacity: 1;
+}
+
+.kanban-subtask-btn-responsavel:hover {
+    color: var(--sic-brand, #0d6efd);
+    border-color: var(--sic-border, #dee2e6);
+    background: var(--sic-surface-2, #f8f9fa);
+}
+
+/* Popover de busca de responsável */
+.kanban-subtask-search-popover {
+    position: absolute;
+    z-index: 1070;
+    background: var(--sic-surface, #fff);
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.4rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+    padding: 0.4rem;
+    min-width: 180px;
+    max-width: 220px;
+    display: none;
+    animation: kanbanSubtaskMenuFadeIn 0.12s ease;
+}
+
+.kanban-subtask-search-popover.show {
+    display: block;
+}
+
+.kanban-subtask-search-input {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.25rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.kanban-subtask-search-input:focus {
+    border-color: var(--sic-brand, #0d6efd);
+}
+
+.kanban-subtask-search-results {
+    list-style: none;
+    margin: 0.3rem 0 0;
+    padding: 0;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.kanban-subtask-search-item {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+    border-radius: 0.2rem;
+    transition: background 0.12s ease;
+}
+
+.kanban-subtask-search-item:hover {
+    background: var(--sic-hover, #f0f4ff);
+}
+
+.kanban-subtask-search-item.text-muted {
+    cursor: default;
+    font-style: italic;
+}
+
+.kanban-subtask-search-btn-remove {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    width: 100%;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.68rem;
+    color: var(--bs-danger, #dc3545);
+    background: none;
+    border: none;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+    margin-top: 0.25rem;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+
+.kanban-subtask-search-btn-remove:hover {
+    background: color-mix(in srgb, var(--bs-danger, #dc3545) 8%, transparent);
+}
+
+/* ====== Kanban: Criação rápida inline ====== */
+
+/* Rodapé da coluna — botão "+ Tarefa" */
+.kanban-column-footer {
+    padding: 0.35rem 0.5rem 0.5rem;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+}
+
+.kanban-btn-add-task {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    background: none;
+    border: none;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.3rem 0.4rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.kanban-btn-add-task:hover {
+    color: var(--sic-brand, #0d6efd);
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 8%, transparent);
+}
+
+.kanban-btn-add-task i {
+    font-size: 0.65rem;
+}
+
+/* Link "+ Subitem" no rodapé do card */
+.kanban-btn-add-subtask {
+    display: none;
+    align-items: center;
+    gap: 0.25em;
+    background: none;
+    border: none;
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 0.2rem 0;
+    margin-top: 0.35rem;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.kanban-btn-add-subtask:hover {
+    color: var(--sic-brand, #0d6efd);
+}
+
+.kanban-btn-add-subtask i {
+    font-size: 0.55rem;
+}
+
+.kanban-card:hover .kanban-btn-add-subtask {
+    display: inline-flex;
+}
+
+/* Form inline (usado na coluna e dentro do card) */
+.kanban-inline-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.4rem 0;
+    animation: kanbanInlineFadeIn 0.15s ease;
+}
+
+@keyframes kanbanInlineFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.kanban-inline-input {
+    font-size: 0.82rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 0.3rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kanban-inline-input:focus {
+    border-color: var(--sic-brand, #0d6efd);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand, #0d6efd) 15%, transparent);
+}
+
+.kanban-inline-input.is-invalid {
+    border-color: var(--bs-danger, #dc3545);
+}
+
+.kanban-inline-input.is-invalid:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bs-danger, #dc3545) 15%, transparent);
+}
+
+/* Botões de ação do form inline */
+.kanban-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.kanban-inline-btn-confirm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25em;
+    background: var(--sic-brand, #0d6efd);
+    color: #fff;
+    border: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.kanban-inline-btn-confirm:hover {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 85%, #000);
+}
+
+.kanban-inline-btn-confirm:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.kanban-inline-btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    color: var(--sic-muted, #6c757d);
+    border: 1px solid var(--sic-border, #dee2e6);
+    font-size: 0.72rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.kanban-inline-btn-cancel:hover {
+    background: var(--sic-surface-2, #f8f9fa);
+    color: var(--sic-text, #212529);
+}
+
+/* Form inline dentro do card (subtarefa) */
+.kanban-card .kanban-inline-form {
+    padding: 0.3rem 0 0;
+    border-top: 1px dashed var(--sic-border, #dee2e6);
+    margin-top: 0.35rem;
+}
+
+/* ====== Participante autocomplete ====== */
+.ap-autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--sic-surface, #ffffff);
+    color: var(--sic-text, #1f2937);
+    border: 1px solid var(--sic-border, #dfe6ef);
+    border-top: none;
+    border-radius: 0 0 0.375rem 0.375rem;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+
+[data-bs-theme="dark"] .ap-autocomplete-dropdown {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.ap-autocomplete-item {
+    padding: 0.55rem 0.85rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--sic-text, #1f2937);
+    transition: background 0.15s ease, color 0.15s ease;
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border) 50%, transparent);
+}
+
+.ap-autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.ap-autocomplete-item:hover,
+.ap-autocomplete-item.is-active {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 10%, var(--sic-surface));
+    color: var(--sic-text, #1f2937);
+}
+
+[data-bs-theme="dark"] .ap-autocomplete-item:hover,
+[data-bs-theme="dark"] .ap-autocomplete-item.is-active {
+    background: color-mix(in srgb, var(--sic-brand, #FF782D) 18%, var(--sic-surface));
+    color: var(--sic-text);
+}
+
+.ap-autocomplete-item.text-muted {
+    cursor: default;
+    font-style: italic;
+    color: var(--sic-muted, #6b7280) !important;
+    background: transparent !important;
+}
+
+/* Scrollbar mais sutil no dropdown */
+.ap-autocomplete-dropdown::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ap-autocomplete-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.ap-autocomplete-dropdown::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--sic-muted) 35%, transparent);
+    border-radius: 4px;
+}
+
+.ap-autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--sic-muted) 55%, transparent);
+}
+
+/* ====== Page loading overlay ====== */
+.projeto-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    background: color-mix(in srgb, var(--sic-bg, #f4f7fb) 75%, transparent);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+[data-bs-theme="dark"] .projeto-loading-overlay {
+    background: color-mix(in srgb, var(--sic-bg, #090d11) 75%, transparent);
+}
+
+.projeto-loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.projeto-loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--sic-border, #dee2e6);
+    border-top-color: var(--sic-brand, #0d6efd);
+    border-radius: 50%;
+    animation: projeto-spin 0.75s linear infinite;
+}
+
+/* ===== Drawer de Detalhes da Tarefa ===== */
+.tarefa-drawer {
+    width: 420px !important;
+    max-width: 90vw;
+}
+
+.tarefa-drawer .offcanvas-header {
+    padding: 1rem 1.25rem;
+    background: var(--sic-surface, #f8f9fa);
+}
+
+.tarefa-drawer .offcanvas-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tarefa-drawer-section {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--sic-border, #dee2e6);
+}
+
+.tarefa-drawer-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--sic-muted, #6c757d);
+    margin-bottom: 0.35rem;
+}
+
+.tarefa-drawer-section .form-control-lg {
+    font-size: 1.05rem;
+    background: transparent;
+}
+
+.tarefa-drawer-section .form-control-lg:focus {
+    background: #fff;
+    box-shadow: none;
+    border-bottom: 2px solid var(--sic-brand, #0d6efd);
+    border-radius: 0;
+}
+
+.tarefa-drawer-section textarea.form-control {
+    background: transparent;
+    resize: vertical;
+    min-height: 60px;
+    font-size: 0.88rem;
+}
+
+.tarefa-drawer-section textarea.form-control:focus {
+    background: #fff;
+    box-shadow: none;
+    border-bottom: 2px solid var(--sic-brand, #0d6efd);
+    border-radius: 0;
+}
+
+.tarefa-drawer-props {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.tarefa-drawer-prop {
+    display: grid;
+    grid-template-columns: 1.5rem 7rem 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.tarefa-drawer-prop-icon {
+    color: var(--sic-muted, #6c757d);
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+.tarefa-drawer-prop-label {
+    color: var(--sic-muted, #6c757d);
+    font-weight: 500;
+    font-size: 0.82rem;
+}
+
+.tarefa-drawer-prop-value {
+    font-size: 0.82rem !important;
+}
+
+.tarefa-drawer-footer {
+    margin-top: auto;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--sic-border, #dee2e6);
+    background: var(--sic-surface, #f8f9fa);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Drawer subtask list */
+.drawer-subtarefa-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+    font-size: 0.82rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 50%, transparent);
+}
+
+.drawer-subtarefa-item:last-child {
+    border-bottom: none;
+}
+
+.drawer-subtarefa-item.done .drawer-subtarefa-nome {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.drawer-subtarefa-nome {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.drawer-subtarefa-status {
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Kanban subtask badge as button */
+.kanban-btn-ver-subtarefas {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: inherit;
+    color: inherit;
+}
+
+.kanban-btn-ver-subtarefas:hover {
+    text-decoration: underline;
+}
+
+/* Lista task row hover highlight */
+.tarefa-row:hover {
+    background-color: color-mix(in srgb, var(--sic-brand, #0d6efd) 4%, transparent);
+}
+
+@media (max-width: 575.98px) {
+    .tarefa-drawer-prop {
+        grid-template-columns: 1.5rem 5.5rem 1fr;
+    }
+
+    /* Stack tarefa table on small screens */
+    .tarefa-table-header {
+        display: none;
+    }
+
+    .tarefa-row {
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
+        padding: 0.75rem;
+    }
+
+    .tarefa-col-expand {
+        display: none;
+    }
+
+    .tarefa-col-acoes {
+        opacity: 1;
+    }
+
+    .tarefa-row-sub {
+        padding-left: 1rem;
+    }
+}
+
+@keyframes projeto-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ====== Responsivo ====== */
+@media (max-width: 575.98px) {
+    .tarefa-subtarefas {
+        padding-left: 1rem;
+    }
+
+    /* Kanban inline: sempre visível no mobile (sem hover) */
+    .kanban-btn-add-subtask {
+        display: inline-flex;
+    }
+
+    .kanban-inline-input {
+        font-size: 0.85rem;
+    }
+
+    /* Subtarefas embutidas: ajustes mobile */
+    .kanban-subtask-btn-responsavel {
+        opacity: 1;
+    }
+
+    .kanban-subtask-actions {
+        flex-wrap: wrap;
+    }
+
+    .kanban-subtask-responsavel {
+        max-width: none;
+    }
+
+    .kanban-subtask-status-trigger .fa-caret-down {
+        opacity: 1;
+    }
+}
+
+/* ====== Progresso inline (Lista view) ====== */
+.tarefa-col-progresso {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.tarefa-progress-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.tarefa-progress-bar-bg {
+    flex: 1 1 0;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--sic-border, #dee2e6);
+    overflow: hidden;
+    min-width: 0;
+}
+
+.tarefa-progress-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    max-width: 100%;
+}
+
+.tarefa-progress-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--sic-muted, #6c757d);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ====== Column toggle dropdown ====== */
+.tarefa-col-toggle-menu {
+    min-width: 170px;
+    padding: 0.25rem 0;
+    font-size: 0.82rem;
+}
+
+.tarefa-col-toggle-item {
+    display: flex;
+    align-items: center;
+    padding: 0.3rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+}
+
+.tarefa-col-toggle-item:hover {
+    background: var(--sic-surface-2, #f8f9fa);
+}
+
+.tarefa-col-toggle-item .form-check-input {
+    margin-top: 0;
+}
+
+/* Column visibility classes */
+.tarefa-hide-status .tarefa-col-status { display: none !important; }
+.tarefa-hide-prioridade .tarefa-col-prioridade { display: none !important; }
+.tarefa-hide-responsavel .tarefa-col-responsavel { display: none !important; }
+.tarefa-hide-prazo .tarefa-col-prazo { display: none !important; }
+.tarefa-hide-progresso .tarefa-col-progresso { display: none !important; }
+
+/* Inline prioridade / responsável dropdown menus */
+.tarefa-prioridade-dropdown-menu,
+.tarefa-responsavel-dropdown-menu {
+    min-width: 10rem;
+    font-size: 0.82rem;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 0.25rem 0;
+    z-index: 1055;
+}
+
+.tarefa-prioridade-dropdown-menu .dropdown-item,
+.tarefa-responsavel-dropdown-menu .dropdown-item {
+    font-size: 0.82rem;
+    padding: 0.35rem 0.75rem;
+}
+
+.tarefa-prioridade-trigger:hover,
+.tarefa-responsavel-trigger:hover {
+    opacity: 0.85;
+}
+
+/* Inline date input for prazo */
+.tarefa-prazo-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.tarefa-inline-date-input {
+    border: none;
+    background: transparent;
+    font-size: 0.78rem;
+    color: var(--sic-text-muted, #6c757d);
+    padding: 0.15rem 0.25rem;
+    border-radius: 4px;
+    outline: none;
+    width: 100%;
+    min-width: 0;
+    max-width: 6rem;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+}
+
+.tarefa-inline-date-input:hover {
+    background: var(--sic-surface-2, #f8f9fa);
+}
+
+.tarefa-inline-date-input:focus {
+    background: #fff;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand, #0d6efd) 25%, transparent);
+}
+
+.tarefa-inline-date-input:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+/* Inline name editing */
+.tarefa-nome-editable-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    position: relative;
+}
+
+.tarefa-nome-text {
+    cursor: pointer;
+    transition: color 0.15s;
+    position: relative;
+}
+
+.tarefa-nome-text:hover {
+    color: var(--sic-brand, #0d6efd);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--sic-brand, #0d6efd) 40%, transparent);
+    text-underline-offset: 2px;
+}
+
+.tarefa-descricao-text {
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.tarefa-descricao-text:hover {
+    opacity: 0.8;
+}
+
+.tarefa-nome-edit-trigger {
+    opacity: 0;
+    color: var(--sic-text-muted, #6c757d);
+    transition: opacity 0.15s;
+    font-size: 0.65rem;
+}
+
+.tarefa-nome-editable-wrapper:hover .tarefa-nome-edit-trigger {
+    opacity: 1;
+}
+
+.tarefa-nome-edit-trigger:hover {
+    color: var(--sic-brand, #0d6efd);
+}
+
+.tarefa-nome-input {
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.25rem 0.4rem;
+    border: 1px solid var(--sic-border, #dee2e6);
+    border-radius: 4px;
+    outline: none;
+    width: 100%;
+    max-width: 320px;
+}
+
+.tarefa-nome-input:focus {
+    border-color: var(--sic-brand, #0d6efd);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sic-brand, #0d6efd) 25%, transparent);
+}
+
+.tarefa-row-sub .tarefa-nome-input {
+    font-size: 0.84rem;
+}
+
+/* ====== Drawer Histórico Timeline ====== */
+.drawer-historico-list {
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.drawer-historico-timeline {
+    position: relative;
+    padding-left: 1.1rem;
+    border-left: 2px solid var(--sic-border, #e9ecef);
+}
+
+.drawer-historico-item {
+    position: relative;
+    padding: 0.4rem 0 0.4rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.drawer-historico-item::before {
+    content: '';
+    position: absolute;
+    left: -1.55rem;
+    top: 0.75rem;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--sic-brand, #0d6efd);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--sic-border, #e9ecef);
+}
+
+.drawer-historico-acao {
+    line-height: 1.35;
+    color: var(--sic-text, #212529);
+}
+
+.drawer-historico-usuario {
+    font-weight: 600;
+    color: var(--sic-brand, #0d6efd);
+}
+
+.drawer-historico-texto {
+    color: var(--sic-text-muted, #6c757d);
+}
+
+.drawer-historico-data {
+    margin-top: 0.15rem;
+    font-size: 0.7rem;
+    color: var(--sic-text-muted, #6c757d);
+    opacity: 0.85;
+}
+
+#btnToggleHistoricoDrawer {
+    text-decoration: none;
+    line-height: 1;
+}
+
+#btnToggleHistoricoDrawer:hover {
+    color: var(--sic-brand, #0d6efd) !important;
+}
+
+/* ====== Lista Drag & Drop ====== */
+.tarefa-drag-handle {
+    position: absolute;
+    left: -0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sic-muted, #adb5bd);
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease;
+    font-size: 0.7rem;
+    user-select: none;
+    z-index: 2;
+}
+
+.tarefa-row:hover .tarefa-drag-handle {
+    opacity: 0.7;
+}
+
+.tarefa-drag-handle:hover {
+    opacity: 1 !important;
+    color: var(--sic-brand, #0d6efd);
+}
+
+.tarefa-drag-handle:active {
+    cursor: grabbing;
+}
+
+.tarefa-row.tarefa-dragging {
+    opacity: 0.4;
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 8%, transparent);
+}
+
+.tarefa-row.tarefa-drag-over-before {
+    border-top: 2px solid var(--sic-brand, #0d6efd);
+}
+
+.tarefa-row.tarefa-drag-over-after {
+    border-bottom: 2px solid var(--sic-brand, #0d6efd);
+}
+
+.tarefa-group-body.tarefa-drag-over {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 4%, transparent);
+    border-radius: 4px;
+}
+
+.tarefa-group-empty.tarefa-drag-over {
+    background: color-mix(in srgb, var(--sic-brand, #0d6efd) 10%, transparent);
+    border: 2px dashed var(--sic-brand, #0d6efd);
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+/* ====== Empty state when filters yield no results ====== */
+.tarefa-filter-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    background: var(--sic-surface, #f8f9fa);
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+.tarefa-filter-empty p {
+    font-size: 0.9rem;
+}
+
+/* Hide entire group when all its rows are filtered out */
+.tarefa-group.tarefa-group-hidden-by-filter {
+    display: none;
+}
+
+/* ====== View toggle (Lista / Quadro / Colunas) ======
+   Pill "segmented" que se adapta ao tema claro/escuro.
+   Usa variáveis locais que são redefinidas em [data-bs-theme="dark"]. */
+
+.view-toggle-group,
+#btnColumnToggle {
+    /* Valores padrão (tema claro) */
+    --vt-bg: var(--sic-surface-2, #f1f3f5);
+    --vt-border: var(--sic-border, #dfe6ef);
+    --vt-text: var(--sic-muted, #6b7280);
+    --vt-text-hover: var(--sic-text, #1f2937);
+    --vt-icon: var(--sic-muted, #9ca3af);
+    --vt-hover-bg: color-mix(in srgb, var(--sic-text, #1f2937) 6%, transparent);
+    --vt-active-bg: var(--sic-surface, #ffffff);
+    --vt-active-text: var(--sic-text, #111827);
+    --vt-active-icon: var(--sic-brand, #FF782D);
+    --vt-active-shadow: 0 2px 6px rgba(15, 23, 42, 0.12), 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+[data-bs-theme="dark"] .view-toggle-group,
+[data-bs-theme="dark"] #btnColumnToggle {
+    /* No dark, pill escuro com ativo em cinza mais claro (não branco) */
+    --vt-bg: #0f172a;
+    --vt-border: #1f2937;
+    --vt-text: #9ca3af;
+    --vt-text-hover: #e5e7eb;
+    --vt-icon: #6b7280;
+    --vt-hover-bg: rgba(255, 255, 255, 0.05);
+    --vt-active-bg: #334155;
+    --vt-active-text: #f9fafb;
+    --vt-active-icon: var(--sic-brand, #FF782D);
+    --vt-active-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* ---- Grupo Lista / Quadro ---- */
+.view-toggle-group {
+    background: var(--vt-bg);
+    border-radius: 999px;
+    padding: 3px;
+    border: 1px solid var(--vt-border);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    gap: 2px;
+    overflow: hidden;
+}
+
+.view-toggle-group .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.3rem 0.85rem;
+    border: none !important;
+    border-radius: 999px !important;
+    background: transparent;
+    color: var(--vt-text);
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.1s ease;
+}
+
+.view-toggle-group .btn i {
+    font-size: 0.85rem;
+    color: var(--vt-icon);
+    transition: color 0.18s ease;
+}
+
+.view-toggle-group .btn:hover:not(.active) {
+    background: var(--vt-hover-bg);
+    color: var(--vt-text-hover);
+}
+
+.view-toggle-group .btn:hover:not(.active) i {
+    color: var(--vt-text-hover);
+}
+
+.view-toggle-group .btn.active {
+    background: var(--vt-active-bg);
+    color: var(--vt-active-text);
+    font-weight: 600;
+    box-shadow: var(--vt-active-shadow);
+}
+
+.view-toggle-group .btn.active i {
+    color: var(--vt-active-icon);
+}
+
+.view-toggle-group .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sic-brand, #FF782D) 40%, transparent);
+}
+
+/* ---- Botão "Colunas" (isolado, mesmo estilo) ---- */
+#btnColumnToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--vt-border) !important;
+    border-radius: 999px !important;
+    background: var(--vt-bg);
+    color: var(--vt-text);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    transition: background 0.18s ease, color 0.18s ease, transform 0.1s ease, border-color 0.18s ease;
+}
+
+#btnColumnToggle i {
+    font-size: 0.85rem;
+    color: var(--vt-icon);
+    transition: color 0.18s ease;
+}
+
+#btnColumnToggle:hover {
+    background: var(--vt-hover-bg);
+    color: var(--vt-text-hover);
+}
+
+#btnColumnToggle:hover i {
+    color: var(--vt-text-hover);
+}
+
+#btnColumnToggle[aria-expanded="true"] {
+    background: var(--vt-active-bg);
+    color: var(--vt-active-text);
+    border-color: var(--vt-active-bg) !important;
+    font-weight: 600;
+    box-shadow: var(--vt-active-shadow);
+}
+
+#btnColumnToggle[aria-expanded="true"] i {
+    color: var(--vt-active-icon);
+}
+
+#btnColumnToggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sic-brand, #FF782D) 40%, transparent);
+}
+
+/* Oculta apenas os textos em telas muito pequenas, mantendo os ícones */
+@media (max-width: 480px) {
+    .view-toggle-label {
+        display: none;
+    }
+
+    .view-toggle-group .btn,
+    #btnColumnToggle {
+        padding: 0.35rem 0.6rem;
+    }
+}

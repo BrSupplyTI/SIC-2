@@ -29,6 +29,19 @@ public interface IPrePedidoPDFCommandRepository
         string descricao,
         CancellationToken cancellationToken = default);
 
+    Task<bool> UpdateVlrUnitAsync(
+        int prePedidoItemId,
+        int prePedidoId,
+        decimal vlrUnit,
+        string descricao,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> UpdateObsAsync(
+        int prePedidoId,
+        string obsNota,
+        string obsComprador,
+        CancellationToken cancellationToken = default);
+
     Task<bool> CancelarAsync(
         int prePedidoId,
         CancellationToken cancellationToken = default);

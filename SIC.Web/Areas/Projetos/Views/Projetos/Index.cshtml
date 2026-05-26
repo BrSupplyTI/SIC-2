@@ -1,0 +1,297 @@
+@model SIC.Web.Areas.Projetos.Models.ProjetoListaViewModel
+@{
+    ViewData["Title"] = "Projetos";
+
+    var statusSelecionado = Model.StatusDisponiveis.FirstOrDefault(s => s.ProjetoStatusID == Model.ProjetoStatusID);
+
+    var totalFiltrosAtivos = (Model.ProjetoStatusID > 0 ? 1 : 0)
+        + (!Model.ExcluirEncerrados ? 1 : 0);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/projetos/index.css" asp-append-version="true" />
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 projeto-page-header">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin fa-diagram-project me-2 text-br"></i>Projetos</h2>
+                </div>
+                <p class="projeto-page-subtitle">
+                    <strong>@Model.TotalRegistros</strong> projeto(s) encontrado(s)
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button" class="btn btn-br" data-bs-toggle="modal" data-bs-target="#modalNovoProjeto">
+                    <i class="fa-solid fa-plus me-1"></i>Novo Projeto
+                </button>
+            </div>
+        </div>
+
+        <!-- Busca & Controles -->
+        <div class="projeto-filters">
+            <form method="get" asp-area="Projetos" asp-controller="Projetos" asp-action="Index" id="formFiltros">
+                <input type="hidden" name="page" id="inputPage" value="@Model.PageNumber" />
+                <input type="hidden" name="projetoStatusId" id="inputProjetoStatusId" value="@Model.ProjetoStatusID" />
+                <input type="hidden" name="excluirEncerrados" id="inputExcluirEncerrados" value="@(Model.ExcluirEncerrados ? "true" : "false")" />
+
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-lg-6">
+                        <small class="text-muted">Pesquisar por nome</small>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="texto" value="@Model.Texto"
+                                   placeholder="Nome do projeto..." id="inputTexto" />
+                            <button type="submit" class="btn btn-br">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <small class="text-muted">Por página</small>
+                        <select class="form-select" name="pageSize" id="selectPageSize"
+                                onchange="document.getElementById('inputPage').value=1;document.getElementById('formFiltros').submit();">
+                            @foreach (var size in new[] { 12, 24, 48, 96 })
+                            {
+                                <option value="@size" selected="@(Model.PageSize == size)">@size itens</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <small class="text-muted d-none d-lg-block">&nbsp;</small>
+                        <button type="button" class="btn btn-outline-secondary w-100 position-relative"
+                                data-bs-toggle="offcanvas" data-bs-target="#offcanvasFiltros">
+                            <i class="fa-solid fa-sliders me-1"></i>Filtros
+                            @if (totalFiltrosAtivos > 0)
+                            {
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@totalFiltrosAtivos</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Filtros ativos -->
+        <div class="d-flex flex-wrap gap-2 mb-3" id="activeFilters">
+            @if (!string.IsNullOrWhiteSpace(Model.Texto))
+            {
+                <span class="badge-status badge-status-primary projeto-filter-tag" data-field="texto">
+                    <i class="fa-solid fa-search me-1"></i>"@Model.Texto"<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (statusSelecionado is not null)
+            {
+                <span class="badge-status badge-status-primary projeto-filter-tag" data-field="projetoStatusId">
+                    <i class="fa-solid fa-circle me-1" style="color: @statusSelecionado.CdCor; font-size: 0.5rem;"></i>@statusSelecionado.NmStatus<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+        </div>
+
+        <!-- Lista de projetos -->
+        @if (Model.Itens.Count == 0)
+        {
+            <div class="projeto-empty">
+                <i class="fa-duotone fa-folder-open d-block"></i>
+                <h5 class="text-muted">Nenhum projeto encontrado</h5>
+                <p class="text-muted mb-3">Tente ajustar os filtros ou o termo de busca.</p>
+                <a asp-area="Projetos" asp-controller="Projetos" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                    <i class="fa-solid fa-rotate-left me-1"></i>Limpar filtros
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr class="text-muted border-bottom" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            <th style="width: 4px; padding: 0;"></th>
+                            <th class="ps-3 py-2">Projeto</th>
+                            <th class="py-2 d-none d-md-table-cell">Status</th>
+                            <th class="py-2 d-none d-lg-table-cell" style="min-width: 180px;">Progresso</th>
+                            <th class="py-2 d-none d-lg-table-cell">Datas</th>
+                            <th class="py-2 d-none d-xl-table-cell">Criador</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Itens)
+                        {
+                            <partial name="_ProjetoRow" model="item" />
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            @if (Model.TotalPaginas > 1)
+            {
+                var totalPages = Model.TotalPaginas;
+                var currentPage = Model.PageNumber;
+                var startPage = Math.Max(1, currentPage - 2);
+                var endPage = Math.Min(totalPages, currentPage + 2);
+
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mt-4 gap-2">
+                    <small class="text-muted">
+                        Página <strong>@currentPage</strong> de <strong>@totalPages</strong>
+                        — @Model.Itens.Count de @Model.TotalRegistros projetos
+                    </small>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(1)"><i class="fa-solid fa-angles-left"></i></a>
+                        </li>
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage - 1))"><i class="fa-solid fa-angle-left"></i></a>
+                        </li>
+                        @for (var p = startPage; p <= endPage; p++)
+                        {
+                            <li class="page-item @(p == currentPage ? "active" : "")">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(@p)">@p</a>
+                            </li>
+                        }
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(@(currentPage + 1))"><i class="fa-solid fa-angle-right"></i></a>
+                        </li>
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(@totalPages)"><i class="fa-solid fa-angles-right"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Offcanvas de Filtros -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasFiltros" aria-labelledby="offcanvasFiltrosLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 id="offcanvasFiltrosLabel" class="mb-0"><i class="fa-duotone fa-sliders me-2 text-br"></i>Filtros Avançados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+        <div class="flex-grow-1">
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-circle-dot me-1 text-muted"></i>Status</label>
+                <select class="form-select" id="filtroStatus">
+                    <option value="0" selected="@(Model.ProjetoStatusID == 0)">Todos</option>
+                    @foreach (var s in Model.StatusDisponiveis)
+                    {
+                        <option value="@s.ProjetoStatusID" selected="@(Model.ProjetoStatusID == s.ProjetoStatusID)">@s.NmStatus</option>
+                    }
+                </select>
+            </div>
+
+            <hr class="my-3" />
+
+            <div class="mb-3">
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="filtroExcluirEncerrados" @(Model.ExcluirEncerrados ? "checked" : "")>
+                    <label class="form-check-label" for="filtroExcluirEncerrados">
+                        <i class="fa-solid fa-eye-slash text-muted me-1"></i>Ocultar projetos encerrados
+                    </label>
+                </div>
+                <small class="text-muted">Esconde projetos com status Concluído ou Cancelado.</small>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 pt-3 border-top">
+            <button type="button" class="btn btn-primary" id="btnAplicarFiltros">
+                <i class="fa-solid fa-check me-1"></i>Aplicar Filtros
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
+                <i class="fa-solid fa-eraser me-1"></i>Limpar Tudo
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Novo Projeto -->
+<div class="modal fade" id="modalNovoProjeto" tabindex="-1" aria-labelledby="modalNovoProjetoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formNovoProjeto" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalNovoProjetoLabel">
+                        <i class="fa-duotone fa-thin fa-folder-plus me-2 text-br"></i>Novo Projeto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="npUsuarioCriadorID" value="@Model.UsuarioLogadoID" />
+
+                    <div class="mb-3">
+                        <label for="npNmProjeto" class="form-label">Nome do Projeto <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="npNmProjeto" maxlength="200" required />
+                        <div class="invalid-feedback">O nome do projeto é obrigatório.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="npDsProjeto" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="npDsProjeto" rows="3" maxlength="2000"></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="npDtInicio" class="form-label">Data de Início</label>
+                            <input type="date" class="form-control" id="npDtInicio" />
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="npDtPrevisaoFim" class="form-label">Previsão de Término</label>
+                            <input type="date" class="form-control" id="npDtPrevisaoFim" />
+                            <div class="invalid-feedback">A previsão de término não pode ser anterior à data de início.</div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3" />
+                    <div class="mb-2 d-flex align-items-center justify-content-between">
+                        <label class="form-label mb-0">
+                            <i class="fa-solid fa-tags me-1 text-muted"></i>Campos personalizados
+                            <small class="text-muted fw-normal">(opcional, até 4)</small>
+                        </label>
+                    </div>
+                    <div id="npCamposExtras">
+                        @for (var i = 1; i <= 4; i++)
+                        {
+                            <div class="row g-2 mb-2 np-campo-extra" data-ordem="@i">
+                                <div class="col-5">
+                                    <input type="text" class="form-control form-control-sm np-campo-nome" maxlength="100" placeholder="Nome do campo @i" />
+                                </div>
+                                <div class="col-7">
+                                    <input type="text" class="form-control form-control-sm np-campo-valor" maxlength="500" placeholder="Valor" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarNovoProjeto">
+                        <i class="fa-solid fa-check me-1"></i>Criar Projeto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function goToPage(page) {
+            document.getElementById('inputPage').value = page;
+            document.getElementById('formFiltros').submit();
+        }
+
+        document.getElementById('btnAplicarFiltros')?.addEventListener('click', function () {
+            document.getElementById('inputProjetoStatusId').value = document.getElementById('filtroStatus').value;
+            document.getElementById('inputExcluirEncerrados').value = document.getElementById('filtroExcluirEncerrados').checked ? 'true' : 'false';
+            document.getElementById('inputPage').value = '1';
+            document.getElementById('formFiltros').submit();
+        });
+
+        document.getElementById('btnLimparFiltros')?.addEventListener('click', function () {
+            window.location.href = '@Url.Action("Index", "Projetos", new { area = "Projetos" })';
+        });
+    </script>
+    <script src="~/js/projetos/index.js" asp-append-version="true"></script>
+}

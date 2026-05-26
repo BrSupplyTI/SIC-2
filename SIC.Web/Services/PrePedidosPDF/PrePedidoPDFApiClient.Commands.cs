@@ -48,6 +48,27 @@ public sealed partial class PrePedidoPDFApiClient
             new { Quantidade = quantidade, Descricao = descricao },
             cancellationToken);
 
+    public Task<OperationResultVm> AtualizarVlrUnitAsync(
+        int id,
+        int itemId,
+        decimal vlrUnit,
+        string descricao,
+        CancellationToken cancellationToken = default)
+        => PutAsync(
+            $"api/pre-pedidos-pdf/{id}/itens/{itemId}/vlr-unit",
+            new { VlrUnit = vlrUnit, Descricao = descricao },
+            cancellationToken);
+
+    public Task<OperationResultVm> AtualizarObsAsync(
+        int id,
+        string obsNota,
+        string obsComprador,
+        CancellationToken cancellationToken = default)
+        => PutAsync(
+            $"api/pre-pedidos-pdf/{id}/obs",
+            new { ObsNota = obsNota, ObsComprador = obsComprador },
+            cancellationToken);
+
     public Task<OperationResultVm> ExcluirItemAsync(
         int id,
         int itemId,

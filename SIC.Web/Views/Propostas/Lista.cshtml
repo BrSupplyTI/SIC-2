@@ -1,0 +1,440 @@
+@model SIC.Web.Models.Propostas.PropostasListViewModel
+@{
+    ViewData["Title"] = "Propostas";
+
+    var totalFiltrosAtivos = (!string.IsNullOrWhiteSpace(Model.FiltroCodigo) ? 1 : 0)
+        + (!string.IsNullOrWhiteSpace(Model.FiltroNome) ? 1 : 0)
+        + (!string.IsNullOrWhiteSpace(Model.FiltroEstabelecimento) ? 1 : 0)
+        + (!string.IsNullOrWhiteSpace(Model.FiltroStatus) ? 1 : 0);
+
+    var orderByOptions = new[]
+    {
+        "Cód. (Recente)", "Cód. (Antigo)",
+        "Nome (A-Z)", "Nome (Z-A)",
+        "Estabelecimento (A-Z)", "Estabelecimento (Z-A)",
+        "Data Criação (Recente)", "Data Criação (Antigo)"
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.min.css" />
+    <style>
+        /* ── Section title ── */
+        .proposta-section-title {
+            font-size: .8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--sic-muted);
+            border-bottom: 1px solid var(--sic-border);
+            padding-bottom: .5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* ── Table ── */
+        .table-proposta-wrap {
+            border: 1px solid var(--sic-border);
+            border-radius: .5rem;
+            overflow: hidden;
+        }
+        .table-proposta {
+            --bs-table-bg: transparent;
+            --bs-table-hover-bg: var(--sic-surface-2);
+        }
+        .table-proposta thead th {
+            font-size: .7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--sic-muted);
+            background: var(--sic-surface-2);
+            border-bottom: 2px solid var(--sic-border);
+            padding: .55rem .75rem;
+            white-space: nowrap;
+        }
+        .table-proposta tbody td {
+            color: var(--sic-text);
+            border-bottom: 1px solid var(--sic-border);
+            padding: .5rem .75rem;
+            font-size: .85rem;
+            vertical-align: middle;
+        }
+        .table-proposta tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ── Action buttons ── */
+        .proposta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            font-size: .8rem;
+            font-weight: 600;
+            padding: .45rem 1rem;
+            border-radius: .375rem;
+            border: 1px solid transparent;
+            transition: all .2s ease;
+            cursor: pointer;
+        }
+        .proposta-btn i {
+            font-size: .85rem;
+        }
+        .proposta-btn-editar {
+            background: rgba(var(--bs-primary-rgb), .12);
+            color: var(--sic-text);
+            border-color: rgba(var(--bs-primary-rgb), .3);
+            text-decoration: none !important;
+        }
+        .proposta-btn-editar:hover {
+            background: rgba(var(--bs-primary-rgb), .25);
+            border-color: rgba(var(--bs-primary-rgb), .5);
+        }
+        .proposta-btn-codificacao {
+            background: rgba(var(--bs-success-rgb), .12);
+            color: var(--sic-text);
+            border-color: rgba(var(--bs-success-rgb), .3);
+            text-decoration: none !important;
+        }
+        .proposta-btn-codificacao:hover {
+            background: rgba(var(--bs-success-rgb), .25);
+            border-color: rgba(var(--bs-success-rgb), .5);
+        }
+        .proposta-btn-excluir {
+            background: rgba(var(--bs-danger-rgb), .12);
+            color: var(--sic-text);
+            border-color: rgba(var(--bs-danger-rgb), .3);
+        }
+        .proposta-btn-excluir:hover {
+            background: rgba(var(--bs-danger-rgb), .25);
+            border-color: rgba(var(--bs-danger-rgb), .5);
+        }
+    </style>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin fa-file-lines me-2 text-br"></i>Propostas</h2>
+                    <a asp-controller="Propostas" asp-action="CadastroProposta" class="btn btn-sm btn-primary">
+                        <i class="fa-solid fa-plus me-1"></i>Codificar Nova Proposta
+                    </a>
+                </div>
+                <p class="text-muted mt-1 mb-0">
+                    <strong>@Model.Propostas.Count.ToString("N0", new System.Globalization.CultureInfo("pt-BR"))</strong> proposta(s) encontrada(s)
+                </p>
+            </div>
+        </div>
+
+        <!-- Busca & Controles -->
+        <form method="get" asp-controller="Propostas" asp-action="Lista" id="formPropostas">
+            <input type="hidden" name="filtroCodigo" id="inputFiltroCodigo" value="@Model.FiltroCodigo" />
+            <input type="hidden" name="filtroNome" id="inputFiltroNome" value="@Model.FiltroNome" />
+            <input type="hidden" name="filtroEstabelecimento" id="inputFiltroEstabelecimento" value="@Model.FiltroEstabelecimento" />
+            <input type="hidden" name="filtroStatus" id="inputFiltroStatus" value="@Model.FiltroStatus" />
+
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-lg-5">
+                    <small class="text-muted">Pesquisar por nome, estabelecimento ou código</small>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="inputBuscaTabela"
+                               placeholder="Nome, estabelecimento, código..." />
+                        <button type="button" class="btn btn-primary" id="btnBuscaTabela">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <small class="text-muted">Ordem</small>
+                    <select class="form-select h-45px" id="selectOrderBy">
+                        @foreach (var opt in orderByOptions)
+                        {
+                            <option value="@opt">@opt</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <small class="text-muted">Por página</small>
+                    <select class="form-select h-45px" id="selectPageSize">
+                        @foreach (var size in new[] { 10, 25, 50, 100 })
+                        {
+                            <option value="@size" selected="@(size == 25)">@size itens</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-lg-2 d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1 position-relative mt-4" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFiltros">
+                        <i class="fa-solid fa-sliders me-1"></i>Filtros
+                        @if (totalFiltrosAtivos > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@totalFiltrosAtivos</span>
+                        }
+                    </button>
+                    <a asp-controller="Propostas" asp-action="Lista" class="btn btn-outline-danger mt-4" title="Limpar filtros">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Filtros ativos -->
+        <div class="d-flex flex-wrap gap-2 mb-4" id="activeFilters">
+            @if (!string.IsNullOrWhiteSpace(Model.FiltroCodigo))
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('filtroCodigo')">
+                    <i class="fa-solid fa-hashtag me-1"></i>Cód: @Model.FiltroCodigo<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.FiltroNome))
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('filtroNome')">
+                    <i class="fa-solid fa-tag me-1"></i>Nome: @Model.FiltroNome<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.FiltroEstabelecimento))
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('filtroEstabelecimento')">
+                    <i class="fa-solid fa-warehouse me-1"></i>Estab.: @Model.FiltroEstabelecimento<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.FiltroStatus))
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('filtroStatus')">
+                    <i class="fa-solid fa-circle-dot me-1"></i>Status: @Model.FiltroStatus<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+        </div>
+
+        @* ══════════ TABELA DE PROPOSTAS ══════════ *@
+        <div class="proposta-section-title">
+            <i class="fa-duotone fa-list me-1 text-br"></i>Propostas
+        </div>
+
+        <div class="table-proposta-wrap">
+            <div class="table-responsive">
+                <table class="table table-hover table-proposta mb-0" id="tabelaPropostas">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Cód.</th>
+                            <th>Nome da Proposta</th>
+                            <th>Estabelecimento</th>
+                            <th class="text-center">Data Criação</th>
+                            <th>Status</th>
+                            <th>Processo de codificação</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Propostas.Count > 0)
+                        {
+                            @foreach (var item in Model.Propostas)
+                            {
+                                <tr>
+                                    <td class="text-center">@item.PropostaID</td>
+                                    <td>@item.NomeProposta</td>
+                                    <td>@item.NmEstabelecimento</td>
+                                    <td class="text-center">@item.DtCriacao</td>
+                                    <td>@item.NmStatus</td>
+                                    <td>@item.PercentualConcluido</td>
+                                    <td class="text-center">
+                                        <a asp-controller="Propostas" asp-action="CadastroProposta" asp-route-id="@item.PropostaID"
+                                           class="proposta-btn proposta-btn-editar" title="Editar">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </a>
+                                        <a asp-controller="Propostas" asp-action="Codificacao" asp-route-id="@item.PropostaID"
+                                           class="proposta-btn proposta-btn-codificacao" title="Codificação">
+                                            <i class="fa-solid fa-barcode"></i>
+                                        </a>
+                                        <button type="button" class="proposta-btn proposta-btn-excluir" title="Excluir"
+                                                data-proposta-id="@item.PropostaID">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">Nenhuma proposta encontrada.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas de Filtros -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasFiltros" aria-labelledby="offcanvasFiltrosLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 id="offcanvasFiltrosLabel" class="mb-0"><i class="fa-duotone fa-sliders me-2 text-br"></i>Filtros Avançados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+        <div class="flex-grow-1">
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-hashtag me-1 text-muted"></i>Código</label>
+                <input type="text" class="form-control" id="filtroCodigoInput"
+                       value="@Model.FiltroCodigo" placeholder="Ex.: 1234" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-tag me-1 text-muted"></i>Nome da Proposta</label>
+                <input type="text" class="form-control" id="filtroNomeInput"
+                       value="@Model.FiltroNome" placeholder="Buscar por nome..." />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-warehouse me-1 text-muted"></i>Estabelecimento</label>
+                <input type="text" class="form-control" id="filtroEstabelecimentoInput"
+                       value="@Model.FiltroEstabelecimento" placeholder="Buscar por estabelecimento..." />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-circle-dot me-1 text-muted"></i>Status</label>
+                <select class="form-select" id="filtroStatusInput">
+                    <option value="">Todos</option>
+                    <option value="Ativo" selected="@(Model.FiltroStatus == "Ativo")">Ativo</option>
+                    <option value="Inativo" selected="@(Model.FiltroStatus == "Inativo")">Inativo</option>
+                    <option value="Pendente" selected="@(Model.FiltroStatus == "Pendente")">Pendente</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 pt-3 border-top">
+            <button type="button" class="btn btn-primary" id="btnAplicarFiltros">
+                <i class="fa-solid fa-check me-1"></i>Aplicar Filtros
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
+                <i class="fa-solid fa-eraser me-1"></i>Limpar Tudo
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.min.js"></script>
+    <script>
+        (() => {
+            if (typeof DataTable === 'undefined') return;
+
+            var orderMap = {
+                'Cód. (Recente)':            [[0, 'desc']],
+                'Cód. (Antigo)':             [[0, 'asc']],
+                'Nome (A-Z)':                [[1, 'asc']],
+                'Nome (Z-A)':                [[1, 'desc']],
+                'Estabelecimento (A-Z)':     [[2, 'asc']],
+                'Estabelecimento (Z-A)':     [[2, 'desc']],
+                'Data Criação (Recente)':    [[3, 'desc']],
+                'Data Criação (Antigo)':     [[3, 'asc']]
+            };
+
+            var dt = new DataTable('#tabelaPropostas', {
+                pageLength: 25,
+                responsive: true,
+                lengthChange: false,
+                searching: true,
+                info: false,
+                paging: true,
+                order: [[0, 'desc']],
+                pagingType: 'full_numbers',
+                language: {
+                    emptyTable: 'Nenhuma proposta encontrada.',
+                    info: 'Mostrando _START_ até _END_ de _TOTAL_ propostas',
+                    infoEmpty: 'Mostrando 0 até 0 de 0 propostas',
+                    zeroRecords: 'Nenhuma proposta corresponde ao filtro',
+                    paginate: {
+                        first: 'Primeiro',
+                        previous: 'Anterior',
+                        next: 'Próximo',
+                        last: 'Último'
+                    }
+                },
+                columnDefs: [
+                    { targets: -1, orderable: false }
+                ]
+            });
+
+            // Esconde a busca nativa do DataTables
+            var dtSearch = document.querySelector('#tabelaPropostas_wrapper .dt-search');
+            if (dtSearch) dtSearch.style.display = 'none';
+
+            // Busca personalizada
+            var inputBusca = document.getElementById('inputBuscaTabela');
+            var btnBusca = document.getElementById('btnBuscaTabela');
+
+            function aplicarBusca() {
+                dt.search(inputBusca.value || '').draw();
+            }
+
+            btnBusca?.addEventListener('click', aplicarBusca);
+            inputBusca?.addEventListener('keyup', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); aplicarBusca(); }
+            });
+
+            // Ordem
+            document.getElementById('selectOrderBy')?.addEventListener('change', function () {
+                var order = orderMap[this.value];
+                if (order) dt.order(order).draw();
+            });
+
+            // Por página
+            document.getElementById('selectPageSize')?.addEventListener('change', function () {
+                dt.page.len(parseInt(this.value, 10)).draw();
+            });
+        })();
+
+        var filterInputMap = {
+            filtroCodigo: 'inputFiltroCodigo',
+            filtroNome: 'inputFiltroNome',
+            filtroEstabelecimento: 'inputFiltroEstabelecimento',
+            filtroStatus: 'inputFiltroStatus'
+        };
+
+        function removeFilter(field) {
+            var inputId = filterInputMap[field];
+            if (!inputId) return;
+            var el = document.getElementById(inputId);
+            if (el) el.value = '';
+            document.getElementById('formPropostas').submit();
+        }
+
+        document.getElementById('btnAplicarFiltros')?.addEventListener('click', function () {
+            document.getElementById('inputFiltroCodigo').value = document.getElementById('filtroCodigoInput').value;
+            document.getElementById('inputFiltroNome').value = document.getElementById('filtroNomeInput').value;
+            document.getElementById('inputFiltroEstabelecimento').value = document.getElementById('filtroEstabelecimentoInput').value;
+            document.getElementById('inputFiltroStatus').value = document.getElementById('filtroStatusInput').value;
+            document.getElementById('formPropostas').submit();
+        });
+
+        document.getElementById('btnLimparFiltros')?.addEventListener('click', function () {
+            window.location.href = '@Url.Action("Lista", "Propostas")';
+        });
+
+        // ── Excluir proposta ──
+        document.querySelectorAll('.proposta-btn-excluir').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var propostaId = this.getAttribute('data-proposta-id');
+                if (!propostaId) return;
+
+                if (!confirm('Tem certeza que deseja excluir a proposta #' + propostaId + '?')) return;
+
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '@Url.Action("Excluir", "Propostas")/' + propostaId;
+                document.body.appendChild(form);
+                form.submit();
+            });
+        });
+    </script>
+}

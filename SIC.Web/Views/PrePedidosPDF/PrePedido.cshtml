@@ -125,20 +125,60 @@
 
             <div class="col-md-6 col-xl-3">
                 <div class="prepedido-quick-card h-100">
-                    <i class="fa-duotone fa-note-sticky text-br"></i>
-                    <div>
-                        <small class="text-muted">Obs. Nota</small>
-                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.ObsNota) ? "—" : Model.ObsNota)</div>
+                    <i class="fa-duotone fa-note-sticky text-br flex-shrink-0"></i>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex align-items-center gap-1">
+                            <small class="text-muted">Obs. Nota</small>
+                            @if (!statusSomenteLeitura)
+                            {
+                                <button type="button"
+                                        class="btn-obs-edit js-obs-edit-toggle"
+                                        data-target="inputObsNota"
+                                        title="Editar observação da nota">
+                                    <i class="fa-solid fa-pencil"></i>
+                                </button>
+                            }
+                        </div>
+                        <div id="inputObsNotaDisplay" class="fw-semibold obs-display-text">@(string.IsNullOrWhiteSpace(Model.ObsNota) ? "—" : Model.ObsNota)</div>
+                        @if (!statusSomenteLeitura)
+                        {
+                            <textarea id="inputObsNota"
+                                      class="form-control form-control-sm mt-1 js-prepedido-obs obs-inline-edit d-none"
+                                      rows="2"
+                                      data-field="obsNota"
+                                      data-display="inputObsNotaDisplay"
+                                      data-last-value="@Model.ObsNota">@Model.ObsNota</textarea>
+                        }
                     </div>
                 </div>
             </div>
 
             <div class="col-md-6 col-xl-3">
                 <div class="prepedido-quick-card h-100">
-                    <i class="fa-duotone fa-comment-lines text-br"></i>
-                    <div>
-                        <small class="text-muted">Obs. Comprador</small>
-                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.ObsComprador) ? "—" : Model.ObsComprador)</div>
+                    <i class="fa-duotone fa-comment-lines text-br flex-shrink-0"></i>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex align-items-center gap-1">
+                            <small class="text-muted">Obs. Comprador</small>
+                            @if (!statusSomenteLeitura)
+                            {
+                                <button type="button"
+                                        class="btn-obs-edit js-obs-edit-toggle"
+                                        data-target="inputObsComprador"
+                                        title="Editar observação do comprador">
+                                    <i class="fa-solid fa-pencil"></i>
+                                </button>
+                            }
+                        </div>
+                        <div id="inputObsCompradorDisplay" class="fw-semibold obs-display-text">@(string.IsNullOrWhiteSpace(Model.ObsComprador) ? "—" : Model.ObsComprador)</div>
+                        @if (!statusSomenteLeitura)
+                        {
+                            <textarea id="inputObsComprador"
+                                      class="form-control form-control-sm mt-1 js-prepedido-obs obs-inline-edit d-none"
+                                      rows="2"
+                                      data-field="obsComprador"
+                                      data-display="inputObsCompradorDisplay"
+                                      data-last-value="@Model.ObsComprador">@Model.ObsComprador</textarea>
+                        }
                     </div>
                 </div>
             </div>
@@ -182,64 +222,144 @@
         <div class="prepedido-mapping-panel mb-4">
             <div class="row g-3">
                 <div class="col-lg-4">
-                    <label class="form-label">
-                        <i class="fa-duotone fa-id-card me-1 text-br"></i>CNPJ Faturamento
-                    </label>
-                    <select id="prePedidoCnpj" class="form-select js-prepedido-searchable-select" data-last-value="@Model.CNPJ" data-placeholder="Digite para selecionar" @(statusSomenteLeitura ? "disabled" : "")>
-                        <option value="">-- Não mapeado --</option>
-                        @foreach (var cnpj in Model.Cnpjs)
+                    <div class="d-flex align-items-center gap-1 prepedido-mapping-panel-label">
+                        <label class="form-label mb-0">
+                            <i class="fa-duotone fa-id-card me-1 text-br"></i>CNPJ Faturamento
+                        </label>
+                        @if (!statusSomenteLeitura)
                         {
-                            if (cnpj.CPFCNPJ == Model.CNPJ)
-                            {
-                                <option value="@cnpj.CPFCNPJ" selected>@cnpj.CPFCNPJ</option>
-                            }
-                            else
-                            {
-                                <option value="@cnpj.CPFCNPJ">@cnpj.CPFCNPJ</option>
-                            }
+                            <button type="button"
+                                    class="btn-obs-edit js-mapping-edit-toggle"
+                                    data-target="prePedidoCnpjWrapper"
+                                    data-display="prePedidoCnpjDisplay"
+                                    title="Editar CNPJ Faturamento">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
                         }
-                    </select>
+                    </div>
+                    <div id="prePedidoCnpjDisplay" class="fw-semibold mapping-display-text mt-1">@(string.IsNullOrWhiteSpace(Model.CNPJ) ? "— Não mapeado —" : Model.CNPJ)</div>
+                    @if (!statusSomenteLeitura)
+                    {
+                        <div id="prePedidoCnpjWrapper" class="d-none mt-1">
+                            <select id="prePedidoCnpj" class="form-select js-prepedido-searchable-select" data-last-value="@Model.CNPJ" data-placeholder="Digite para selecionar">
+                                <option value="">-- Não mapeado --</option>
+                                @foreach (var cnpj in Model.Cnpjs)
+                                {
+                                    if (cnpj.CPFCNPJ == Model.CNPJ)
+                                    {
+                                        <option value="@cnpj.CPFCNPJ" selected>@cnpj.CPFCNPJ</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@cnpj.CPFCNPJ">@cnpj.CPFCNPJ</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    }
+                    else
+                    {
+                        <select id="prePedidoCnpj" class="d-none" data-last-value="@Model.CNPJ" disabled>
+                            <option value="@Model.CNPJ" selected>@Model.CNPJ</option>
+                        </select>
+                    }
                 </div>
 
                 <div class="col-lg-4">
-                    <label class="form-label">
-                        <i class="fa-duotone fa-location-dot me-1 text-br"></i>Endereço
-                    </label>
-                    <select id="prePedidoEndereco" class="form-select js-prepedido-searchable-select" data-last-value="@Model.ClienteEnderecoID" data-placeholder="Digite para selecionar" @(statusSomenteLeitura ? "disabled" : "")>
-                        <option value="">-- Não mapeado --</option>
-                        @foreach (var endereco in Model.Enderecos)
+                    <div class="d-flex align-items-center gap-1 prepedido-mapping-panel-label">
+                        <label class="form-label mb-0">
+                            <i class="fa-duotone fa-location-dot me-1 text-br"></i>Endereço
+                        </label>
+                        @if (!statusSomenteLeitura)
                         {
-                            if (endereco.ClienteEnderecoID == Model.ClienteEnderecoID)
-                            {
-                                <option value="@endereco.ClienteEnderecoID" data-logradouro="@endereco.Logradouro" selected>@endereco.Logradouro</option>
-                            }
-                            else
-                            {
-                                <option value="@endereco.ClienteEnderecoID" data-logradouro="@endereco.Logradouro">@endereco.Logradouro</option>
-                            }
+                            <button type="button"
+                                    class="btn-obs-edit js-mapping-edit-toggle"
+                                    data-target="prePedidoEnderecoWrapper"
+                                    data-display="prePedidoEnderecoDisplay"
+                                    title="Editar Endereço">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
                         }
-                    </select>
+                    </div>
+                    @{
+                        var enderecoSelecionado = Model.Enderecos.FirstOrDefault(e => e.ClienteEnderecoID == Model.ClienteEnderecoID);
+                        var enderecoTexto = enderecoSelecionado?.Logradouro;
+                    }
+                    <div id="prePedidoEnderecoDisplay" class="fw-semibold mapping-display-text mt-1">@(string.IsNullOrWhiteSpace(enderecoTexto) ? "— Não mapeado —" : enderecoTexto)</div>
+                    @if (!statusSomenteLeitura)
+                    {
+                        <div id="prePedidoEnderecoWrapper" class="d-none mt-1">
+                            <select id="prePedidoEndereco" class="form-select js-prepedido-searchable-select" data-last-value="@Model.ClienteEnderecoID" data-placeholder="Digite para selecionar">
+                                <option value="">-- Não mapeado --</option>
+                                @foreach (var endereco in Model.Enderecos)
+                                {
+                                    if (endereco.ClienteEnderecoID == Model.ClienteEnderecoID)
+                                    {
+                                        <option value="@endereco.ClienteEnderecoID" data-logradouro="@endereco.Logradouro" selected>@endereco.Logradouro</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@endereco.ClienteEnderecoID" data-logradouro="@endereco.Logradouro">@endereco.Logradouro</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    }
+                    else
+                    {
+                        <select id="prePedidoEndereco" class="d-none" data-last-value="@Model.ClienteEnderecoID" disabled>
+                            <option value="@Model.ClienteEnderecoID" selected>@enderecoTexto</option>
+                        </select>
+                    }
                 </div>
 
                 <div class="col-lg-4">
-                    <label class="form-label">
-                        <i class="fa-duotone fa-truck me-1 text-br"></i>Local de Entrega
-                    </label>
-                    <select id="prePedidoLocalEntrega" class="form-select js-prepedido-searchable-select" data-last-value="@Model.ClienteLocalEntregaID" data-placeholder="Digite para selecionar" @(statusSomenteLeitura ? "disabled" : "")>
-                        <option value="">-- Não mapeado --</option>
-                        @foreach (var local in Model.LocaisEntrega)
+                    <div class="d-flex align-items-center gap-1 prepedido-mapping-panel-label">
+                        <label class="form-label mb-0">
+                            <i class="fa-duotone fa-truck me-1 text-br"></i>Local de Entrega
+                        </label>
+                        @if (!statusSomenteLeitura)
                         {
-                            var textoLocal = $"{local.CdControle} - {local.NmLocalEntrega}";
-                            if (local.ClienteLocalEntregaID == Model.ClienteLocalEntregaID)
-                            {
-                                <option value="@local.ClienteLocalEntregaID" data-local="@textoLocal" selected>@textoLocal</option>
-                            }
-                            else
-                            {
-                                <option value="@local.ClienteLocalEntregaID" data-local="@textoLocal">@textoLocal</option>
-                            }
+                            <button type="button"
+                                    class="btn-obs-edit js-mapping-edit-toggle"
+                                    data-target="prePedidoLocalEntregaWrapper"
+                                    data-display="prePedidoLocalEntregaDisplay"
+                                    title="Editar Local de Entrega">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
                         }
-                    </select>
+                    </div>
+                    @{
+                        var localSelecionado = Model.LocaisEntrega.FirstOrDefault(l => l.ClienteLocalEntregaID == Model.ClienteLocalEntregaID);
+                        var localTexto = localSelecionado != null ? $"{localSelecionado.CdControle} - {localSelecionado.NmLocalEntrega}" : null;
+                    }
+                    <div id="prePedidoLocalEntregaDisplay" class="fw-semibold mapping-display-text mt-1">@(string.IsNullOrWhiteSpace(localTexto) ? "— Não mapeado —" : localTexto)</div>
+                    @if (!statusSomenteLeitura)
+                    {
+                        <div id="prePedidoLocalEntregaWrapper" class="d-none mt-1">
+                            <select id="prePedidoLocalEntrega" class="form-select js-prepedido-searchable-select" data-last-value="@Model.ClienteLocalEntregaID" data-placeholder="Digite para selecionar">
+                                <option value="">-- Não mapeado --</option>
+                                @foreach (var local in Model.LocaisEntrega)
+                                {
+                                    var textoLocal = $"{local.CdControle} - {local.NmLocalEntrega}";
+                                    if (local.ClienteLocalEntregaID == Model.ClienteLocalEntregaID)
+                                    {
+                                        <option value="@local.ClienteLocalEntregaID" data-local="@textoLocal" selected>@textoLocal</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@local.ClienteLocalEntregaID" data-local="@textoLocal">@textoLocal</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    }
+                    else
+                    {
+                        <select id="prePedidoLocalEntrega" class="d-none" data-last-value="@Model.ClienteLocalEntregaID" disabled>
+                            <option value="@Model.ClienteLocalEntregaID" selected>@localTexto</option>
+                        </select>
+                    }
                 </div>
             </div>
         </div>
@@ -292,8 +412,8 @@
                     <tr>
                         <th>Item Cliente</th>
                         <th>Item BrSupply</th>
-                        <th class="text-end">Vlr. Unit. (PDF)</th>
                         <th class="text-center">Qtde</th>
+                        <th class="text-end">Vlr. Unit. (PDF)</th>
                         <th class="text-end">Vlr. Unit. (Tabela)</th>
                         <th class="text-end">Vlr. Total</th>
                         <th class="text-center prepedido-col-acoes">Ações</th>
@@ -307,10 +427,6 @@
                             <tr>
                                 <td>
                                     <span class="fw-medium">@item.ItemCliente</span>
-                                    @if (!string.IsNullOrWhiteSpace(item.Descricao))
-                                    {
-                                        <div class="prepedido-item-desc">@item.Descricao</div>
-                                    }
                                 </td>
                                 <td>
                                     @if (!string.IsNullOrWhiteSpace(item.ItemBrSupply))
@@ -320,16 +436,6 @@
                                     else
                                     {
                                         <span class="badge bg-warning-subtle text-warning prepedido-badge-count">Não mapeado</span>
-                                    }
-                                </td>
-                                <td class="text-end text-nowrap">
-                                    @if (string.IsNullOrWhiteSpace(item.VlrTblPrecoFormat))
-                                    {
-                                        @("R$ 0,00")
-                                    }
-                                    else
-                                    {
-                                        @item.VlrTblPrecoFormat
                                     }
                                 </td>
                                 <td class="text-center">
@@ -349,9 +455,29 @@
                                     }
                                 </td>
                                 <td class="text-end text-nowrap">
-                                    @if (!string.IsNullOrWhiteSpace(item.VlrTblPrecoFormat))
+                                    @if (string.IsNullOrWhiteSpace(item.VlrTblPrecoFormat))
                                     {
-                                        @($"R$ {item.PDFVlrUnit}")
+                                        @("R$ 0,00")
+                                    }
+                                    else
+                                    {
+                                        @item.VlrTblPrecoFormat
+                                    }
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    @if (permiteEditarQuantidade)
+                                    {
+                                        <input type="text"
+                                               inputmode="numeric"
+                                               class="form-control form-control-sm js-prepedido-vlrunit text-end mx-auto prepedido-qty-input"
+                                               value="@item.PDFVlrUnit"
+                                               data-item-id="@item.PDFPrePedidoPDFItemID"
+                                               data-descricao="@item.Descricao"
+                                               data-last-value="@item.PDFVlrUnit" />
+                                    }
+                                    else
+                                    {
+                                        <span class="fw-semibold">@(string.IsNullOrWhiteSpace(item.PDFVlrUnit) ? "R$ 0,00" : $"R$ {item.PDFVlrUnit}")</span>
                                     }
                                 </td>
                                 <td class="text-end fw-semibold text-nowrap">@item.VlrTotal</td>
@@ -689,6 +815,8 @@
                 atualizarEndereco: '@Url.Action("AtualizarEndereco", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 atualizarLocalEntrega: '@Url.Action("AtualizarLocalEntrega", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 atualizarQuantidadeBase: '@Url.Action("PrePedido", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                atualizarVlrUnitBase: '@Url.Action("PrePedido", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
+                atualizarObs: '@Url.Action("AtualizarObs", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 cancelar: '@Url.Action("Cancelar", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 reprocessar: '@Url.Action("Reprocessar", "PrePedidoPDFDetalhes", new { id = Model.PDFPrePedidoPDFID })',
                 trocaItens: '@Url.Action("GetTrocaItens", "PrePedidoPDFDetalhes")',

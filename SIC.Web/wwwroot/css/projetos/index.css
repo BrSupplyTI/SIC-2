@@ -1,0 +1,222 @@
+/* ============================================
+   Projetos - Portfolio (Index)
+   Alinhado com o design system SIC
+   ============================================ */
+
+/* ====== Stat cards (resumo) ====== */
+.projeto-stat-card {
+    min-height: 80px;
+    transition: border-color 0.2s ease;
+}
+
+.projeto-stat-card:hover {
+    border-color: var(--sic-brand) !important;
+}
+
+/* ====== Project Card ====== */
+.projeto-card {
+    border: 1px solid var(--sic-border, var(--bs-border-color));
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    height: 100%;
+}
+
+.projeto-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sic-shadow, 0 8px 20px rgba(15, 23, 42, 0.08));
+}
+
+.projeto-card .card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Status indicator (barra lateral esquerda) */
+.projeto-card-status {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0.75rem 0 0 0.75rem;
+}
+
+/* ====== Progress bar ====== */
+.projeto-progress {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--sic-border);
+}
+
+.projeto-progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+/* ====== Avatar stack (participantes) ====== */
+.projeto-avatar-stack {
+    display: flex;
+}
+
+.projeto-avatar-stack .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--sic-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #fff;
+    margin-left: -8px;
+}
+
+.projeto-avatar-stack .avatar:first-child {
+    margin-left: 0;
+}
+
+/* ====== Filter tag ====== */
+.projeto-filter-tag {
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.projeto-filter-tag:hover {
+    opacity: 0.85;
+    transform: scale(1.02);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.projeto-filter-tag .fa-xmark {
+    font-size: 0.65rem;
+    opacity: 0.5;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.projeto-filter-tag:hover .fa-xmark {
+    opacity: 1;
+    color: var(--sic-brand, #FF782D);
+}
+
+/* ====== Page header ====== */
+.projeto-page-header {
+    padding-bottom: 1.15rem;
+    margin-bottom: 1.15rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 60%, transparent);
+}
+
+.projeto-page-subtitle {
+    font-size: 0.82rem;
+    color: var(--sic-muted, #6c757d);
+    margin-top: 0.4rem;
+    margin-bottom: 0;
+    letter-spacing: 0.01em;
+}
+
+.projeto-page-subtitle strong {
+    color: var(--sic-brand, #FF782D);
+    font-weight: 700;
+}
+
+/* ====== Filters ====== */
+.projeto-filters {
+    background: var(--sic-surface-2, #f8fafc);
+    border: 1px solid color-mix(in srgb, var(--sic-border, #dee2e6) 70%, transparent);
+    border-radius: 0.75rem;
+    padding: 1.1rem 1.15rem;
+    margin-bottom: 1.15rem;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.025);
+}
+
+.projeto-filters small {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.projeto-filters .form-control,
+.projeto-filters .form-select {
+    font-size: 0.85rem;
+    border-radius: 0.45rem;
+    border-color: var(--sic-border, #dee2e6);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.projeto-filters .form-control:focus,
+.projeto-filters .form-select:focus {
+    border-color: var(--sic-brand, #FF782D);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sic-brand, #FF782D) 12%, transparent);
+}
+
+.projeto-filters .input-group .btn {
+    border-radius: 0 0.45rem 0.45rem 0;
+}
+
+/* ====== Empty state ====== */
+.projeto-empty {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--sic-muted);
+}
+
+.projeto-empty i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+    color: var(--sic-brand, #FF782D);
+}
+
+/* ====== Page loading overlay ====== */
+.projeto-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.projeto-loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.projeto-loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--sic-border, #dee2e6);
+    border-top-color: var(--sic-brand, #FF782D);
+    border-radius: 50%;
+    animation: projeto-spin 0.75s linear infinite;
+}
+
+@keyframes projeto-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ====== Responsivo ====== */
+@media (max-width: 575.98px) {
+    .projeto-card {
+        border-radius: 0.5rem;
+    }
+
+    .projeto-page-header {
+        padding-bottom: 0.85rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .projeto-filters {
+        padding: 0.85rem;
+        border-radius: 0.55rem;
+    }
+}

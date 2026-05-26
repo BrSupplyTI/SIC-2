@@ -1,0 +1,272 @@
+@model SIC.Web.Models.Cotacao.CotacaoListPageViewModel
+@{
+    ViewData["Title"] = "Lista de Cotações";
+
+    var totalFiltrosAtivos = (!string.IsNullOrWhiteSpace(Model.Filtro.CdExtCliente) ? 1 : 0)
+        + (Model.Filtro.PropostaId.HasValue ? 1 : 0)
+        + (!string.IsNullOrWhiteSpace(Model.Filtro.CNPJ) ? 1 : 0)
+        + (Model.Filtro.EstabelecimentoID.HasValue ? 1 : 0)
+        + (Model.Filtro.StatusID.HasValue ? 1 : 0)
+        + (!string.IsNullOrWhiteSpace(Model.Filtro.DataInicial) ? 1 : 0)
+        + (!string.IsNullOrWhiteSpace(Model.Filtro.DataFinal) ? 1 : 0);
+
+    var orderByOptions = new[]
+    {
+        "Proposta (Recente)", "Proposta (Antigo)",
+        "Cliente (A-Z)", "Cliente (Z-A)",
+        "Status (A-Z)", "Status (Z-A)",
+        "Abertura (Recente)", "Abertura (Antigo)"
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="~/css/Cotacao/cotacoes.css" />
+    <link rel="stylesheet" href="~/css/Cotacao/cotacao-view.css" asp-append-version="true" />
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-thin fa-file-invoice-dollar me-2 text-br"></i>Cotações</h2>
+                </div>
+                <p class="text-muted mt-1 mb-0" id="totalRegistros">
+                    Carregando...
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Voltar para lista
+                </a>
+                <a asp-controller="Cotacao" asp-action="Add" class="btn btn-primary">
+                    <i class="fa-solid fa-plus me-2"></i>Nova Cotação
+                </a>
+            </div>
+        </div>
+
+        <!-- Busca & Controles -->
+        <form method="get" asp-controller="Cotacao" asp-action="Index" id="formCotacoes">
+            <input type="hidden" name="cdExtCliente" id="inputCdExtCliente" value="@Model.Filtro.CdExtCliente" />
+            <input type="hidden" name="propostaId" id="inputPropostaId" value="@Model.Filtro.PropostaId" />
+            <input type="hidden" name="cnpj" id="inputCNPJ" value="@Model.Filtro.CNPJ" />
+            <input type="hidden" name="estabelecimentoID" id="inputEstabelecimentoID" value="@Model.Filtro.EstabelecimentoID" />
+            <input type="hidden" name="statusID" id="inputStatusID" value="@Model.Filtro.StatusID" />
+            <input type="hidden" name="dataInicial" id="inputDataInicial" value="@(Model.FiltroDataInicial.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="dataFinal" id="inputDataFinal" value="@(Model.FiltroDataFinal.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="filtroCotacao" id="inputFiltroCotacao" value="@Model.Filtro.FiltroCotacao" />
+
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-lg-5">
+                    <small class="text-muted">Pesquisar por cliente, CNPJ ou proposta</small>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="inputBuscaTabela"
+                               placeholder="Cliente, CNPJ, proposta..." />
+                        <button type="button" class="btn btn-primary" id="btnBuscaTabela">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <small class="text-muted">Ordem</small>
+                    <select class="form-select h-45px" id="selectOrderBy">
+                        @foreach (var opt in orderByOptions)
+                        {
+                            <option value="@opt">@opt</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <small class="text-muted">Por página</small>
+                    <select class="form-select h-45px" id="selectPageSize">
+                        @foreach (var size in new[] { 10, 25, 50, 100 })
+                        {
+                            <option value="@size" selected="@(size == 25)">@size itens</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-lg-2 d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1 position-relative mt-4" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFiltros">
+                        <i class="fa-solid fa-sliders me-1"></i>Filtros
+                        @if (totalFiltrosAtivos > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@totalFiltrosAtivos</span>
+                        }
+                    </button>
+                    <a asp-controller="Cotacao" asp-action="Index" class="btn btn-outline-danger mt-4" title="Limpar filtros">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Filtros ativos -->
+        <div class="d-flex flex-wrap gap-2 mb-4" id="activeFilters">
+            <span class="badge-status badge-status-primary">
+                <i class="fa-solid fa-calendar me-1"></i>@Model.FiltroDataInicial.ToString("dd/MM/yyyy") — @Model.FiltroDataFinal.ToString("dd/MM/yyyy")
+            </span>
+            @if (!string.IsNullOrWhiteSpace(Model.Filtro.CdExtCliente))
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('cdExtCliente')">
+                    <i class="fa-solid fa-user me-1"></i>Cliente: @Model.Filtro.CdExtCliente<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.Filtro.PropostaId.HasValue)
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('propostaId')">
+                    <i class="fa-solid fa-hashtag me-1"></i>Proposta: @Model.Filtro.PropostaId<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Filtro.CNPJ))
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('cnpj')">
+                    <i class="fa-solid fa-building me-1"></i>CNPJ: @Model.Filtro.CNPJ<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.Filtro.EstabelecimentoID.HasValue)
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('estabelecimentoID')">
+                    <i class="fa-solid fa-store me-1"></i>Estabelecimento: @(Model.EstabelecimentoOptions.FirstOrDefault(e => e.Id == Model.Filtro.EstabelecimentoID)?.Nome ?? Model.Filtro.EstabelecimentoID.ToString())<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+            @if (Model.Filtro.StatusID.HasValue)
+            {
+                <span class="badge-status badge-status-primary" style="cursor:pointer" onclick="removeFilter('statusID')">
+                    <i class="fa-solid fa-circle-dot me-1"></i>Status: @(Model.StatusOptions.FirstOrDefault(s => s.Id == Model.Filtro.StatusID)?.Nome ?? Model.Filtro.StatusID.ToString())<i class="fa-solid fa-xmark ms-2"></i>
+                </span>
+            }
+        </div>
+
+        @* ══════════ TABELA DE COTAÇÕES ══════════ *@
+        <div class="cotacao-section-title">
+            <i class="fa-duotone fa-list me-1 text-br"></i>Cotações
+        </div>
+
+        <div class="table-cotacao-wrap">
+            <div class="table-responsive">
+                <table class="table table-hover table-cotacao mb-0" id="cotacoesTable">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Proposta</th>
+                            <th>Nome</th>
+                            <th>Cód. Cliente</th>
+                            <th>Cliente</th>
+                            <th>CNPJ</th>
+                            <th>Estabelecimento</th>
+                            <th>Status</th>
+                            <th class="text-end">Total Venda</th>
+                            <th class="text-center">Itens</th>
+                            <th class="text-center">Abertura</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @* Dados carregados via AJAX (server-side) *@
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas de Filtros -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasFiltros" aria-labelledby="offcanvasFiltrosLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 id="offcanvasFiltrosLabel" class="mb-0"><i class="fa-duotone fa-sliders me-2 text-br"></i>Filtros Avançados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+        <div class="flex-grow-1">
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-user me-1 text-muted"></i>Código do Cliente</label>
+                <input type="text" class="form-control" id="filtroCdExtCliente"
+                       value="@Model.Filtro.CdExtCliente" placeholder="Código do cliente" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-hashtag me-1 text-muted"></i>Nº Proposta</label>
+                <input type="number" class="form-control" id="filtroPropostaId"
+                       value="@Model.Filtro.PropostaId" placeholder="ID da proposta" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-building me-1 text-muted"></i>CNPJ</label>
+                <input type="text" class="form-control" id="filtroCNPJ"
+                       value="@Model.Filtro.CNPJ" placeholder="CNPJ (parcial)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-store me-1 text-muted"></i>Estabelecimento</label>
+                <select class="form-select" id="filtroEstabelecimentoID">
+                    <option value="">Todos</option>
+                    @foreach (var e in Model.EstabelecimentoOptions)
+                    {
+                        <option value="@e.Id"
+                                selected="@(Model.Filtro.EstabelecimentoID == e.Id)">
+                            @e.Nome
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-circle-dot me-1 text-muted"></i>Status</label>
+                <select class="form-select" id="filtroStatusID">
+                    <option value="">Todos</option>
+                    @foreach (var s in Model.StatusOptions)
+                    {
+                        <option value="@s.Id"
+                                selected="@(Model.Filtro.StatusID == s.Id)">
+                            @s.Nome
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="filtroComCotacao"
+                           @(Model.Filtro.FiltroCotacao == 1 ? "checked" : "") />
+                    <label class="form-check-label fw-semibold" for="filtroComCotacao">
+                        <i class="fa-solid fa-file-circle-check me-1 text-muted"></i>Com Cotação
+                    </label>
+                </div>
+                <small class="text-muted">Marcado = todos · Desmarcado = apenas sem cotação</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-calendar me-1 text-muted"></i>Data Inicial</label>
+                <input type="date" class="form-control" id="filtroDataInicial"
+                       value="@(Model.FiltroDataInicial.ToString("yyyy-MM-dd"))" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fa-solid fa-calendar me-1 text-muted"></i>Data Final</label>
+                <input type="date" class="form-control" id="filtroDataFinal"
+                       value="@(Model.FiltroDataFinal.ToString("yyyy-MM-dd"))" />
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 pt-3 border-top">
+            <button type="button" class="btn btn-primary" id="btnAplicarFiltros">
+                <i class="fa-solid fa-check me-1"></i>Aplicar Filtros
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
+                <i class="fa-solid fa-eraser me-1"></i>Limpar Tudo
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.min.js"></script>
+    <script src="~/js/Cotacao/cotacoes-index.js" asp-append-version="true"></script>
+}

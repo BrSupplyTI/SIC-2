@@ -50,7 +50,7 @@ public sealed class CotacaoController(
         };
 
         var estabelecimentosTask = apiClient.GetEstabelecimentoOptionsAsync(cancellationToken);
-        var statusOptionsTask = apiClient.GetStatusOptionsAsync(cancellationToken);
+        var statusOptionsTask    = apiClient.GetStatusOptionsAsync(cancellationToken);
 
         await Task.WhenAll(estabelecimentosTask, statusOptionsTask);
 
@@ -71,14 +71,8 @@ public sealed class CotacaoController(
         return View(vm);
     }
 
-    /// <summary>
-    /// Endpoint AJAX para DataTables server-side processing.
-    /// </summary>
-    [HttpGet("ListData")]
-    public async Task<IActionResult> ListData(
-        int draw,
-        int start,
-        int length,
+    [HttpGet("ListaJson")]
+    public async Task<IActionResult> ListaJson(
         string? cdExtCliente,
         int? propostaId,
         string? cnpj,
@@ -89,91 +83,32 @@ public sealed class CotacaoController(
         int filtroCotacao = 1,
         CancellationToken cancellationToken = default)
     {
-        try
+        var filtroDataInicial = DateTime.TryParse(dataInicial, out var di) ? di : DateTime.Today.AddMonths(-1);
+        var filtroDataFinal   = DateTime.TryParse(dataFinal,   out var df) ? df : DateTime.Today;
+
+        var itens = await apiClient.GetListaAsync(
+            GetUsuarioId(), filtroCotacao,
+            cdExtCliente, propostaId, cnpj,
+            estabelecimentoID, statusID,
+            filtroDataInicial, filtroDataFinal,
+            cancellationToken);
+
+        var data = itens.Select(row => new
         {
-            var filtroDataInicial = DateTime.TryParse(dataInicial, out var di) ? di : DateTime.Today.AddMonths(-1);
-            var filtroDataFinal = DateTime.TryParse(dataFinal, out var df) ? df : DateTime.Today;
+            row.PropostaId,
+            row.Nome,
+            row.CdExtCliente,
+            row.ClienteNome,
+            row.ClienteCNPJ,
+            row.NmEstabelecimento,
+            row.StatusID,
+            row.StatusName,
+            TotalVenda = row.TotalVenda.ToString("N2", new System.Globalization.CultureInfo("pt-BR")),
+            row.QtdItens,
+            row.DataAbertura,
+        });
 
-            var filtro = new CotacaoListFilterViewModel
-            {
-                UsuarioID = GetUsuarioId(),
-                FiltroCotacao = filtroCotacao,
-                CdExtCliente = cdExtCliente,
-                PropostaId = propostaId,
-                CNPJ = cnpj,
-                EstabelecimentoID = estabelecimentoID,
-                StatusID = statusID,
-                DataInicial = dataInicial,
-                DataFinal = dataFinal,
-            };
-
-            var searchValue = Request.Query["search[value]"].ToString();
-            var orderColStr = Request.Query["order[0][column]"].ToString();
-            var orderDir = Request.Query["order[0][dir]"].ToString();
-
-            var allItems = await apiClient.GetListaAsync(
-                GetUsuarioId(), filtroCotacao,
-                cdExtCliente, propostaId, cnpj,
-                estabelecimentoID, statusID,
-                filtroDataInicial, filtroDataFinal,
-                cancellationToken);
-
-            IEnumerable<CotacaoListItemViewModel> filtered = allItems;
-            if (!string.IsNullOrWhiteSpace(searchValue))
-            {
-                var term = searchValue.Trim();
-                filtered = allItems.Where(r =>
-                    r.ClienteNome.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || r.ClienteCNPJ.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || r.PropostaId.ToString().Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || r.CdExtCliente.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || r.NmEstabelecimento.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || r.StatusName.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || r.Nome.Contains(term, StringComparison.OrdinalIgnoreCase));
-            }
-
-            var orderedItems = ApplyOrder(filtered, orderColStr, orderDir).ToList();
-
-            var recordsTotal = allItems.Count;
-            var recordsFiltered = orderedItems.Count;
-            var pageData = orderedItems.Skip(start).Take(length);
-
-            var data = pageData.Select(r => new object[]
-            {
-                r.PropostaId,
-                r.Nome,
-                r.CdExtCliente,
-                r.ClienteNome,
-                r.ClienteCNPJ,
-                r.NmEstabelecimento,
-                r.StatusName,
-                r.TotalVenda.ToString("N2", new System.Globalization.CultureInfo("pt-BR")),
-                r.QtdItens,
-                r.DataAbertura,
-                new { propostaId = r.PropostaId, statusId = r.StatusID }
-            }).ToList();
-
-            return Json(new { draw, recordsTotal, recordsFiltered, data });
-        }
-        catch (Exception ex)
-        {
-            return Json(new { draw, recordsTotal = 0, recordsFiltered = 0, data = Array.Empty<object>(), error = ex.Message });
-        }
-    }
-
-    private static IEnumerable<CotacaoListItemViewModel> ApplyOrder(
-        IEnumerable<CotacaoListItemViewModel> items, string colIndex, string dir)
-    {
-        var asc = !string.Equals(dir, "desc", StringComparison.OrdinalIgnoreCase);
-        return colIndex switch
-        {
-            "0" => asc ? items.OrderBy(r => r.PropostaId) : items.OrderByDescending(r => r.PropostaId),
-            "1" => asc ? items.OrderBy(r => r.Nome) : items.OrderByDescending(r => r.Nome),
-            "3" => asc ? items.OrderBy(r => r.ClienteNome) : items.OrderByDescending(r => r.ClienteNome),
-            "6" => asc ? items.OrderBy(r => r.StatusName) : items.OrderByDescending(r => r.StatusName),
-            "9" => asc ? items.OrderBy(r => r.DataAberturaSQL) : items.OrderByDescending(r => r.DataAberturaSQL),
-            _ => items.OrderByDescending(r => r.PropostaId),
-        };
+        return Json(new { data });
     }
 
     [HttpGet("Edit")]

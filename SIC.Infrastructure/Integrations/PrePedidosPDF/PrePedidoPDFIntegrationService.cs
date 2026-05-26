@@ -53,7 +53,7 @@ public sealed class PrePedidoPDFIntegrationService(HttpClient httpClient) : IPre
         if (string.IsNullOrWhiteSpace(jsonPedido))
             return (false, "Conteúdo do arquivo não encontrado para reprocessamento.");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brsupply.com.br/v1/homologacao/IntegradorERP/Pedido")
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brsupply.com.br/v1/IntegradorERP/PedidoNew")
         {
             Content = new StringContent(jsonPedido, Encoding.UTF8)
         };

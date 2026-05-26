@@ -1,103 +1,89 @@
 /* ============================================
-   Cotações — Index (DataTables Server-Side)
+   Cotações — Index (DataTables AJAX)
    ============================================ */
-$(function () {
-    // Lê filtros dos hidden inputs do form
-    function getFilterParams() {
-        return {
-            cdExtCliente: document.getElementById('inputCdExtCliente')?.value || '',
-            propostaId: document.getElementById('inputPropostaId')?.value || '',
-            cnpj: document.getElementById('inputCNPJ')?.value || '',
-            estabelecimentoID: document.getElementById('inputEstabelecimentoID')?.value || '',
-            statusID: document.getElementById('inputStatusID')?.value || '',
-            dataInicial: document.getElementById('inputDataInicial')?.value || '',
-            dataFinal: document.getElementById('inputDataFinal')?.value || '',
-            filtroCotacao: document.getElementById('inputFiltroCotacao')?.value || '1'
-        };
-    }
+(() => {
+    if (typeof DataTable === 'undefined') return;
 
-    var dt = $('#cotacoesTable').DataTable({
-        serverSide: true,
-        processing: true,
+    // Colunas da tabela:
+    // 0:Proposta 1:Nome 2:Cód.Cliente 3:Cliente 4:CNPJ
+    // 5:Estabelecimento 6:Status 7:Total Venda 8:Itens 9:Abertura 10:Ações
+    var orderMap = {
+        'Proposta (Recente)': [[0, 'desc']],
+        'Proposta (Antigo)':  [[0, 'asc']],
+        'Cliente (A-Z)':      [[3, 'asc']],
+        'Cliente (Z-A)':      [[3, 'desc']],
+        'Status (A-Z)':       [[6, 'asc']],
+        'Status (Z-A)':       [[6, 'desc']],
+        'Abertura (Recente)': [[9, 'desc']],
+        'Abertura (Antigo)':  [[9, 'asc']]
+    };
+
+    // Monta a URL do AJAX reaproveitando os filtros da query string atual
+    var ajaxUrl = '/Cotacao/ListaJson' + window.location.search;
+
+    var dt = new DataTable('#cotacoesTable', {
+        ajax: {
+            url: ajaxUrl,
+            dataSrc: 'data'
+        },
+        columns: [
+            { data: 'propostaId',       className: 'text-center' },
+            { data: 'nome' },
+            { data: 'cdExtCliente' },
+            { data: 'clienteNome' },
+            { data: 'clienteCNPJ' },
+            { data: 'nmEstabelecimento' },
+            { data: 'statusName' },
+            { data: 'totalVenda',       className: 'text-end' },
+            { data: 'qtdItens',         className: 'text-center' },
+            { data: 'dataAbertura',     className: 'text-center' },
+            {
+                data: null,
+                orderable: false,
+                searchable: false,
+                className: 'text-center',
+                render: function (data, type, row) {
+                    var podeEditar = row.statusID !== 3 && row.statusID !== 7;
+                    var html = '<div class="d-flex gap-1 justify-content-center">';
+                    html += '<a href="/Cotacao/Cotacao?propostaId=' + row.propostaId + '" class="cotacao-btn cotacao-btn-exibir" title="Exibir Cotação"><i class="fa-solid fa-eye"></i></a>';
+                    if (podeEditar) {
+                        html += '<a href="/Cotacao/Edit?propostaId=' + row.propostaId + '" class="cotacao-btn cotacao-btn-abrir" title="Editar Cotação"><i class="fa-solid fa-pen-to-square"></i></a>';
+                    }
+                    html += '</div>';
+                    return html;
+                }
+            }
+        ],
         pageLength: 25,
         responsive: true,
-        deferRender: true,
         lengthChange: false,
         searching: true,
         info: false,
         paging: true,
         order: [[0, 'desc']],
         pagingType: 'full_numbers',
-        ajax: {
-            url: '/Cotacao/ListData',
-            type: 'GET',
-            data: function (d) {
-                var filters = getFilterParams();
-                d.cdExtCliente = filters.cdExtCliente;
-                d.propostaId = filters.propostaId || undefined;
-                d.cnpj = filters.cnpj;
-                d.estabelecimentoID = filters.estabelecimentoID || undefined;
-                d.statusID = filters.statusID || undefined;
-                d.dataInicial = filters.dataInicial;
-                d.dataFinal = filters.dataFinal;
-                d.filtroCotacao = filters.filtroCotacao;
-            },
-            dataFilter: function (raw) {
-                var json = JSON.parse(raw);
-                var el = document.getElementById('totalRegistros');
-                if (el) {
-                    var total = (json.recordsTotal || 0).toLocaleString('pt-BR');
-                    el.innerHTML = '<strong>' + total + '</strong> cotação(ões) encontrada(s)';
-                }
-                return raw;
-            },
-            error: function (xhr, error, thrown) {
-                console.error('ListData error:', xhr.status, error, thrown);
-            }
-        },
-        columnDefs: [
-            { targets: 0, className: 'text-center' },
-            { targets: 7, className: 'text-end' },
-            { targets: [8, 9], className: 'text-center' },
-            {
-                targets: 10,
-                orderable: false,
-                searchable: false,
-                className: 'text-center',
-                render: function (data) {
-                    var propostaId = data.propostaId;
-                    var statusId = data.statusId;
-
-                    var html = '<div class="d-flex gap-1 justify-content-center">';
-
-                    // botão visualizar (sempre aparece)
-                    html += '<a href="/Cotacao/Cotacao?propostaId=' + propostaId + '" class="cotacao-btn cotacao-btn-exibir" title="Exibir Cotação">'
-                        + '<i class="fa-solid fa-eye"></i></a>';
-
-                    // regra do editar (igual PHP)
-                    if (statusId != 3 && statusId != 7) {
-                        html += '<a href="/Cotacao/Edit?propostaId=' + propostaId + '" class="cotacao-btn cotacao-btn-abrir" title="Editar Cotação">'
-                            + '<i class="fa-solid fa-pen-to-square"></i></a>';
-                    }
-
-                    html += '</div>';
-
-                    return html;
-                }
-            }
-        ],
         language: {
-            emptyTable: 'Nenhuma cotação encontrada.',
-            processing: '<i class="fa-solid fa-spinner fa-spin me-2"></i>Carregando...',
-            info: 'Mostrando _START_ até _END_ de _TOTAL_ cotações',
-            infoEmpty: 'Mostrando 0 até 0 de 0 cotações',
+            emptyTable:  'Nenhuma cotação encontrada.',
             zeroRecords: 'Nenhuma cotação corresponde ao filtro',
+            info:        'Mostrando _START_ até _END_ de _TOTAL_ cotações',
+            infoEmpty:   'Mostrando 0 até 0 de 0 cotações',
+            loadingRecords: 'Carregando...',
+            processing:  'Processando...',
             paginate: {
-                first: 'Primeiro',
+                first:    'Primeiro',
                 previous: 'Anterior',
-                next: 'Próximo',
-                last: 'Último'
+                next:     'Próximo',
+                last:     'Último'
             }
+        }
+    });
+
+    // Atualiza o contador de registros após o AJAX retornar
+    dt.on('init.dt draw.dt', function () {
+        var total = dt.rows({ search: 'applied' }).count();
+        var spanTotal = document.getElementById('spanTotalRegistros');
+        if (spanTotal) {
+            spanTotal.textContent = total.toLocaleString('pt-BR');
         }
     });
 
@@ -107,7 +93,7 @@ $(function () {
 
     // Busca personalizada
     var inputBusca = document.getElementById('inputBuscaTabela');
-    var btnBusca = document.getElementById('btnBuscaTabela');
+    var btnBusca   = document.getElementById('btnBuscaTabela');
 
     function aplicarBusca() {
         dt.search(inputBusca.value || '').draw();
@@ -119,17 +105,6 @@ $(function () {
     });
 
     // Ordem via select
-    var orderMap = {
-        'Proposta (Recente)': [[0, 'desc']],
-        'Proposta (Antigo)':  [[0, 'asc']],
-        'Cliente (A-Z)':      [[2, 'asc']],
-        'Cliente (Z-A)':      [[2, 'desc']],
-        'Status (A-Z)':       [[5, 'asc']],
-        'Status (Z-A)':       [[5, 'desc']],
-        'Abertura (Recente)': [[8, 'desc']],
-        'Abertura (Antigo)':  [[8, 'asc']]
-    };
-
     document.getElementById('selectOrderBy')?.addEventListener('change', function () {
         var order = orderMap[this.value];
         if (order) dt.order(order).draw();
@@ -139,7 +114,7 @@ $(function () {
     document.getElementById('selectPageSize')?.addEventListener('change', function () {
         dt.page.len(parseInt(this.value, 10)).draw();
     });
-});
+})();
 
 // ── Filtros ──
 var filterInputMap = {

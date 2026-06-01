@@ -91,10 +91,10 @@
                 </div>
                 <div class="col-6 col-lg-2">
                     <small class="text-muted">Por página</small>
-                    <select class="form-select h-45px" name="pageSize" id="selectPageSize" onchange="this.form.submit()">
+                    <select class="form-select h-45px" id="selectPageSize">
                         @foreach (var size in new[] { 10, 25, 50, 100 })
                         {
-                            if (size == Model.TamanhoPagina)
+                            if (size == 25)
                             {
                                 <option value="@size" selected>@size itens</option>
                             }
@@ -223,55 +223,6 @@
             </div>
         </div>
 
-        @{
-            int primeiroRegistro = Model.TotalRegistros == 0 ? 0 : (Model.PaginaAtual - 1) * Model.TamanhoPagina + 1;
-            int ultimoRegistro   = Math.Min(Model.PaginaAtual * Model.TamanhoPagina, Model.TotalRegistros);
-        }
-        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-            <small class="text-muted">
-                Exibindo <strong>@primeiroRegistro</strong> a <strong>@ultimoRegistro</strong> de <strong>@Model.TotalRegistros.ToString("N0", new System.Globalization.CultureInfo("pt-BR"))</strong> registro(s)
-            </small>
-            @if (Model.TotalPaginas > 1)
-            {
-                int startPage = Math.Max(1, Model.PaginaAtual - 2);
-                int endPage   = Math.Min(Model.TotalPaginas, startPage + 4);
-                startPage     = Math.Max(1, endPage - 4);
-                <nav>
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item @(Model.PaginaAtual == 1 ? "disabled" : "")">
-                            <a class="page-link" href="@PageUrl(1)">Primeiro</a>
-                        </li>
-                        <li class="page-item @(Model.PaginaAtual == 1 ? "disabled" : "")">
-                            <a class="page-link" href="@PageUrl(Model.PaginaAtual - 1)">Anterior</a>
-                        </li>
-                        @if (startPage > 1)
-                        {
-                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                        }
-                        @for (int p = startPage; p <= endPage; p++)
-                        {
-                            <li class="page-item @(p == Model.PaginaAtual ? "active" : "")">
-                                <a class="page-link" href="@PageUrl(p)">@p</a>
-                            </li>
-                        }
-                        @if (endPage < Model.TotalPaginas)
-                        {
-                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                            <li class="page-item">
-                                <a class="page-link" href="@PageUrl(Model.TotalPaginas)">@Model.TotalPaginas</a>
-                            </li>
-                        }
-                        <li class="page-item @(Model.PaginaAtual == Model.TotalPaginas ? "disabled" : "")">
-                            <a class="page-link" href="@PageUrl(Model.PaginaAtual + 1)">Próximo</a>
-                        </li>
-                        <li class="page-item @(Model.PaginaAtual == Model.TotalPaginas ? "disabled" : "")">
-                            <a class="page-link" href="@PageUrl(Model.TotalPaginas)">Último</a>
-                        </li>
-                    </ul>
-                </nav>
-            }
-        </div>
-
     </div>
 </div>
 
@@ -395,22 +346,41 @@
             document.getElementById('formCotacoes').submit();
         }
 
-        // Inicializa DataTables apenas para estilo visual (paginação, header)
+        // Inicializa DataTables com paginação automática (igual ao PrePedidosPDF)
         if (typeof DataTable !== 'undefined') {
-            new DataTable('#cotacoesTable', {
-                paging:   false,
+            var dt = new DataTable('#cotacoesTable', {
+                pageLength: 25,
+                lengthChange: false,
                 searching: false,
                 ordering: false,
-                info:     false,
+                info: false,
+                paging: true,
+                pagingType: 'full_numbers',
                 language: {
+                    emptyTable: 'Nenhuma cotação encontrada.',
+                    info: 'Mostrando _START_ até _END_ de _TOTAL_ cotações',
+                    infoEmpty: 'Mostrando 0 até 0 de 0 cotações',
+                    zeroRecords: 'Nenhuma cotação corresponde ao filtro',
                     paginate: {
-                        first:    'Primeiro',
+                        first: 'Primeiro',
                         previous: 'Anterior',
-                        next:     'Próximo',
-                        last:     'Último'
+                        next: 'Próximo',
+                        last: 'Último'
                     }
                 }
             });
+
+            // Esconde a busca nativa do DataTables (se aparecer)
+            var dtSearch = document.querySelector('#cotacoesTable_wrapper .dt-search');
+            if (dtSearch) dtSearch.style.display = 'none';
+
+            // Controle de "Por página" - sincroniza com DataTables
+            var selectPageSize = document.getElementById('selectPageSize');
+            if (selectPageSize) {
+                selectPageSize.addEventListener('change', function () {
+                    dt.page.len(parseInt(this.value, 10)).draw();
+                });
+            }
         }
     </script>
 }

@@ -22,11 +22,14 @@ public sealed class CotacaoController(
         int? statusID,
         string? dataInicial,
         string? dataFinal,
+        string? busca,
         int filtroCotacao = 1,
+        int page = 1,
+        int pageSize = 25,
         CancellationToken cancellationToken = default)
     {
         var filtroDataInicial = DateTime.TryParse(dataInicial, out var di) ? di : DateTime.Today.AddMonths(-1);
-        var filtroDataFinal = DateTime.TryParse(dataFinal, out var df) ? df : DateTime.Today;
+        var filtroDataFinal   = DateTime.TryParse(dataFinal,   out var df) ? df : DateTime.Today;
 
         var filtroAplicado = !string.IsNullOrWhiteSpace(cdExtCliente)
             || propostaId.HasValue
@@ -38,28 +41,100 @@ public sealed class CotacaoController(
 
         var filtro = new CotacaoListFilterViewModel
         {
-            UsuarioID = GetUsuarioId(),
+            UsuarioID     = GetUsuarioId(),
             FiltroCotacao = filtroCotacao,
-            CdExtCliente = cdExtCliente,
-            PropostaId = propostaId,
-            CNPJ = cnpj,
+            CdExtCliente  = cdExtCliente,
+            PropostaId    = propostaId,
+            CNPJ          = cnpj,
             EstabelecimentoID = estabelecimentoID,
-            StatusID = statusID,
-            DataInicial = dataInicial,
-            DataFinal = dataFinal,
+            StatusID      = statusID,
+            DataInicial   = dataInicial,
+            DataFinal     = dataFinal,
+            Busca         = busca,
         };
 
+        // Busca todos os dados (volume já limitado pelo filtro de datas)
+        var todosTask            = apiClient.GetListaAsync(
+            GetUsuarioId(), filtroCotacao,
+            cdExtCliente, propostaId, cnpj,
+            estabelecimentoID, statusID,
+            filtroDataInicial, filtroDataFinal,
+            cancellationToken);
         var estabelecimentosTask = apiClient.GetEstabelecimentoOptionsAsync(cancellationToken);
         var statusOptionsTask    = apiClient.GetStatusOptionsAsync(cancellationToken);
 
-        await Task.WhenAll(estabelecimentosTask, statusOptionsTask);
+        await Task.WhenAll(todosTask, estabelecimentosTask, statusOptionsTask);
+
+        var todos = todosTask.Result.AsEnumerable();
+
+        // Filtro de busca em memória (cliente, CNPJ, proposta)
+        if (!string.IsNullOrWhiteSpace(busca))
+        {
+            var term = busca.Trim();
+            todos = todos.Where(i =>
+                i.ClienteNome.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                i.ClienteCNPJ.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                i.PropostaId.ToString().Contains(term) ||
+                i.CdExtCliente.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var lista = todos.ToList();
+        var totalRegistros = lista.Count;
+
+        // Garante que page nunca fique fora do intervalo
+        if (page < 1) page = 1;
+        var totalPaginas = totalRegistros == 0 ? 1 : (int)Math.Ceiling((double)totalRegistros / pageSize);
+        if (page > totalPaginas) page = totalPaginas;
+
+        var itensPagina = lista
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(i => new CotacaoListItemViewModel
+            {
+                CdExtCliente      = i.CdExtCliente,
+                PropostaId        = i.PropostaId,
+                CdProposta        = i.CdProposta,
+                Nome              = i.Nome,
+                DtCriacao         = i.DtCriacao,
+                ClienteId         = i.ClienteId,
+                ClienteNome       = i.ClienteNome,
+                ClienteCNPJ       = i.ClienteCNPJ,
+                MargemPadrao      = i.MargemPadrao,
+                Frete             = i.Frete,
+                DataValidade      = i.DataValidade,
+                DataValidadeSQL   = i.DataValidadeSQL,
+                StatusID          = i.StatusID,
+                StatusName        = i.StatusName,
+                Obs               = i.Obs,
+                NmMotivo          = i.NmMotivo,
+                Justificativa     = i.Justificativa,
+                CotacaoID         = i.CotacaoID,
+                CotacaoStatusID   = i.CotacaoStatusID,
+                CotacaoStatus     = i.CotacaoStatus,
+                TotalVenda        = i.TotalVenda,
+                QtdItens          = i.QtdItens,
+                TipoCotacao       = i.TipoCotacao,
+                NmCondPagto       = i.NmCondPagto,
+                Endereco          = i.Endereco,
+                NmEstabelecimento = i.NmEstabelecimento,
+                EstabelecimentoID = i.EstabelecimentoID,
+                DataAbertura      = i.DataAbertura,
+                DataAberturaSQL   = i.DataAberturaSQL,
+                Executivo         = i.Executivo,
+                AprovadorNmUsuario = i.AprovadorNmUsuario,
+            })
+            .ToList();
 
         var vm = new CotacaoListPageViewModel
         {
-            Filtro = filtro,
+            Filtro            = filtro,
             FiltroDataInicial = filtroDataInicial,
-            FiltroDataFinal = filtroDataFinal,
-            FiltroAplicado = filtroAplicado,
+            FiltroDataFinal   = filtroDataFinal,
+            FiltroAplicado    = filtroAplicado,
+            Itens             = itensPagina,
+            TotalRegistros    = totalRegistros,
+            PaginaAtual       = page,
+            TamanhoPagina     = pageSize,
             EstabelecimentoOptions = estabelecimentosTask.Result
                 .Select(e => new SelectOptionViewModel { Id = e.EstabelecimentoId, Nome = e.Nome })
                 .ToList(),
@@ -69,46 +144,6 @@ public sealed class CotacaoController(
         };
 
         return View(vm);
-    }
-
-    [HttpGet("ListaJson")]
-    public async Task<IActionResult> ListaJson(
-        string? cdExtCliente,
-        int? propostaId,
-        string? cnpj,
-        int? estabelecimentoID,
-        int? statusID,
-        string? dataInicial,
-        string? dataFinal,
-        int filtroCotacao = 1,
-        CancellationToken cancellationToken = default)
-    {
-        var filtroDataInicial = DateTime.TryParse(dataInicial, out var di) ? di : DateTime.Today.AddMonths(-1);
-        var filtroDataFinal   = DateTime.TryParse(dataFinal,   out var df) ? df : DateTime.Today;
-
-        var itens = await apiClient.GetListaAsync(
-            GetUsuarioId(), filtroCotacao,
-            cdExtCliente, propostaId, cnpj,
-            estabelecimentoID, statusID,
-            filtroDataInicial, filtroDataFinal,
-            cancellationToken);
-
-        var data = itens.Select(row => new
-        {
-            row.PropostaId,
-            row.Nome,
-            row.CdExtCliente,
-            row.ClienteNome,
-            row.ClienteCNPJ,
-            row.NmEstabelecimento,
-            row.StatusID,
-            row.StatusName,
-            TotalVenda = row.TotalVenda.ToString("N2", new System.Globalization.CultureInfo("pt-BR")),
-            row.QtdItens,
-            row.DataAbertura,
-        });
-
-        return Json(new { data });
     }
 
     [HttpGet("Edit")]

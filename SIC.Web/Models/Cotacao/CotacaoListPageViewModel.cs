@@ -19,6 +19,12 @@ public sealed class CotacaoListPageViewModel
     // ── Opções dos selects ──
     public IReadOnlyList<SelectOptionViewModel> EstabelecimentoOptions { get; set; } = [];
     public IReadOnlyList<SelectOptionViewModel> StatusOptions { get; set; } = [];
+
+    // ── Paginação ──
+    public int PaginaAtual { get; set; } = 1;
+    public int TamanhoPagina { get; set; } = 25;
+    public int TotalRegistros { get; set; }
+    public int TotalPaginas => TotalRegistros == 0 ? 1 : (int)Math.Ceiling((double)TotalRegistros / TamanhoPagina);
 }
 
 /// <summary>

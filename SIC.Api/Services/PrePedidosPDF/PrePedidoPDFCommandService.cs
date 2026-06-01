@@ -229,6 +229,17 @@ public sealed class PrePedidoPDFCommandService(
             };
         }
 
+        var arquivoPrePedidoId = await repository.AtualizarStatusReprocessarAsync(prePedidoId, cancellationToken);
+
+        if (arquivoPrePedidoId <= 0)
+        {
+            return new OperationResult
+            {
+                Success = false,
+                Message = "Erro ao reprocessar pré-pedido."
+            };
+        }
+
         var jsonPedido = await integrationService.GetConteudoArquivoPedidoAsync(
             prePedido.CdExtCliente,
             prePedido.OrdemCompra,
@@ -239,35 +250,11 @@ public sealed class PrePedidoPDFCommandService(
             return new OperationResult
             {
                 Success = false,
-                Message = "Conteúdo do arquivo não encontrado."
-            };
-        }
-
-        var preparado = await repository.SetProcessadorPraZeroAsync(prePedidoId, cancellationToken);
-
-        if (!preparado)
-        {
-            return new OperationResult
-            {
-                Success = false,
-                Message = "Não foi possível preparar o pré-pedido para reprocessamento."
+                Message = "Conteúdo do arquivo não encontrado para disparar o reprocessamento."
             };
         }
 
         var (success, message) = await integrationService.ReprocessarPedidoAsync(jsonPedido, cancellationToken);
-
-        if (success)
-        {
-            await repository.InserirLogReprocessamentoAsync(
-                prePedidoId,
-                $"Pré-pedido reprocessado. Ordem de compra: {prePedido.OrdemCompra}",
-                cancellationToken);
-
-            if (prePedido.StatusPrePedidoPDFID == 5)
-            {
-                await repository.AtualizarStatusAguardandoAsync(prePedidoId, cancellationToken);
-            }
-        }
 
         return new OperationResult
         {
@@ -275,7 +262,7 @@ public sealed class PrePedidoPDFCommandService(
             Message = string.IsNullOrWhiteSpace(message)
                 ? success
                     ? "Pré-pedido reprocessado com sucesso."
-                    : "Erro ao reprocessar pré-pedido."
+                    : "Erro ao disparar reprocessamento na API externa."
                 : message
         };
     }

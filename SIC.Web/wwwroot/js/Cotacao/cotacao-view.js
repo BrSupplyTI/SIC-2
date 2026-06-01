@@ -69,29 +69,124 @@
     }
 
     // ══════════════════════════════════════════════════════════════
-    // CONDIÇÃO DE PAGAMENTO — salvar ao alterar
+    // CONDIÇÃO DE PAGAMENTO — Tom Select pesquisável + lápis + ESC
     // ══════════════════════════════════════════════════════════════
 
     const selectCondPagto = document.getElementById('selectCondPagto');
-    if (selectCondPagto) {
-        selectCondPagto.addEventListener('change', async function () {
-            const condPagtoId = parseInt(this.value, 10);
-            const url = window.cotacaoConfig?.urls?.salvarCondPagto;
-            if (!url || !condPagtoId) return;
 
-            try {
-                const resp = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ condPagtoId })
-                });
-                const data = await resp.json();
-                if (!data.success) {
-                    Swal.fire({ icon: 'error', title: 'Erro', text: data.message || 'Erro ao salvar condição de pagamento.' });
+    function initCondPagtoSelect(select) {
+        if (!select || typeof TomSelect === 'undefined') return null;
+
+        var instance = new TomSelect(select, {
+            create: false,
+            allowEmptyOption: true,
+            maxOptions: null,
+            placeholder: select.dataset.placeholder || 'Digite para pesquisar...',
+            searchField: ['text'],
+            sortField: [{ field: 'text', direction: 'asc' }],
+            onFocus: function () {
+                this._clearOnNextType = true;
+            },
+            onType: function () {
+                if (this._clearOnNextType) {
+                    this._clearOnNextType = false;
+                    this.clear(true);
                 }
-            } catch {
-                Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha na comunicação com o servidor.' });
+            },
+            onBlur: function () {
+                this._clearOnNextType = false;
+                // Se não houve mudança pendente, restaura o valor original
+                if (select.dataset.pendingChange !== '1') {
+                    var lastValue = select.dataset.lastValue || '';
+                    this.setValue(lastValue, true);
+                }
+                select.dataset.pendingChange = '0';
+            },
+            onChange: function () {
+                select.dataset.pendingChange = '1';
             }
+        });
+
+        return instance;
+    }
+
+    initCondPagtoSelect(selectCondPagto);
+
+    async function updateCondPagto() {
+        if (!selectCondPagto) return;
+
+        const value    = parseInt(selectCondPagto.value, 10);
+        const lastValue = parseInt(selectCondPagto.dataset.lastValue || '0', 10);
+        if (!value || value === lastValue) return;
+
+        const url = window.cotacaoConfig?.urls?.salvarCondPagto;
+        if (!url) return;
+
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ condPagtoId: value })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                selectCondPagto.dataset.lastValue = String(value);
+                window.location.reload();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Erro', text: data.message || 'Erro ao salvar condição de pagamento.' });
+                // Restaura o valor anterior no Tom Select
+                if (selectCondPagto.tomselect) {
+                    selectCondPagto.tomselect.setValue(String(lastValue), true);
+                }
+            }
+        } catch {
+            Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha na comunicação com o servidor.' });
+        }
+    }
+
+    selectCondPagto?.addEventListener('change', updateCondPagto);
+
+    // ── Botão lápis: abre o wrapper e foca o Tom Select ──
+    document.querySelectorAll('.js-mapping-edit-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var wrapperId = btn.dataset.target;
+            var displayId = btn.dataset.display;
+            var wrapper   = document.getElementById(wrapperId);
+            var display   = document.getElementById(displayId);
+            if (!wrapper) return;
+
+            wrapper.classList.remove('d-none');
+            if (display) display.classList.add('d-none');
+            btn.classList.add('d-none');
+
+            var sel = wrapper.querySelector('select');
+            if (sel && sel.tomselect) {
+                sel.tomselect.focus();
+            } else if (sel) {
+                sel.focus();
+            }
+        });
+    });
+
+    // ── ESC: fecha sem salvar, volta ao modo exibição ──
+    if (selectCondPagto) {
+        selectCondPagto.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            var wrapper = selectCondPagto.closest('[id$="Wrapper"]');
+            if (!wrapper) return;
+            var displayId  = wrapper.id.replace('Wrapper', 'Display');
+            var display    = document.getElementById(displayId);
+            var toggleBtn  = document.querySelector('.js-mapping-edit-toggle[data-target="' + wrapper.id + '"]');
+
+            // Restaura valor original no Tom Select
+            if (selectCondPagto.tomselect) {
+                selectCondPagto.tomselect.setValue(selectCondPagto.dataset.lastValue || '', true);
+            }
+            selectCondPagto.dataset.pendingChange = '0';
+
+            wrapper.classList.add('d-none');
+            if (display) display.classList.remove('d-none');
+            if (toggleBtn) toggleBtn.classList.remove('d-none');
         });
     }
 

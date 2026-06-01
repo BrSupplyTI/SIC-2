@@ -89,6 +89,10 @@ public interface IPrePedidoPDFCommandRepository
         int prePedidoId,
         CancellationToken cancellationToken = default);
 
+    Task<int> AtualizarStatusReprocessarAsync(
+        int prePedidoId,
+        CancellationToken cancellationToken = default);
+
     Task<int> GerarPedidoAsync(
         int estabelecimentoId,
         int clienteId,

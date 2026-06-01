@@ -223,19 +223,12 @@
             </div>
         </div>
 
-        @{
-            int primeiroRegistro = Model.TotalRegistros == 0 ? 0 : (Model.PaginaAtual - 1) * Model.TamanhoPagina + 1;
-            int ultimoRegistro   = Math.Min(Model.PaginaAtual * Model.TamanhoPagina, Model.TotalRegistros);
-        }
-        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-            <small class="text-muted">
-                Exibindo <strong>@primeiroRegistro</strong> a <strong>@ultimoRegistro</strong> de <strong>@Model.TotalRegistros.ToString("N0", new System.Globalization.CultureInfo("pt-BR"))</strong> registro(s)
-            </small>
-            @if (Model.TotalPaginas > 1)
-            {
-                int startPage = Math.Max(1, Model.PaginaAtual - 2);
-                int endPage   = Math.Min(Model.TotalPaginas, startPage + 4);
-                startPage     = Math.Max(1, endPage - 4);
+        @if (Model.TotalPaginas > 1)
+        {
+            int startPage = Math.Max(1, Model.PaginaAtual - 2);
+            int endPage   = Math.Min(Model.TotalPaginas, startPage + 4);
+            startPage     = Math.Max(1, endPage - 4);
+            <div class="d-flex justify-content-end mt-3">
                 <nav>
                     <ul class="pagination pagination-sm mb-0">
                         <li class="page-item @(Model.PaginaAtual == 1 ? "disabled" : "")">
@@ -269,8 +262,8 @@
                         </li>
                     </ul>
                 </nav>
-            }
-        </div>
+            </div>
+        }
 
     </div>
 </div>

@@ -315,6 +315,46 @@ public sealed class SqlPrePedidoPDFCommandRepository(IConfiguration configuratio
             },
             cancellationToken);
 
+    public async Task<int> AtualizarStatusReprocessarAsync(
+        int prePedidoId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+            DECLARE @ArquivoPrePedidoId INT;
+
+            SELECT @ArquivoPrePedidoId = ArquivoPrePedidoId
+              FROM Integracao_Clientes.dbo.PDF_PrePedido
+             WHERE PDFPrePedidoID = @PDFPrePedidoID;
+
+            UPDATE Integracao_Clientes.dbo.PDF_PrePedido
+               SET StatusPrePedidoID = 7
+             WHERE PDFPrePedidoID = @PDFPrePedidoID;
+
+            UPDATE Integracao_Clientes.dbo.PDF_ArquivoPrePedido
+               SET Processado = NULL
+             WHERE PDFArquivoPrePedidoID = @ArquivoPrePedidoId;
+
+            INSERT INTO Integracao_Clientes.dbo.PDF_PrePedidoLog (Mensagem, CriadoEm, PDFPrePedidoID, Tipo)
+            VALUES (
+                'Status atualizado para Reprocessar.',
+                GETDATE(),
+                @PDFPrePedidoID,
+                'Reprocessamento'
+            );
+
+            SELECT ISNULL(@ArquivoPrePedidoId, 0);
+            """;
+
+        await using var command = new SqlCommand(sql, connection) { CommandType = CommandType.Text };
+        command.Parameters.AddWithValue("@PDFPrePedidoID", prePedidoId);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is not null and not DBNull ? Convert.ToInt32(result) : 0;
+    }
+
     public async Task<int> GerarPedidoAsync(
         int estabelecimentoId,
         int clienteId,

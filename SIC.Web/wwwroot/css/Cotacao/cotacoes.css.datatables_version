@@ -84,32 +84,63 @@
     border-color: rgba(var(--bs-primary-rgb), .5);
 }
 
-/* ── Paginação — visual idêntico ao dt-paging-button do DataTables ── */
-.pagination .page-link {
-    background-color: var(--sic-surface-2);
-    border-color: var(--sic-border);
-    color: var(--sic-text);
-    font-size: .8rem;
+/* ── Paginação DataTables — estilo laranja (idêntico ao PrePedidosPDF) ── */
+#cotacoesTable_wrapper .dt-paging {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+#cotacoesTable_wrapper .dt-paging .dt-paging-button {
+    min-width: 2.5rem;
     padding: .3rem .6rem;
-    line-height: 1.4;
-    transition: background-color .15s ease, border-color .15s ease;
-}
-
-.pagination .page-link:hover {
-    background-color: var(--sic-surface-3, #2a2d3e);
-    border-color: var(--sic-border);
+    margin: 0 .15rem;
+    font-size: .8rem;
+    font-weight: 500;
+    text-align: center;
+    border-radius: .375rem;
+    border: 1px solid var(--sic-border);
+    background-color: var(--sic-surface-2);
     color: var(--sic-text);
+    cursor: pointer;
+    transition: all .2s ease;
+    text-decoration: none;
+    display: inline-block;
 }
 
-.pagination .page-item.active .page-link {
-    background-color: var(--sic-brand);
+#cotacoesTable_wrapper .dt-paging .dt-paging-button:hover:not(.disabled) {
+    background-color: color-mix(in srgb, var(--sic-brand) 15%, transparent);
     border-color: var(--sic-brand);
-    color: #fff;
+    color: var(--sic-brand);
 }
 
-.pagination .page-item.disabled .page-link {
+#cotacoesTable_wrapper .dt-paging .dt-paging-button.current {
+    background-color: var(--sic-brand) !important;
+    border-color: var(--sic-brand) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+#cotacoesTable_wrapper .dt-paging .dt-paging-button.disabled {
     background-color: var(--sic-surface-2);
     border-color: var(--sic-border);
     color: var(--sic-muted);
-    opacity: .6;
+    opacity: .5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Esconde a busca nativa do DataTables caso apareça */
+#cotacoesTable_wrapper .dt-search {
+    display: none;
+}
+
+/* Esconde informações de paginação (ex: "Mostrando 1 até 25 de 100") */
+#cotacoesTable_wrapper .dt-info {
+    display: none;
+}
+
+/* Ajuste para wrapper do DataTables */
+#cotacoesTable_wrapper {
+    width: 100%;
 }

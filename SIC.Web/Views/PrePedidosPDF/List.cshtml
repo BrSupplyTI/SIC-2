@@ -17,6 +17,8 @@
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/prepedidospdf/prepedido.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Cotacao/cotacao-view.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.min.css" />
     <style>
@@ -218,21 +220,41 @@
                                         @if (row.CotacaoID > 0)
                                         {
                                             <a asp-controller="Pedidos" asp-action="Detalhes" asp-route-pedido="@row.CotacaoID"
-                                               class="prepedido-btn prepedido-btn-abrir" title="Ver Pedido">
-                                                <i class="fa-solid fa-file"></i>@row.CotacaoID
+                                               class="btn btn-sm btn-outline-secondary" title="Ver Pedido BRS">
+                                                <i class="fa-solid fa-file me-1"></i>@row.CotacaoID
                                             </a>
                                         }
                                     </td>
-                                    <td>@row.StatusDescricao</td>
+                                    <td>
+                                        @{
+                                            var badgeCls = row.StatusPrePedidoPDFID switch
+                                            {
+                                                4 => "badge-status-success",
+                                                5 => "badge-status-danger",
+                                                _ => "badge-status-warning"
+                                            };
+                                            var badgeIco = row.StatusPrePedidoPDFID switch
+                                            {
+                                                4 => "fa-solid fa-check",
+                                                5 => "fa-solid fa-times",
+                                                _ => "fa-solid fa-hourglass-half"
+                                            };
+                                        }
+                                        <span class="badge-status @badgeCls">
+                                            <i class="@badgeIco me-1"></i>@row.StatusDescricao
+                                        </span>
+                                    </td>
                                     <td class="text-center">@row.CriadoEm</td>
                                     <td class="text-center">
-                                        <a asp-controller="PrePedidoPDFDetalhes"
-                                           asp-action="PrePedido"
-                                           asp-route-id="@row.PDFPrePedidoPDFID"
-                                           class="prepedido-btn prepedido-btn-abrir"
-                                           title="Abrir Pedido ERP">
-                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                        </a>
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <a asp-controller="PrePedidoPDFDetalhes"
+                                               asp-action="PrePedido"
+                                               asp-route-id="@row.PDFPrePedidoPDFID"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Abrir Pedido ERP">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -246,6 +268,14 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Paginação Bootstrap idêntica à Cotacao/Index -->
+        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2" id="paginacaoWrap">
+            <small class="text-muted" id="paginacaoInfo"></small>
+            <nav id="paginacaoNav">
+                <ul class="pagination pagination-sm mb-0" id="paginacaoLista"></ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -330,12 +360,11 @@
                 searching: true,
                 info: false,
                 paging: true,
+                drawCallback: false,
                 order: [[0, 'desc']],
                 pagingType: 'full_numbers',
                 language: {
                     emptyTable: 'Nenhum pré-pedido encontrado.',
-                    info: 'Mostrando _START_ até _END_ de _TOTAL_ pré-pedidos',
-                    infoEmpty: 'Mostrando 0 até 0 de 0 pré-pedidos',
                     zeroRecords: 'Nenhum pré-pedido corresponde ao filtro',
                     paginate: {
                         first: 'Primeiro',
@@ -346,9 +375,82 @@
                 }
             });
 
-            // Esconde a busca nativa do DataTables
-            var dtSearch = document.querySelector('#prePedidosPDFTable_wrapper .dt-search');
-            if (dtSearch) dtSearch.style.display = 'none';
+            // Esconde paginação e busca nativas do DataTables
+            var dtWrapper = document.querySelector('#prePedidosPDFTable_wrapper');
+            if (dtWrapper) {
+                var dtPaging = dtWrapper.querySelector('.dt-paging');
+                if (dtPaging) dtPaging.style.display = 'none';
+                var dtSearch = dtWrapper.querySelector('.dt-search');
+                if (dtSearch) dtSearch.style.display = 'none';
+            }
+
+            // ── Paginação Bootstrap idêntica à Cotacao/Index ──
+            function renderPaginacao() {
+                var pageInfo  = dt.page.info();
+                var total     = pageInfo.recordsDisplay;
+                var pageLen   = pageInfo.length;
+                var current   = pageInfo.page;          // 0-based
+                var totalPgs  = pageInfo.pages;
+
+                var primeiro = total === 0 ? 0 : current * pageLen + 1;
+                var ultimo   = Math.min((current + 1) * pageLen, total);
+
+                // Info
+                var info = document.getElementById('paginacaoInfo');
+                if (info) {
+                    info.innerHTML = 'Exibindo <strong>' + primeiro + '</strong> a <strong>' + ultimo + '</strong> de <strong>' + total.toLocaleString('pt-BR') + '</strong> registro(s)';
+                }
+
+                // Nav
+                var lista = document.getElementById('paginacaoLista');
+                if (!lista) return;
+                lista.innerHTML = '';
+
+                if (totalPgs <= 1) { document.getElementById('paginacaoNav').style.display = 'none'; return; }
+                document.getElementById('paginacaoNav').style.display = '';
+
+                function li(label, page, disabled, active) {
+                    var el = document.createElement('li');
+                    el.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+                    var a = document.createElement('a');
+                    a.className = 'page-link';
+                    a.href = '#';
+                    a.innerHTML = label;
+                    if (!disabled) {
+                        a.addEventListener('click', function (e) { e.preventDefault(); dt.page(page).draw('page'); });
+                    }
+                    el.appendChild(a);
+                    lista.appendChild(el);
+                }
+
+                var startPage = Math.max(0, current - 2);
+                var endPage   = Math.min(totalPgs - 1, startPage + 4);
+                startPage     = Math.max(0, endPage - 4);
+
+                li('Primeiro', 0,            current === 0);
+                li('Anterior', current - 1,  current === 0);
+                if (startPage > 0) {
+                    var sp = document.createElement('li');
+                    sp.className = 'page-item disabled';
+                    sp.innerHTML = '<span class="page-link">...</span>';
+                    lista.appendChild(sp);
+                }
+                for (var p = startPage; p <= endPage; p++) {
+                    li(p + 1, p, false, p === current);
+                }
+                if (endPage < totalPgs - 1) {
+                    var ep = document.createElement('li');
+                    ep.className = 'page-item disabled';
+                    ep.innerHTML = '<span class="page-link">...</span>';
+                    lista.appendChild(ep);
+                    li(totalPgs, totalPgs - 1, false);
+                }
+                li('Próximo', current + 1,   current === totalPgs - 1);
+                li('Último',  totalPgs - 1,  current === totalPgs - 1);
+            }
+
+            dt.on('draw', renderPaginacao);
+            renderPaginacao();
 
             // Busca personalizada
             var inputBusca = document.getElementById('inputBuscaTabela');

@@ -223,22 +223,52 @@
         <div class="row g-2 mb-4">
             <div class="col-md-6 col-xl-4">
                 <div class="cotacao-quick-card h-100">
-                    <i class="fa-duotone fa-calendar-days text-br"></i>
-                    <div class="flex-grow-1">
-                        <small class="text-muted">Condição de Pagamento</small>
-                        <select id="selectCondPagto" class="form-select form-select-sm mt-1">
-                            @foreach (var opt in Model.CondicoesPagamento)
+                    <i class="fa-duotone fa-calendar-days text-br flex-shrink-0"></i>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex align-items-center gap-1">
+                            <small class="text-muted">Condição de Pagamento</small>
+                            @if (Model.StatusID == 1 || Model.StatusID == 14)
                             {
-                                if (opt.Id == Model.CondPagtoID)
-                                {
-                                    <option value="@opt.Id" selected>@opt.Nome</option>
-                                }
-                                else
-                                {
-                                    <option value="@opt.Id">@opt.Nome</option>
-                                }
+                                <button type="button"
+                                        class="btn-obs-edit js-mapping-edit-toggle"
+                                        data-target="cotacaoCondPagtoWrapper"
+                                        data-display="cotacaoCondPagtoDisplay"
+                                        title="Editar Condição de Pagamento">
+                                    <i class="fa-solid fa-pencil"></i>
+                                </button>
                             }
-                        </select>
+                        </div>
+                        <div id="cotacaoCondPagtoDisplay" class="fw-semibold mapping-display-text mt-1">
+                            @(string.IsNullOrWhiteSpace(Model.CondPagtoNome) ? "— Não definida —" : Model.CondPagtoNome)
+                        </div>
+                        @if (Model.StatusID == 1 || Model.StatusID == 14)
+                        {
+                            <div id="cotacaoCondPagtoWrapper" class="d-none mt-1">
+                                <select id="selectCondPagto"
+                                        class="form-select form-select-sm js-cotacao-searchable-select"
+                                        data-last-value="@Model.CondPagtoID"
+                                        data-placeholder="Digite para pesquisar...">
+                                    <option value="">-- Selecione --</option>
+                                    @foreach (var opt in Model.CondicoesPagamento)
+                                    {
+                                        if (opt.Id == Model.CondPagtoID)
+                                        {
+                                            <option value="@opt.Id" selected>@opt.Nome</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@opt.Id">@opt.Nome</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <select id="selectCondPagto" class="d-none" data-last-value="@Model.CondPagtoID" disabled>
+                                <option value="@Model.CondPagtoID" selected>@Model.CondPagtoNome</option>
+                            </select>
+                        }
                     </div>
                 </div>
             </div>
@@ -1100,13 +1130,8 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
             }
         };
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script src="~/js/Cotacao/cotacao-view.js" asp-append-version="true"></script>
-    <script>
-        new TomSelect('#selectCondPagto', {
-            allowEmptyOption: false,
-            placeholder: 'Selecione...'
-        });
-    </script>
     <script>
         (function () {
             async function gerarPdf(comImpostos) {

@@ -622,3 +622,33 @@
         padding: .38rem .75rem;
     }
 }
+
+/* ── Paginação — visual idêntico ao cotacoes.css ── */
+.pagination .page-link {
+    background-color: var(--sic-surface-2);
+    border-color: var(--sic-border);
+    color: var(--sic-text);
+    font-size: .8rem;
+    padding: .3rem .6rem;
+    line-height: 1.4;
+    transition: background-color .15s ease, border-color .15s ease;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--sic-surface-3, #2a2d3e);
+    border-color: var(--sic-border);
+    color: var(--sic-text);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--sic-brand);
+    border-color: var(--sic-brand);
+    color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+    background-color: var(--sic-surface-2);
+    border-color: var(--sic-border);
+    color: var(--sic-muted);
+    opacity: .6;
+}

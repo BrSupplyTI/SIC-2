@@ -18,7 +18,7 @@ public sealed class PrePedidoPDFIntegrationService(HttpClient httpClient) : IPre
         if (string.IsNullOrWhiteSpace(cdExtCliente) || string.IsNullOrWhiteSpace(ordemCompra))
             return string.Empty;
 
-        var url = $"https://punchout.brsupply.com.br/storage/Teste/processadorERP/{Uri.EscapeDataString(cdExtCliente)}/{Uri.EscapeDataString(ordemCompra)}.json";
+        var url = $"https://punchout.brsupply.com.br/storage/processadorERP/{Uri.EscapeDataString(cdExtCliente)}/{Uri.EscapeDataString(ordemCompra)}.json";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         using var response = await httpClient.SendAsync(request, cancellationToken);

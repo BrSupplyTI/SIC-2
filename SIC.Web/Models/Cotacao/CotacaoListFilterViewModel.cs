@@ -14,4 +14,5 @@ public sealed class CotacaoListFilterViewModel
     public int? StatusID { get; set; }
     public string? DataInicial { get; set; }
     public string? DataFinal { get; set; }
+    public string? Busca { get; set; }
 }

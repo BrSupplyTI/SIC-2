@@ -200,7 +200,7 @@ public sealed class CotacaoController(
         int clienteEnderecoId, CancellationToken cancellationToken)
     {
         var result = await queryService.GetTipoOVSAPByEnderecoAsync(clienteEnderecoId, cancellationToken);
-        return Ok(new { TipoOVSAP = result });
+        return Ok(new { found = !string.IsNullOrEmpty(result), value = result });
     }
 
     [HttpGet("enderecos/{clienteEnderecoId:int}/frete-inicial")]

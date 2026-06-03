@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using SIC.Domain.Abstractions.Cotacao;
 using SIC.Domain.Entities.Cotacao;
@@ -568,24 +568,21 @@ public sealed class SqlCotacaoQueryRepository(IConfiguration configuration) : IC
         CancellationToken cancellationToken = default)
     {
         const string sql = """
-            SELECT CP.CondPagtoID AS Id,
-                   CP.DsCondPagto AS Nome
-            FROM BRsupply.dbo.BR_CondPagto CP (NOLOCK)
-            INNER JOIN BrWeb.dbo.TelevendasConfigCondPagto Tel (NOLOCK)
-                ON Tel.CondPagtoID = CP.CondPagtoID
-               AND CP.FlagAtivo = 1
-               AND CP.FlagPagarReceber = 'R'
-               AND Tel.EstabelecimentoID = @EstabelecimentoID
-            WHERE @ValorTotal >= Tel.VlrMinimo
-            ORDER BY CP.DsCondPagto
+            SELECT CondPagtoID AS Id,
+                   CASE ISNULL(DsCondPagto, '')
+                       WHEN '' THEN NmCondPagto
+                       ELSE DsCondPagto
+                   END AS Nome
+            FROM BrSupply.dbo.BR_CondPagto (NOLOCK)
+            WHERE FlagAtivo = 1
+              AND FlagPagarReceber = 'R'
+            ORDER BY CdCondPagto ASC
             """;
 
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using var cmd = new SqlCommand(sql, connection);
-        cmd.Parameters.AddWithValue("@EstabelecimentoID", estabelecimentoId);
-        cmd.Parameters.AddWithValue("@ValorTotal", valorTotal);
 
         var items = new List<CotacaoSelectOption>();
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
@@ -1451,7 +1448,7 @@ public sealed class SqlCotacaoQueryRepository(IConfiguration configuration) : IC
             FROM BrSupply.dbo.BR_ClienteLocalEntrega AS ClienteLocalEntrega WITH (NOLOCK)
             LEFT JOIN BrSupply.dbo.BR_ClienteEndereco AS ClienteEndereco WITH (NOLOCK)
                 ON ClienteEndereco.ClienteEnderecoID = ClienteLocalEntrega.ClienteEnderecoID
-            WHERE ClienteLocalEntrega.ClienteEnderecoID = @ClienteEnderecoID
+            WHERE ClienteLocalEntrega.ClienteLocalEntregaID = @ClienteLocalEntregaID
               AND ClienteLocalEntrega.FlagAtivo = 1
             """;
 

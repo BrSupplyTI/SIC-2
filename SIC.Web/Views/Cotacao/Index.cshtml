@@ -39,7 +39,6 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/Cotacao/cotacoes.css" />
     <link rel="stylesheet" href="~/css/Cotacao/cotacao-view.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
 }
 
 <div class="card border-0 shadow-sm mb-4">
@@ -366,8 +365,6 @@
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
     <script>
         // Aplica filtros avançados do offcanvas
         document.getElementById('btnAplicarFiltros').addEventListener('click', function () {
@@ -393,24 +390,6 @@
             document.getElementById('input' + campo.charAt(0).toUpperCase() + campo.slice(1)).value = '';
             document.querySelector('#formCotacoes [name="page"]').value = 1;
             document.getElementById('formCotacoes').submit();
-        }
-
-        // Inicializa DataTables apenas para estilo visual (paginação, header)
-        if (typeof DataTable !== 'undefined') {
-            new DataTable('#cotacoesTable', {
-                paging:   false,
-                searching: false,
-                ordering: false,
-                info:     false,
-                language: {
-                    paginate: {
-                        first:    'Primeiro',
-                        previous: 'Anterior',
-                        next:     'Próximo',
-                        last:     'Último'
-                    }
-                }
-            });
         }
     </script>
 }

@@ -545,7 +545,7 @@ public sealed class CotacaoController(
     public async Task<IActionResult> GetLocaisEntrega(int clienteEnderecoId, CancellationToken cancellationToken)
     {
         var items = await apiClient.GetLocaisEntregaByEnderecoAsync(clienteEnderecoId, cancellationToken);
-        return Json(items.Select(i => new
+        var result = items.Select(i => new
         {
             id                  = i.ClienteLocalEntregaId,
             text                = i.Text,
@@ -557,7 +557,9 @@ public sealed class CotacaoController(
             obsLocalEntrega     = i.ObsLocalEntrega,
             tipoOVSAP           = i.TipoOVSAP,
             condPagtoId         = i.CondPagtoId
-        }));
+        });
+        System.Diagnostics.Debug.WriteLine($"[GetLocaisEntrega] Retornando {result.Count()} itens. Exemplo: {System.Text.Json.JsonSerializer.Serialize(result.FirstOrDefault())}");
+        return Json(result);
     }
 
     [HttpGet("GetTabelaPreco")]

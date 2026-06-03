@@ -60,6 +60,11 @@ public sealed class CotacaoEmailService(
             env.ContentRootPath,
             "Views", "Cotacao", "EmailInformarClienteCotacaoLiberadaModelo2.html");
 
+        System.Diagnostics.Debug.WriteLine($"[EMAIL] ContentRootPath: {env.ContentRootPath}");
+        System.Diagnostics.Debug.WriteLine($"[EMAIL] WebRootPath: {env.WebRootPath}");
+        System.Diagnostics.Debug.WriteLine($"[EMAIL] Template Path: {templatePath}");
+        System.Diagnostics.Debug.WriteLine($"[EMAIL] File Exists: {File.Exists(templatePath)}");
+
         var corpo = await File.ReadAllTextAsync(templatePath, cancellationToken);
 
         // ── 6. Substituir placeholders ────────────────────────────────────

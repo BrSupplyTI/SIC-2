@@ -79,6 +79,10 @@ public sealed class CotacaoPdfService(IWebHostEnvironment env, IHttpClientFactor
     {
         var logoPath = Path.Combine(env.WebRootPath, "img", "logo-light.png");
 
+        System.Diagnostics.Debug.WriteLine($"[PDF] WebRootPath: {env.WebRootPath}");
+        System.Diagnostics.Debug.WriteLine($"[PDF] Logo Path: {logoPath}");
+        System.Diagnostics.Debug.WriteLine($"[PDF] File Exists: {File.Exists(logoPath)}");
+
         if (File.Exists(logoPath))
             row.ConstantItem(130).Padding(4).Image(logoPath).FitWidth();
 

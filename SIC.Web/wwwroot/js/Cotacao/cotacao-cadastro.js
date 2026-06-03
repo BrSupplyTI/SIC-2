@@ -13,6 +13,15 @@
     const $condPagtoSelect = $('#CondPagtoId');
     const $condPagtoHidden = $('#CondPagtoId_hidden');
 
+    if ($condPagtoSelect.length) {
+        $condPagtoSelect.select2({
+            theme: 'bootstrap-5',
+            language: 'pt-BR',
+            placeholder: 'Selecione',
+            allowClear: true
+        });
+    }
+
     function syncCondPagtoHidden() {
         $condPagtoHidden.val($condPagtoSelect.val());
     }
@@ -108,7 +117,7 @@
             allowClear: true,
             minimumInputLength: 2,
             ajax: {
-                url: '/Cotacao/SearchClientes',
+                url: window.cotacaoUrls.searchClientes,
                 dataType: 'json',
                 delay: 300,
                 data: function (params) {
@@ -153,7 +162,7 @@
         $cliente.on('change', function () {
             var clienteId = $(this).val();
             $endereco.empty().append('<option value="">Selecione</option>').trigger('change');
-            $localEntrega.empty().append('<option value="">Selecione</option>');
+            $localEntrega.empty().append('<option value="">Selecione</option>').trigger('change');
             $nrContrato.empty().append('<option value="">Selecione</option>');
             $btnNovoContrato.attr('href', '#');
 
@@ -170,22 +179,27 @@
             }
 
             if (clienteId) {
-                $.getJSON('/Cotacao/GetEnderecos', { clienteId: clienteId }, function (data) {
+                $.getJSON(window.cotacaoUrls.getEnderecos, { clienteId: clienteId }, function (data) {
                     $.each(data, function (i, item) {
                         $endereco.append($('<option></option>').val(item.id).text(item.text));
                     });
+                    if (data.length === 1) {
+                        $endereco.val(data[0].id).trigger('change');
+                    } else {
+                        $endereco.trigger('change');
+                    }
                 });
 
-                $.getJSON('/Cotacao/GetTabelaPreco', { clienteId: clienteId }, function (data) {
+                $.getJSON(window.cotacaoUrls.getTabelaPreco, { clienteId: clienteId }, function (data) {
                     if (data.found) {
                         $('#TabelaPreco').val(data.text);
                         $('#TabelaPrecoId').val(data.id);
                     }
                 });
 
-                $.getJSON('/Cotacao/GetFormaPagtoCliente', { clienteId: clienteId }, function (data) {
+                $.getJSON(window.cotacaoUrls.getFormaPagtoCliente, { clienteId: clienteId }, function (data) {
                     if (data.found) {
-                        $('#FormaPagtoId').val(data.id);
+                        $('#FormaPagtoId').val(data.id).trigger('change');
                     }
                 });
 
@@ -196,44 +210,64 @@
                 }
             } else {
                 // Sem cliente: limpa e bloqueia
-                $('#CondPagtoId').val('').prop('disabled', true);
+                $('#CondPagtoId').val('').trigger('change').prop('disabled', true);
+                $('#FormaPagtoId').val('').trigger('change');
             }
         });
 
         $endereco.on('change', function () {
             var enderecoId = $(this).val();
-            $localEntrega.empty().append('<option value="">Selecione</option>');
+            console.log('Endereço selecionado:', enderecoId);
+            $localEntrega.empty().append('<option value="">Selecione</option>').trigger('change');
 
             if (enderecoId) {
-                $.getJSON('/Cotacao/GetLocaisEntrega', { clienteEnderecoId: enderecoId }, function (data) {
+                $.getJSON(window.cotacaoUrls.getLocaisEntrega, { clienteEnderecoId: enderecoId }, function (data) {
                     $.each(data, function (i, item) {
-                        $localEntrega.append($('<option></option>').val(item.id).text(item.text));
+                        $localEntrega.append(
+                            $('<option></option>')
+                                .val(item.id)
+                                .text(item.text)
+                                .attr('data-cond-pagto-id', item.condPagtoId || '')
+                                .attr('data-tipo-ovsap', item.tipoOVSAP || '')
+                        );
                     });
-
-                    // Regra CondPagto ao mudar endereço
-                    var tipoTexto = $tipo.find('option:selected').text().trim();
-                    var TIPOS_COND_FIXA = ['Comodato', 'Pedido - Bonificação', 'Pedido - Remessa Reposição'];
-                    var $condPagto = $('#CondPagtoId');
-                    var isAdmin = $condPagto.data('is-admin') === true || $condPagto.data('is-admin') === 'true';
-                    var isBackOffice = $condPagto.data('is-backoffice') === true || $condPagto.data('is-backoffice') === 'true';
-
-                    if (TIPOS_COND_FIXA.indexOf(tipoTexto) !== -1) {
-                        $condPagto.val('2');
-                        $condPagto.prop('disabled', true);
+                    if (data.length === 1) {
+                        $localEntrega.val(data[0].id).trigger('change');
                     } else {
-                        var condPagtoId = data.length > 0 && data[0].condPagtoId ? data[0].condPagtoId : '';
-                        $condPagto.val(condPagtoId);
-                        $condPagto.prop('disabled', !(isAdmin || isBackOffice));
+                        $localEntrega.trigger('change');
                     }
-                    $('#CondPagtoId_hidden').val($condPagto.val());
+                });
+            }
+        });
+
+        // ── Local de Entrega: preenche Condição de Pagamento e Tipo de Ordem automaticamente ──
+        $localEntrega.on('change', function () {
+            var $selectedOption = $(this).find('option:selected');
+            var condPagtoId = $selectedOption.attr('data-cond-pagto-id');
+            var tipoOVSAP = $selectedOption.attr('data-tipo-ovsap');
+
+            if (condPagtoId) {
+                $condPagtoSelect.val(condPagtoId).trigger('change');
+            }
+
+            if (tipoOVSAP) {
+                // Procura a opção do TipoOrdem que contém o tipoOVSAP no texto
+                var $tipoOrdem = $('#TipoOrdem');
+                var encontrou = false;
+
+                $tipoOrdem.find('option').each(function () {
+                    var optionText = $(this).text().trim().toUpperCase();
+                    if (optionText.includes(tipoOVSAP.toUpperCase())) {
+                        $tipoOrdem.val($(this).val()).trigger('change');
+                        encontrou = true;
+                        console.log('[TipoOrdem] Preenchido com sucesso:', tipoOVSAP, '→ Valor:', $(this).val());
+                        return false; // break
+                    }
                 });
 
-                // Preenche Tipo de Ordem com o tipoOVSAP do endereço
-                $.getJSON('/Cotacao/GetTipoOVSAPByEndereco', { clienteEnderecoId: enderecoId }, function (data) {
-                    if (data.found) {
-                        $('#TipoOrdem').val(data.value);
-                    }
-                });
+                if (!encontrou) {
+                    console.warn('[TipoOrdem] Não encontrada opção para:', tipoOVSAP);
+                }
             }
         });
 
@@ -272,7 +306,7 @@
         function carregarContratos(clienteId) {
             $nrContrato.empty().append('<option value="">Selecione</option>');
             if (clienteId) {
-                $.getJSON('/Cotacao/GetContratos', { clienteId: clienteId }, function (data) {
+                $.getJSON(window.cotacaoUrls.getContratos, { clienteId: clienteId }, function (data) {
                     $.each(data, function (i, item) {
                         $nrContrato.append($('<option></option>').val(item.id).text(item.text));
                     });
@@ -334,24 +368,40 @@
             syncMargemHidden();
         }
 
+        // Função para carregar opções de Tipo de Ordem
+        function carregarTiposOrdem(cotacaoTipoId, valorParaSelecionar) {
+            var $tipoOrdem = $('#TipoOrdem');
+            var valorAtual = valorParaSelecionar !== undefined ? valorParaSelecionar : $tipoOrdem.val();
+            $tipoOrdem.empty().append('<option value="">Selecione</option>');
+
+            if (cotacaoTipoId) {
+                $.getJSON(window.cotacaoUrls.getTiposOrdem, { cotacaoTipoId: cotacaoTipoId }, function (data) {
+                    $.each(data, function (i, item) {
+                        $tipoOrdem.append($('<option></option>').val(item.id).text(item.text));
+                    });
+                    // Se temos um valor para selecionar, seleciona após carregar
+                    if (valorAtual) {
+                        $tipoOrdem.val(valorAtual);
+                    }
+                });
+            }
+        }
+
         $tipo.on('change', function () {
             var selectedText = $(this).find('option:selected').text().trim();
             aplicarRegrasTipo(selectedText);
 
             var cotacaoTipoId = $(this).val();
-            var $tipoOrdem = $('#TipoOrdem');
-            $tipoOrdem.empty().append('<option value="">Selecione</option>');
-            if (cotacaoTipoId) {
-                $.getJSON('/Cotacao/GetTiposOrdem', { cotacaoTipoId: cotacaoTipoId }, function (data) {
-                    $.each(data, function (i, item) {
-                        $tipoOrdem.append($('<option></option>').val(item.id).text(item.text));
-                    });
-                });
-            }
+            carregarTiposOrdem(cotacaoTipoId);
         });
 
         // Aplica ao carregar se já houver tipo selecionado
         aplicarRegrasTipo($tipo.find('option:selected').text().trim());
+
+        // Carrega tipos de ordem ao iniciar se já houver tipo selecionado
+        if ($tipo.val()) {
+            carregarTiposOrdem($tipo.val(), $('#TipoOrdem').val());
+        }
 
         $estabelecimento.on('change', function () {
             if ($(this).val()) {
@@ -388,7 +438,7 @@
                 $cidadeDestino.trigger('change');
                 return;
             }
-            $.getJSON('/Cotacao/GetCidadesByUf', { cdUf: cdUf }, function (data) {
+            $.getJSON(window.cotacaoUrls.getCidadesByUf, { cdUf: cdUf }, function (data) {
                 $.each(data, function (i, item) {
                     $cidadeDestino.append($('<option></option>').val(item.id).text(item.text));
                 });

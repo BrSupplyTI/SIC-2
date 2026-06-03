@@ -211,15 +211,22 @@ public sealed class CotacaoExcelService(IWebHostEnvironment env)
             .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Right);
     }
 
-    private string ObterCaminhoLogo(int estabelecimentoId)
-    {
-        var logoName = estabelecimentoId switch
+        private string ObterCaminhoLogo(int estabelecimentoId)
         {
-            1 or 5 or 9 or 11 => "logo-light.png",
-            2 or 3             => "logo-sp.png",
-            4                  => "logo-sc.png",
-            _                  => "logo-light.png"
-        };
-        return Path.Combine(env.WebRootPath, "img", logoName);
+            var logoName = estabelecimentoId switch
+            {
+                1 or 5 or 9 or 11 => "logo-light.png",
+                2 or 3             => "logo-sp.png",
+                4                  => "logo-sc.png",
+                _                  => "logo-light.png"
+            };
+            var logoPath = Path.Combine(env.WebRootPath, "img", logoName);
+
+            System.Diagnostics.Debug.WriteLine($"[EXCEL] WebRootPath: {env.WebRootPath}");
+            System.Diagnostics.Debug.WriteLine($"[EXCEL] Logo Name: {logoName}");
+            System.Diagnostics.Debug.WriteLine($"[EXCEL] Logo Path: {logoPath}");
+            System.Diagnostics.Debug.WriteLine($"[EXCEL] File Exists: {File.Exists(logoPath)}");
+
+            return logoPath;
+        }
     }
-}

@@ -257,7 +257,8 @@
             if (!propostaId) return;
 
             // propostaItemId = 0 → NULL na procedure → calcula todos os itens e atualiza o cabeçalho
-            const url = `/Cotacao/${propostaId}/itens/0/calcular-margem`;
+            const url = window.cotacaoConfig?.urls?.calcularMargem ?? '';
+            if (!url) return;
 
             const iconeOriginal = btnCalcularMargem.innerHTML;
             btnCalcularMargem.disabled = true;

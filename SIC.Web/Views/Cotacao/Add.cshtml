@@ -292,6 +292,18 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
     <script>
         window.estabelecimentoUfMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EstabelecimentoUfMap));
+
+        window.cotacaoUrls = {
+            searchClientes:            '@Url.Action("SearchClientes",            "Cotacao")',
+            getEnderecos:              '@Url.Action("GetEnderecos",              "Cotacao")',
+            getTabelaPreco:            '@Url.Action("GetTabelaPreco",            "Cotacao")',
+            getFormaPagtoCliente:      '@Url.Action("GetFormaPagtoCliente",      "Cotacao")',
+            getLocaisEntrega:          '@Url.Action("GetLocaisEntrega",          "Cotacao")',
+            getTipoOVSAPByLocalEntrega: '@Url.Action("GetTipoOVSAPByLocalEntrega", "Cotacao")',
+            getContratos:              '@Url.Action("GetContratos",              "Cotacao")',
+            getTiposOrdem:             '@Url.Action("GetTiposOrdem",             "Cotacao")',
+            getCidadesByUf:            '@Url.Action("GetCidadesByUf",            "Cotacao")'
+        };
     </script>
     <script src="~/js/Cotacao/cotacao-cadastro.js" asp-append-version="true"></script>
 }

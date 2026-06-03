@@ -1117,16 +1117,17 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
             intranetUrl:       '@(Config["AppSettings:IntranetBaseUrl"] ?? "http://localhost")',
             itens:             @Html.Raw(itensJson),
             urls: {
-                    buscarCatalogo:            '@Url.Action("BuscarCatalogo",         "Cotacao", new { propostaId = Model.PropostaID })',
-                adicionarItem:             '@Url.Action("AdicionarItem",          "Cotacao", new { propostaId = Model.PropostaID })',
-                atualizarCusto:            '/Cotacao/@Model.PropostaID/itens/{itemId}/atualizar-custo',
-                gerarItens:                '/Cotacao/@Model.PropostaID/gerar-itens',
-                removerItens:              '/Cotacao/@Model.PropostaID/itens/remover',
-                impostosItem:              '/Cotacao/@Model.PropostaID/itens/{itemId}/impostos',
-                validarItensImportacao:    '/Cotacao/@Model.PropostaID/itens/validar-importacao',
-                salvarCondPagto:           '/Cotacao/@Model.PropostaID/salvar-cond-pagto',
-                aprovar:                   '/Cotacao/@Model.PropostaID/aprovar',
-                reprovar:                  '/Cotacao/@Model.PropostaID/reprovar'
+                buscarCatalogo:            '@Url.Action("BuscarCatalogo",           "Cotacao", new { propostaId = Model.PropostaID })',
+                adicionarItem:             '@Url.Action("AdicionarItem",            "Cotacao", new { propostaId = Model.PropostaID })',
+                atualizarCusto:            '@Url.Action("AtualizarCustoItem",       "Cotacao", new { propostaId = Model.PropostaID, propostaItemId = "{itemId}" })',
+                gerarItens:                '@Url.Action("GerarItens",                "Cotacao", new { propostaId = Model.PropostaID })',
+                removerItens:              '@Url.Action("RemoverItens",              "Cotacao", new { propostaId = Model.PropostaID })',
+                impostosItem:              '@Url.Action("ObterImpostosItem",        "Cotacao", new { propostaId = Model.PropostaID, propostaItemId = "{itemId}" })',
+                validarItensImportacao:    '@Url.Action("ValidarItensImportacao",   "Cotacao", new { propostaId = Model.PropostaID })',
+                salvarCondPagto:           '@Url.Action("SalvarCondPagto",           "Cotacao", new { propostaId = Model.PropostaID })',
+                aprovar:                   '@Url.Action("Aprovar",                   "Cotacao", new { propostaId = Model.PropostaID })',
+                reprovar:                  '@Url.Action("Reprovar",                  "Cotacao", new { propostaId = Model.PropostaID })',
+                calcularMargem:            '@Url.Action("CalcularMargemItem",       "Cotacao", new { propostaId = Model.PropostaID, propostaItemId = 0 })'
             }
         };
     </script>

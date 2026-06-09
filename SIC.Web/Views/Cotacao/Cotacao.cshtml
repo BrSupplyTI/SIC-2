@@ -1120,6 +1120,7 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
                 buscarCatalogo:            '@Url.Action("BuscarCatalogo",           "Cotacao", new { propostaId = Model.PropostaID })',
                 adicionarItem:             '@Url.Action("AdicionarItem",            "Cotacao", new { propostaId = Model.PropostaID })',
                 atualizarCusto:            '@Url.Action("AtualizarCustoItem",       "Cotacao", new { propostaId = Model.PropostaID, propostaItemId = "{itemId}" })',
+                atualizarItem:             '@Url.Action("AtualizarItem",            "Cotacao", new { propostaId = Model.PropostaID, propostaItemId = "{itemId}" })',
                 gerarItens:                '@Url.Action("GerarItens",                "Cotacao", new { propostaId = Model.PropostaID })',
                 removerItens:              '@Url.Action("RemoverItens",              "Cotacao", new { propostaId = Model.PropostaID })',
                 impostosItem:              '@Url.Action("ObterImpostosItem",        "Cotacao", new { propostaId = Model.PropostaID, propostaItemId = "{itemId}" })',
@@ -1127,7 +1128,13 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
                 salvarCondPagto:           '@Url.Action("SalvarCondPagto",           "Cotacao", new { propostaId = Model.PropostaID })',
                 aprovar:                   '@Url.Action("Aprovar",                   "Cotacao", new { propostaId = Model.PropostaID })',
                 reprovar:                  '@Url.Action("Reprovar",                  "Cotacao", new { propostaId = Model.PropostaID })',
-                calcularMargem:            '@Url.Action("CalcularMargemItem",       "Cotacao", new { propostaId = Model.PropostaID, propostaItemId = 0 })'
+                calcularMargem:            '@Url.Action("CalcularMargemItem",       "Cotacao", new { propostaId = Model.PropostaID, propostaItemId = 0 })',
+                calcularFrete:             '@Url.Action("CalcularFrete",             "Cotacao", new { propostaId = Model.PropostaID })',
+                salvarFrete:               '@Url.Action("SalvarFrete",               "Cotacao", new { propostaId = Model.PropostaID })',
+                gerarPdf:                  '@Url.Action("GerarPdf",                  "Cotacao", new { propostaId = Model.PropostaID })',
+                gerarExcel:                '@Url.Action("GerarExcel",                "Cotacao", new { propostaId = Model.PropostaID })',
+                finalizar:                 '@Url.Action("Finalizar",                 "Cotacao", new { propostaId = Model.PropostaID })',
+                autorizarFaturamento:      '@Url.Action("AutorizarFaturamento",      "Cotacao", new { propostaId = Model.PropostaID })'
             }
         };
     </script>
@@ -1137,7 +1144,8 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
         (function () {
             async function gerarPdf(comImpostos) {
                 const comFoto = document.getElementById('chkComFoto').checked;
-                const url = `/Cotacao/${cotacaoConfig.propostaId}/gerar-pdf?comFoto=${comFoto}&comImpostos=${comImpostos}`;
+                const baseUrl = cotacaoConfig.urls?.gerarPdf || `/Cotacao/${cotacaoConfig.propostaId}/gerar-pdf`;
+                const url = `${baseUrl}?comFoto=${comFoto}&comImpostos=${comImpostos}`;
                 const btnId = comImpostos ? 'btnPdfComImp' : 'btnPdfSemImp';
                 const btn = document.getElementById(btnId);
                 const originalHtml = btn.innerHTML;
@@ -1177,7 +1185,7 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
     <script>
         (function () {
             async function exportarExcel() {
-                const url = `/Cotacao/${cotacaoConfig.propostaId}/gerar-excel`;
+                const url = cotacaoConfig.urls?.gerarExcel || `/Cotacao/${cotacaoConfig.propostaId}/gerar-excel`;
                 const btn = document.getElementById('btnExportarExcel');
                 const originalHtml = btn.innerHTML;
 
@@ -1226,7 +1234,8 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
                 btn.innerHTML = '<i class="fa-duotone fa-spinner fa-spin me-1"></i>Processando...';
 
                 try {
-                    const resp = await fetch(`/Cotacao/${cotacaoConfig.propostaId}/finalizar`, {
+                    const urlFinalizar = cotacaoConfig.urls?.finalizar || `/Cotacao/${cotacaoConfig.propostaId}/finalizar`;
+                    const resp = await fetch(urlFinalizar, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1274,7 +1283,8 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-duotone fa-spinner fa-spin me-1"></i>Aprovando...';
             try {
-                const resp = await fetch(`/Cotacao/${cotacaoConfig.propostaId}/aprovar`, {
+                const urlAprovar = cotacaoConfig.urls?.aprovar || `/Cotacao/${cotacaoConfig.propostaId}/aprovar`;
+                const resp = await fetch(urlAprovar, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ aprovadorID: aprovadorId })
@@ -1304,7 +1314,8 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-duotone fa-spinner fa-spin me-1"></i>Reprovando...';
             try {
-                const resp = await fetch(`/Cotacao/${cotacaoConfig.propostaId}/reprovar`, {
+                const urlReprovar = cotacaoConfig.urls?.reprovar || `/Cotacao/${cotacaoConfig.propostaId}/reprovar`;
+                const resp = await fetch(urlReprovar, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ aprovadorID: parseInt(document.getElementById('inputAprovadorIDAprovacao')?.value ?? '0'), justificativa })
@@ -1329,7 +1340,8 @@ E-mail para envio de XML/ Danfe/ Boleto: </textarea>
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-duotone fa-spinner fa-spin me-1"></i>Autorizando...';
             try {
-                const resp = await fetch(`/Cotacao/${cotacaoConfig.propostaId}/autorizar-faturamento`, {
+                const urlAutorizarFaturamento = cotacaoConfig.urls?.autorizarFaturamento || `/Cotacao/${cotacaoConfig.propostaId}/autorizar-faturamento`;
+                const resp = await fetch(urlAutorizarFaturamento, {
                     method: 'POST'
                 });
                 const json = await resp.json();

@@ -67,7 +67,7 @@ public sealed class CotacaoController(
 
         var todos = todosTask.Result.AsEnumerable();
 
-        // Filtro de busca em memória (cliente, CNPJ, proposta)
+        // Filtro de busca em memória (cliente, CNPJ, proposta, nome)
         if (!string.IsNullOrWhiteSpace(busca))
         {
             var term = busca.Trim();
@@ -75,7 +75,8 @@ public sealed class CotacaoController(
                 i.ClienteNome.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                 i.ClienteCNPJ.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                 i.PropostaId.ToString().Contains(term) ||
-                i.CdExtCliente.Contains(term, StringComparison.OrdinalIgnoreCase));
+                i.CdExtCliente.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                i.Nome.Contains(term, StringComparison.OrdinalIgnoreCase));
         }
 
         var lista = todos.ToList();

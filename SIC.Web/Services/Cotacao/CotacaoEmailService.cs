@@ -55,21 +55,54 @@ public sealed class CotacaoEmailService(
 
         var cot = MapToDadosEmail(tpl);
 
-        // ── 5. Carregar template HTML ─────────────────────────────────────
-        var templatePath = Path.Combine(
-            env.ContentRootPath,
-            "Views", "Cotacao", "EmailInformarClienteCotacaoLiberadaModelo2.html");
+        // ── 5. Gerar HTML do email em C# (sem arquivo em disco) ───────────
+        var builder = new CotacaoEmailHtmlBuilder(estabCor);
 
-        System.Diagnostics.Debug.WriteLine($"[EMAIL] ContentRootPath: {env.ContentRootPath}");
-        System.Diagnostics.Debug.WriteLine($"[EMAIL] WebRootPath: {env.WebRootPath}");
-        System.Diagnostics.Debug.WriteLine($"[EMAIL] Template Path: {templatePath}");
-        System.Diagnostics.Debug.WriteLine($"[EMAIL] File Exists: {File.Exists(templatePath)}");
+        var dadosEmail = new DadosEmailInterno
+        {
+            CdProposta = cot.CdProposta,
+            OrdemCompra = cot.OrdemCompra,
+            Obs = cot.Obs,
+            ContatoNome = cot.ContatoNome,
+            ContatoEmail = cot.ContatoEmail,
+            DataValidade = cot.DataValidade,
+            CondPagtoNome = cot.CondPagtoNome,
+            StatusNome = cot.StatusNome,
+            DiasPrazoEntrega = cot.DiasPrazoEntrega,
+            TransportadoraNome = cot.TransportadoraNome,
+            VlrFrete = cot.VlrFrete,
+            TotalVendaSemFrete = cot.TotalVendaSemFrete,
+            TotalVendaFinal = cot.TotalVendaFinal,
+            EstabRazaoSocial = cot.EstabRazaoSocial,
+            EstabCNPJ = cot.EstabCNPJ,
+            EstabInscrEstadual = cot.EstabInscrEstadual,
+            EstabTelefone = cot.EstabTelefone,
+            EstabEndereco = cot.EstabEndereco,
+            EstabNumero = cot.EstabNumero,
+            EstabComplemento = cot.EstabComplemento,
+            EstabBairro = cot.EstabBairro,
+            EstabCidade = cot.EstabCidade,
+            EstabUF = cot.EstabUF,
+            EstabCEP = cot.EstabCEP,
+            ConsultorNome = cot.ConsultorNome,
+            ConsultorEmail = cot.ConsultorEmail,
+            ConsultorTelefone = cot.ConsultorTelefone,
+            ClienteRazaoSocial = cot.ClienteRazaoSocial,
+            ClienteCNPJ = cot.ClienteCNPJ,
+            ClienteTelefone = cot.ClienteTelefone,
+            ClienteEndereco = cot.ClienteEndereco,
+            ClienteNumero = cot.ClienteNumero,
+            ClienteComplemento = cot.ClienteComplemento,
+            ClienteBairro = cot.ClienteBairro,
+            ClienteCidade = cot.ClienteCidade,
+            ClienteUF = cot.ClienteUF,
+            ClienteCEP = cot.ClienteCEP,
+            Itens = cot.Itens.Select(i => new ItemEmailInterno(
+                i.CodItemBR, i.DescrItemBR, i.PrecoItem, i.IPI, i.ST,
+                i.Quantidade, i.VlrUnitario, i.NmSegmento, i.NCM)).ToList()
+        };
 
-        var corpo = await File.ReadAllTextAsync(templatePath, cancellationToken);
-
-        // ── 6. Substituir placeholders ────────────────────────────────────
-        corpo = AplicarPlaceholders(corpo, titulo, estabCor, estabLogo,
-                                    form, cot, mensagem, hash);
+        var corpo = builder.Construir(titulo, form.Saudacao, mensagem, dadosEmail, hash);
 
         // ── 7. Montar MimeMessage com CC / BCC / Reply-To ─────────────────
         var bcc     = new List<string>();
@@ -136,130 +169,6 @@ public sealed class CotacaoEmailService(
             PodeAltCondPagamento  = form.PodeAltCondPagamento  ? 1 : 0,
             PodeNegociar          = form.PodeNegociar          ? 1 : 0,
         }, cancellationToken);
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  SUBSTITUIÇÃO DE PLACEHOLDERS
-    // ═══════════════════════════════════════════════════════════════════════
-
-    private static string AplicarPlaceholders(
-        string corpo,
-        string titulo,
-        string estabCor,
-        string estabLogo,
-        EnviarEmailCotacaoViewModel form,
-        DadosEmail cot,
-        string mensagem,
-        string hash)
-    {
-        // Cabeçalho
-        corpo = corpo
-            .Replace("{{EMAIL_TITULO}}",   titulo)
-            .Replace("{{EMAIL_EST_LOGO}}", estabLogo)
-            .Replace("{{EMAIL_EST_ICON}}", estabLogo)
-            .Replace("{{EMAIL_EST_COR}}",  estabCor);
-
-        // Cotação
-        corpo = corpo
-            .Replace("{{EMAIL_COT_ID}}",     cot.CdProposta)
-            .Replace("{{EMAIL_COT_ANO}}",    DateTime.Now.Year.ToString())
-            .Replace("{{EMAIL_COT_STATUS}}", cot.StatusNome)
-            .Replace("{{EMAIL_COT_DATA}}",   DateTime.Now.ToString("dd/MM/yyyy"))
-            .Replace("{{EMAIL_COT_DATAVAL}}", cot.DataValidade)
-            .Replace("{{EMAIL_COT_CONDPAG}}", cot.CondPagtoNome)
-            .Replace("{{EMAIL_COT_OC}}",     string.IsNullOrEmpty(cot.OrdemCompra)  ? "&nbsp;" : cot.OrdemCompra)
-            .Replace("{{EMAIL_COT_OBS}}",    string.IsNullOrEmpty(cot.Obs)          ? "&nbsp;" : cot.Obs)
-            .Replace("{{EMAIL_CONT_NOME}}",  string.IsNullOrEmpty(cot.ContatoNome)  ? "&nbsp;" : cot.ContatoNome)
-            .Replace("{{EMAIL_CONT_EMAIL}}", string.IsNullOrEmpty(cot.ContatoEmail) ? "&nbsp;" : cot.ContatoEmail);
-
-        // Saudação e mensagem
-        corpo = corpo
-            .Replace("{{EMAIL_SAUDACAO}}", form.Saudacao)
-            .Replace("{{EMAIL_MENSAGEM}}", mensagem);
-
-        // Estabelecimento
-        corpo = corpo
-            .Replace("{{EMAIL_EST_RAZAO}}",    cot.EstabRazaoSocial)
-            .Replace("{{EMAIL_EST_CNPJ}}",     FormatCnpj(cot.EstabCNPJ))
-            .Replace("{{EMAIL_EST_INSCREST}}", cot.EstabInscrEstadual)
-            .Replace("{{EMAIL_EST_TELEFONE}}", cot.EstabTelefone)
-            .Replace("{{EMAIL_EST_ENDERECO}}", cot.EstabEndereco)
-            .Replace("{{EMAIL_EST_NUMERO}}",   cot.EstabNumero)
-            .Replace("{{EMAIL_EST_COMP}}",     cot.EstabComplemento)
-            .Replace("{{EMAIL_EST_BAIRRO}}",   cot.EstabBairro)
-            .Replace("{{EMAIL_EST_CIDADE}}",   cot.EstabCidade)
-            .Replace("{{EMAIL_EST_UF}}",       cot.EstabUF)
-            .Replace("{{EMAIL_EST_CEP}}",      cot.EstabCEP);
-
-        // Consultor
-        corpo = corpo
-            .Replace("{{EMAIL_CONSULTOR_NOME}}",     cot.ConsultorNome)
-            .Replace("{{EMAIL_CONSULTOR_EMAIL}}",    cot.ConsultorEmail)
-            .Replace("{{EMAIL_CONSULTOR_TELEFONE}}", cot.ConsultorTelefone);
-
-        // Cliente
-        corpo = corpo
-            .Replace("{{EMAIL_CLI_RAZAO}}",    cot.ClienteRazaoSocial)
-            .Replace("{{EMAIL_CLI_CNPJ}}",     FormatCnpj(cot.ClienteCNPJ))
-            .Replace("{{EMAIL_CLI_TELEFONE}}", cot.ClienteTelefone)
-            .Replace("{{EMAIL_CLI_ENDERECO}}", cot.ClienteEndereco)
-            .Replace("{{EMAIL_CLI_NUMERO}}",   cot.ClienteNumero)
-            .Replace("{{EMAIL_CLI_COMP}}",     cot.ClienteComplemento)
-            .Replace("{{EMAIL_CLI_BAIRRO}}",   cot.ClienteBairro)
-            .Replace("{{EMAIL_CLI_CIDADE}}",   cot.ClienteCidade)
-            .Replace("{{EMAIL_CLI_UF}}",       cot.ClienteUF)
-            .Replace("{{EMAIL_CLI_CEP}}",      cot.ClienteCEP);
-
-        // Itens
-        corpo = corpo.Replace("{{EMAIL_ITENS}}", MontarItens(cot.Itens));
-
-        // Prazo, frete e totais
-        var prazoEntrega = cot.DiasPrazoEntrega == 0
-            ? "<span class='my-cinza'>A definir</span>"
-            : $"{cot.DiasPrazoEntrega} Dias Úteis";
-
-        var transportadora = string.IsNullOrWhiteSpace(cot.TransportadoraNome)
-            ? "<span class='my-cinza'>Definida no momento do faturamento.</span>"
-            : cot.TransportadoraNome;
-
-        var tipoFrete = cot.VlrFrete > 0 ? "FOB" : "CIF";
-
-        corpo = corpo
-            .Replace("{{EMAIL_COT_PRAZOENT}}",      prazoEntrega)
-            .Replace("{{EMAIL_COT_TRANSP}}",        transportadora)
-            .Replace("{{EMAIL_COT_TIPOFRETE}}",     tipoFrete)
-            .Replace("{{EMAIL_COT_VLRFRETE}}",      cot.VlrFrete.ToString("C", new System.Globalization.CultureInfo("pt-BR")))
-            .Replace("{{EMAIL_COT_VLRTOTAL}}",      cot.TotalVendaSemFrete.ToString("C", new System.Globalization.CultureInfo("pt-BR")))
-            .Replace("{{EMAIL_COT_VLRTOTALFRETE}}", cot.TotalVendaFinal.ToString("C", new System.Globalization.CultureInfo("pt-BR")))
-            .Replace("{{EMAIL_HASH}}",              hash);
-
-        return corpo;
-    }
-
-    private static string MontarItens(IReadOnlyList<ItemEmail> itens)
-    {
-        var sb = new StringBuilder();
-        foreach (var item in itens)
-        {
-            var foto = $"http://www.supplymanager.com.br/fotos/low/{item.CodItemBR}.jpg";
-            sb.AppendLine($"""
-                <tr>
-                  <td class='my-text-center'><img src='{foto}' alt='{item.DescrItemBR}' style='width:50px;'></td>
-                  <td class='my-text-center'>{item.CodItemBR}</td>
-                  <td class='my-text-left'>
-                    {item.DescrItemBR}<br>
-                    <span class='my-cinza'>{item.NmSegmento}</span>
-                  </td>
-                  <td class='my-text-center'>{item.NCM}</td>
-                  <td class='my-text-right'>{item.PrecoItem.ToString("C", new System.Globalization.CultureInfo("pt-BR"))}</td>
-                  <td class='my-text-right'>{item.IPI.ToString("C", new System.Globalization.CultureInfo("pt-BR"))}</td>
-                  <td class='my-text-right'>{item.ST.ToString("C", new System.Globalization.CultureInfo("pt-BR"))}</td>
-                  <td class='my-text-center'><strong>{item.Quantidade}</strong></td>
-                  <td class='my-text-right'><strong>{item.VlrUnitario.ToString("C", new System.Globalization.CultureInfo("pt-BR"))}</strong></td>
-                </tr>
-                """);
-        }
-        return sb.ToString();
     }
 
     // ═══════════════════════════════════════════════════════════════════════

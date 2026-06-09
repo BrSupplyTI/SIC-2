@@ -307,7 +307,8 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Calculando...';
 
-            fetch(`/Cotacao/CalcularFrete?propostaId=${propostaId}`, {
+            const urlCalcularFrete = window.cotacaoConfig?.urls?.calcularFrete || `/Cotacao/CalcularFrete?propostaId=${propostaId}`;
+            fetch(urlCalcularFrete, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -431,7 +432,8 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Salvando...';
 
-            fetch(`/Cotacao/SalvarFrete?propostaId=${propostaId}&transportadoraId=${transportadoraId}&valorFrete=${valorFrete}&prazoTotal=${prazoTotal}`, {
+            const urlSalvarFrete = window.cotacaoConfig?.urls?.salvarFrete || `/Cotacao/SalvarFrete?propostaId=${propostaId}&transportadoraId=${transportadoraId}&valorFrete=${valorFrete}&prazoTotal=${prazoTotal}`;
+            fetch(urlSalvarFrete, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -909,7 +911,10 @@
         inputEl.disabled = true;
 
         try {
-            const resp = await fetch(`/Cotacao/${pid}/itens/${propostaItemId}/atualizar`, {
+            const urlAtualizar = window.cotacaoConfig?.urls?.atualizarItem 
+                ? window.cotacaoConfig.urls.atualizarItem.replace('{itemId}', propostaItemId)
+                : `/Cotacao/${pid}/itens/${propostaItemId}/atualizar`;
+            const resp = await fetch(urlAtualizar, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1494,7 +1499,8 @@
                     // Recalcula margem de todos os itens restantes após a exclusão
                     const pid = window.cotacaoConfig?.propostaId;
                     if (pid) {
-                        await fetch(`/Cotacao/${pid}/itens/0/calcular-margem`, {
+                        const urlRecalcularMargem = window.cotacaoConfig?.urls?.calcularMargem || `/Cotacao/${pid}/itens/0/calcular-margem`;
+                        await fetch(urlRecalcularMargem, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ type: 'preco', viaTela: 'NAO' })

@@ -303,8 +303,8 @@ public sealed class SqlCotacaoQueryRepository(IConfiguration configuration) : IC
                 END AS PropostaItem__Criticidade,
                     Convert(Integer,(ISNULL(EstoqueSIC.QtDispEstoque,0) - ISNULL(EstoqueSIC.QtAlocadaSemOV,0))) AS PropostaItem__QtEstoqueSIC,
                     Preco.Preco_Base AS PropostaItem__PrecoBase,
-                    ISNULL(PropostaItem.VlrTabelaPreco, 0) AS PropostaItem__PrecoTabela,
-                    ISNULL(PropostaItem.VlrPrecoMinimo, 0) AS PropostaItem__PrecoMinimo,
+                    COALESCE(TPI.VlrUnit, 0) AS PropostaItem__PrecoTabela,
+                    COALESCE(TPI.VlrUnitMinimo, TPI.VlrUnit, 0) AS PropostaItem__PrecoMinimo,
                     TP.NmTblPreco AS PropostaItem__NomeTabela,
                 (SELECT Cod_Barras
                     FROM BrWeb.dbo.Preco_Itens PII
@@ -321,6 +321,8 @@ public sealed class SqlCotacaoQueryRepository(IConfiguration configuration) : IC
                 LEFT JOIN BrSupply.dbo.BR_Familia Familia (NOLOCK) ON Item.FamiliaID = Familia.FamiliaID
                 LEFT JOIN BrSupply.dbo.BR_SubFamilia SubFamilia (NOLOCK) ON Item.SubFamiliaID = SubFamilia.SubFamiliaID
                 LEFT JOIN BrSupply.dbo.BR_TblPreco TP (NOLOCK) ON TP.TblPrecoID = Proposta.TabelaPrecoID
+                LEFT JOIN BrSupply.dbo.BR_TblPrecoVig TPV (NOLOCK) ON TPV.TblPrecoID = TP.TblPrecoID
+                LEFT JOIN BrSupply.dbo.BR_TblPrecoItem TPI (NOLOCK) ON TPI.TblPrecoVigID = TPV.TblPrecoVigID AND TPI.ItemID = Item.ItemID
                 WHERE PropostaItem.PropostaID = @PropostaID
         """;
 

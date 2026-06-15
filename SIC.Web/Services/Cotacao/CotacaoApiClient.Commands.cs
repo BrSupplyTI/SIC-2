@@ -73,10 +73,11 @@ public sealed partial class CotacaoApiClient
         int propostaId,
         string tipoGeracao,
         int usuarioId,
+        string? cotacaoId = null,
         CancellationToken cancellationToken = default)
         => PostAsync(
             $"api/cotacao/{propostaId}/gerar-itens",
-            new { TipoGeracao = tipoGeracao, UsuarioID = usuarioId },
+            new { TipoGeracao = tipoGeracao, UsuarioID = usuarioId, CotacaoID = cotacaoId },
             cancellationToken);
 
     public Task<OperationResultVm> RemoverItensAsync(

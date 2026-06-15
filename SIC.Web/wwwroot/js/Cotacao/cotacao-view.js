@@ -194,11 +194,26 @@
     // GERAR ITENS (Consumo / Último Pedido)
     // ══════════════════════════════════════════════════════════════
 
-    document.querySelectorAll('.btn-gerar').forEach(function (btn) {
+    document.querySelectorAll('.btn-gerar').forEach(btn => {
         btn.addEventListener('click', async function (e) {
             e.preventDefault();
 
             const tipo = btn.dataset.value;
+
+            // ── Se for "Outro Pedido", abrir o modal em vez de gerar itens ─
+            if (tipo === 'P') {
+                const modal = bootstrap.Modal.getOrCreateInstance(
+                    document.getElementById('modalGerarCotacao')
+                );
+                document.getElementById('inputTipoGeracao').value = 'P';
+                document.getElementById('msgTipoGeracao').textContent = 'Digite o número do Pedido que deseja replicar os itens.';
+                document.getElementById('inputCotacaoID').value = '';
+                document.getElementById('inputCotacaoID').placeholder = 'Ex: 4259647';
+                modal.show();
+                return;
+            }
+
+            // ── Para C e U, usar o fluxo original de geração de itens ─
             const url = window.cotacaoConfig?.urls?.gerarItens;
             if (!url || !tipo) return;
 
@@ -423,22 +438,30 @@
                 return;
             }
 
-            const transportadoraId = linhaSelecionada.dataset.transportadoraId;
-            const valorFrete       = linhaSelecionada.dataset.valor;
-            const prazoTotal       = linhaSelecionada.dataset.comercial;
+            const transportadoraId = parseInt(linhaSelecionada.dataset.transportadoraId);
+            const valorFrete       = parseFloat(linhaSelecionada.dataset.valor);
+            const prazoTotal       = parseInt(linhaSelecionada.dataset.comercial);
 
             const btn = this;
             const textoOriginal = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Salvando...';
 
-            const urlSalvarFrete = window.cotacaoConfig?.urls?.salvarFrete || `/Cotacao/SalvarFrete?propostaId=${propostaId}&transportadoraId=${transportadoraId}&valorFrete=${valorFrete}&prazoTotal=${prazoTotal}`;
+            const urlSalvarFrete = window.cotacaoConfig?.urls?.salvarFrete || `/Cotacao/SalvarFrete`;
+
+            const payload = {
+                transportadoraId: transportadoraId,
+                valorFrete: valorFrete,
+                prazoTotal: prazoTotal
+            };
+
             fetch(urlSalvarFrete, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
-                }
+                },
+                body: JSON.stringify(payload)
             })
                 .then(async response => {
                     if (response.status === 401) { window.location.reload(); return null; }
@@ -1410,8 +1433,11 @@
         e.preventDefault();
 
         const itemId = btn.dataset.propostaItemId;
-        const url = (window.cotacaoConfig?.urls?.impostosItem ?? '').replace('{itemId}', itemId);
-        if (!url) return;
+        const propostaId = window.cotacaoConfig?.propostaId;
+
+        if (!itemId || !propostaId) return;
+
+        const url = `/Cotacao/${propostaId}/itens/${itemId}/impostos`;
 
         impostosLoading?.classList.remove('d-none');
         impostosConteudo?.classList.add('d-none');

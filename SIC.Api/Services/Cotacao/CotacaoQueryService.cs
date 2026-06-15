@@ -572,6 +572,7 @@ public sealed class CotacaoQueryService(ICotacaoQueryRepository repository) : IC
             VlrCustoMedio = i.VlrCustoMedio,
             CustoLiquido = i.CustoLiquido,
             PrecoItem = i.PrecoItem,
+            PrecoUnitario = i.PrecoItem,
             VlrPrecoVenda = i.VlrPrecoVenda,
             Margem = i.Margem,
             MargemPercentual = i.MargemPercentual,

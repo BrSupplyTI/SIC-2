@@ -10,19 +10,19 @@ namespace SIC.Web.Services.Cotacao;
 /// Serviço de envio de e-mail da Cotação e gravação do log.
 /// Replica a lógica do PHP controllers/cotacoes/EnviarEmail.php.
 /// Os dados são obtidos via CotacaoApiClient (sem SQL direto no Web).
+/// Configurações de SMTP são obtidas da API.
 /// </summary>
 public sealed class CotacaoEmailService(
-    IConfiguration configuration,
     IWebHostEnvironment env,
     CotacaoApiClient apiClient)
 {
-    private readonly string _smtpHost      = configuration["Smtp:Host"]      ?? string.Empty;
-    private readonly int    _smtpPort      = configuration.GetValue<int?>("Smtp:Port") ?? 587;
-    private readonly bool   _smtpSsl       = configuration.GetValue<bool?>("Smtp:EnableSsl") ?? true;
-    private readonly string _smtpUser      = configuration["Smtp:Username"]  ?? string.Empty;
-    private readonly string _smtpPass      = configuration["Smtp:Password"]  ?? string.Empty;
-    private readonly string _smtpFrom      = configuration["Smtp:FromEmail"] ?? string.Empty;
-    private readonly string _smtpFromName  = configuration["Smtp:FromName"]  ?? "SIC";
+    private string _smtpHost = string.Empty;
+    private int _smtpPort = 587;
+    private bool _smtpSsl = true;
+    private string _smtpUser = string.Empty;
+    private string _smtpPass = string.Empty;
+    private string _smtpFrom = string.Empty;
+    private string _smtpFromName = "SIC";
 
     // ═══════════════════════════════════════════════════════════════════════
     //  PONTO DE ENTRADA PRINCIPAL
@@ -33,6 +33,18 @@ public sealed class CotacaoEmailService(
         int usuarioLogadoId,
         CancellationToken cancellationToken = default)
     {
+        // ── 0. Obter configurações SMTP da API ─────────────────────────────
+        var smtpConfig = await apiClient.GetSmtpConfigAsync(cancellationToken)
+                         ?? throw new InvalidOperationException("Configurações de SMTP não encontradas na API.");
+
+        _smtpHost = smtpConfig.Host;
+        _smtpPort = smtpConfig.Port;
+        _smtpSsl = smtpConfig.EnableSsl;
+        _smtpUser = smtpConfig.Username;
+        _smtpPass = smtpConfig.Password;
+        _smtpFrom = smtpConfig.FromEmail;
+        _smtpFromName = smtpConfig.FromName;
+
         // ── 1. Normalizar campos (igual ao PHP) ───────────────────────────
         var emailDestinatario = form.EmailDestinatario.Replace(" ", "");
         var comCopia          = string.IsNullOrWhiteSpace(form.ComCopia) ? null

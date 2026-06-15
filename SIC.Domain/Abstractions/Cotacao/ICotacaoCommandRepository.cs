@@ -44,6 +44,7 @@ public interface ICotacaoCommandRepository
         int propostaId,
         string tipoGeracao,
         int usuarioId,
+        string? cotacaoId = null,
         CancellationToken cancellationToken = default);
 
     Task<(bool Success, string? Error)> RemoverItensAsync(

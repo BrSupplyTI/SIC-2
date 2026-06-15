@@ -366,11 +366,11 @@ public sealed class CotacaoController(
         CancellationToken cancellationToken)
     {
         var result = await commandService.GerarItensAsync(
-            propostaId, request.TipoGeracao, request.UsuarioID, cancellationToken);
+            propostaId, request.TipoGeracao, request.UsuarioID, request.CotacaoID, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    public sealed record GerarItensRequest(string TipoGeracao, int UsuarioID);
+    public sealed record GerarItensRequest(string TipoGeracao, int UsuarioID, string? CotacaoID = null);
 
     public sealed record RemoverItensRequest(List<RemoverItemInfo> Itens, string Motivo, int UsuarioId);
     public sealed record RemoverItemInfo(int PropostaItemId, string CdItem);

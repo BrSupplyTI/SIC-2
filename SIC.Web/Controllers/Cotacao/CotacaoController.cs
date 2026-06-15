@@ -634,21 +634,31 @@ public sealed class CotacaoController(
     [HttpPost("SalvarFrete")]
     public async Task<IActionResult> SalvarFrete(
         int propostaId,
-        int transportadoraId,
-        decimal valorFrete,
-        int prazoTotal,
+        [FromBody] SalvarFreteRequest request,
         CancellationToken cancellationToken)
     {
         try
         {
-            var result = await apiClient.SalvarFreteAsync(propostaId, transportadoraId, valorFrete, prazoTotal, cancellationToken);
-            return Json(result.Success ? new { success = true } : new { success = false, error = result.Message });
+            var result = await apiClient.SalvarFreteAsync(
+                propostaId, 
+                request.TransportadoraId, 
+                request.ValorFrete, 
+                request.PrazoTotal, 
+                cancellationToken);
+            return Json(result.Success 
+                ? new { success = true } 
+                : new { success = false, error = result.Message });
         }
         catch (Exception ex)
         {
             return Json(new { success = false, error = ex.Message });
         }
     }
+
+    public sealed record SalvarFreteRequest(
+        int TransportadoraId,
+        decimal ValorFrete,
+        int PrazoTotal);
 
     [HttpGet("{propostaId:int}/buscar-catalogo")]
     public async Task<IActionResult> BuscarCatalogo(
@@ -749,7 +759,7 @@ public sealed class CotacaoController(
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    public sealed record CotacaoGerarItensRequest(string TipoGeracao);
+    public sealed record CotacaoGerarItensRequest(string TipoGeracao, string? CotacaoID = null);
 
     [HttpPost("{propostaId:int}/gerar-itens")]
     public async Task<IActionResult> GerarItens(
@@ -761,6 +771,7 @@ public sealed class CotacaoController(
             propostaId,
             request.TipoGeracao,
             GetUsuarioId(),
+            request.CotacaoID,
             cancellationToken);
 
         return result.Success ? Ok(result) : BadRequest(result);

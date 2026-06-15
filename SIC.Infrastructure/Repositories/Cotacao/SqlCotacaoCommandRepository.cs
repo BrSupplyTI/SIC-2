@@ -139,14 +139,16 @@ public sealed class SqlCotacaoCommandRepository(IConfiguration configuration) : 
         int propostaId,
         string tipoGeracao,
         int usuarioId,
+        string? cotacaoId = null,
         CancellationToken cancellationToken = default)
         => ExecuteAsync(
-            "EXEC BrWeb..Proposta_GerarItens @PropostaID, @TipoGeracao, @UsuarioID",
+            "EXEC BrWeb..Proposta_GerarItens @PropostaID, @TipoGeracao, @UsuarioID, @CotacaoID",
             parameters =>
             {
                 parameters.AddWithValue("@PropostaID",  propostaId);
                 parameters.AddWithValue("@TipoGeracao", tipoGeracao);
                 parameters.AddWithValue("@UsuarioID",   usuarioId);
+                parameters.AddWithValue("@CotacaoID", cotacaoId ?? (object)DBNull.Value);
             },
             cancellationToken);
 

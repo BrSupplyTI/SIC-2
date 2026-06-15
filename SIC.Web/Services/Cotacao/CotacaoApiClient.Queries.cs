@@ -282,4 +282,24 @@ public sealed partial class CotacaoApiClient
     {
         public string Executivo { get; set; } = string.Empty;
     }
+
+    // ── configuração SMTP ──────────────────────────────────────────────────────
+
+    public async Task<SmtpConfigDto?> GetSmtpConfigAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await GetAsync<SmtpConfigDto>(
+            "api/configuration/smtp", cancellationToken);
+    }
+
+    public sealed class SmtpConfigDto
+    {
+        public string Host { get; set; } = string.Empty;
+        public int Port { get; set; }
+        public bool EnableSsl { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string FromEmail { get; set; } = string.Empty;
+        public string FromName { get; set; } = string.Empty;
+    }
 }

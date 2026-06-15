@@ -303,8 +303,8 @@ public sealed class SqlCotacaoQueryRepository(IConfiguration configuration) : IC
                 END AS PropostaItem__Criticidade,
                     Convert(Integer,(ISNULL(EstoqueSIC.QtDispEstoque,0) - ISNULL(EstoqueSIC.QtAlocadaSemOV,0))) AS PropostaItem__QtEstoqueSIC,
                     Preco.Preco_Base AS PropostaItem__PrecoBase,
-                    COALESCE(TPI.VlrUnit, 0) AS PropostaItem__PrecoTabela,
-                    COALESCE(TPI.VlrUnitMinimo, TPI.VlrUnit, 0) AS PropostaItem__PrecoMinimo,
+                    TPI.VlrUnit AS PropostaItem__PrecoTabela,
+                    COALESCE(TPI.VlrUnitMinimo, TPI.VlrUnit) AS PropostaItem__PrecoMinimo,
                     TP.NmTblPreco AS PropostaItem__NomeTabela,
                 (SELECT Cod_Barras
                     FROM BrWeb.dbo.Preco_Itens PII

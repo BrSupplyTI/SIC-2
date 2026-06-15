@@ -91,6 +91,21 @@
     opacity: 0.5;
 }
 
+/* ── Botões outline: garantir cor de texto no hover (todos os temas) ── */
+.btn.btn-outline-success:hover,
+.btn.btn-outline-success:focus,
+.btn.btn-outline-danger:hover,
+.btn.btn-outline-danger:focus {
+    color: #fff !important;
+}
+
+[data-bs-theme="dark"] .btn.btn-outline-success:hover,
+[data-bs-theme="dark"] .btn.btn-outline-success:focus,
+[data-bs-theme="dark"] .btn.btn-outline-danger:hover,
+[data-bs-theme="dark"] .btn.btn-outline-danger:focus {
+    color: #fff !important;
+}
+
 /* ── Quick info cards ── */
 .cotacao-quick-card {
     display: flex;

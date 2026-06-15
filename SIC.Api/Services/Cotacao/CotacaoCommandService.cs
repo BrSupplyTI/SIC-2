@@ -106,12 +106,14 @@ public sealed class CotacaoCommandService(ICotacaoCommandRepository repository) 
         int propostaId,
         string tipoGeracao,
         int usuarioId,
+        string? cotacaoId = null,
         CancellationToken cancellationToken = default)
     {
         var (success, error) = await repository.GerarItensAsync(
             propostaId,
             tipoGeracao,
             usuarioId,
+            cotacaoId,
             cancellationToken);
 
         return new OperationResult

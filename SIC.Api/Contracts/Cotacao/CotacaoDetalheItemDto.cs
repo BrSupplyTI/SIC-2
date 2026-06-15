@@ -17,6 +17,7 @@ public sealed class CotacaoDetalheItemDto
     public decimal VlrCustoMedio { get; set; }
     public decimal CustoLiquido { get; set; }
     public decimal PrecoItem { get; set; }
+    public decimal PrecoUnitario { get; set; }
     public decimal VlrPrecoVenda { get; set; }
     public decimal Margem { get; set; }
     public decimal MargemPercentual { get; set; }

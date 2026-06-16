@@ -1,0 +1,358 @@
+﻿@model SIC.Web.Models.InteligenciaDeBusca.CategorizacaoPageViewModel
+@{
+    ViewData["Title"] = "Categorização dos Itens";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
+    <style>
+        .cat-section-title {
+            font-size: .8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--sic-muted);
+            border-bottom: 1px solid var(--sic-border);
+            padding-bottom: .5rem;
+            margin-bottom: 1rem;
+        }
+        .table-cat-wrap { border: 1px solid var(--sic-border); border-radius: .5rem; overflow: hidden; }
+        .table-cat thead th {
+            font-size: .7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .05em; color: var(--sic-muted); background: var(--sic-surface-2);
+            border-bottom: 2px solid var(--sic-border); padding: .55rem .75rem; white-space: nowrap;
+        }
+        .table-cat tbody td {
+            color: var(--sic-text); border-bottom: 1px solid var(--sic-border);
+            padding: .5rem .75rem; font-size: .85rem; vertical-align: middle;
+        }
+        .table-cat tbody tr:last-child td { border-bottom: none; }
+        #tbl-cat-skeleton { display: block; }
+        #tbl-cat-ready    { display: none;  }
+        .skeleton-row td  { padding: .6rem .75rem; }
+        .skeleton-cell {
+            height: .85rem; border-radius: .25rem;
+            background: linear-gradient(90deg, var(--sic-surface-2) 25%, var(--sic-border) 50%, var(--sic-surface-2) 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.4s infinite;
+        }
+    </style>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 mb-0">
+                    <i class="fa-duotone fa-tags me-2 text-br"></i>Categorização dos Itens
+                </h2>
+                <p class="text-muted mt-1 mb-0">Classifique e organize os itens do catálogo por categoria.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-success btn-sm" href="@Url.Action("ExportarCategorizacaoExcel", "InteligenciaDeBusca")">
+                    <i class="fa-duotone fa-file-excel me-1"></i>Exportar Excel
+                </a>
+                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalSemCategoria">
+                    <i class="fa-duotone fa-triangle-exclamation me-1"></i>Sem Categoria
+                    <span class="badge bg-dark ms-1">@Model.TotalSemCategoria</span>
+                </button>
+                <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("InteligenciaDeBusca", "InteligenciaDeBusca")">
+                    <i class="fa-duotone fa-chevron-left me-1"></i>Voltar
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            @foreach (var cat in Model.Categorias)
+            {
+                var total = Model.Itens.Count(i => i.Categoria == cat.NmTipoLista);
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center">
+                        <div class="fw-bold fs-4 text-br">@total</div>
+                        <div class="text-muted small">@cat.NmTipoLista</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Estabelecimento</label>
+                <select id="filtroEstabelecimento" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    @foreach (var estab in Model.Itens.Select(i => i.NmEstabelecimento).Distinct().OrderBy(e => e))
+                    {
+                        <option value="@estab">@estab</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="cat-section-title"><i class="fa-duotone fa-list me-1 text-br"></i>Itens Categorizados</div>
+
+        <div class="table-cat-wrap" id="tbl-cat-skeleton">
+            <div class="table-responsive">
+                <table class="table table-cat mb-0">
+                    <thead>
+                        <tr>
+                            <th>Estabelecimento</th><th>Cód. Item</th><th>Nome do Item</th>
+                            <th>Criticidade</th><th>Custo Aquisição</th><th>Estoque Disp.</th>
+                            <th>Categoria</th><th>Prioridade</th><th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var s = 0; s < 8; s++)
+                        {
+                            <tr class="skeleton-row">
+                                @for (var c = 0; c < 9; c++)
+                                {
+                                    <td><div class="skeleton-cell" style="width:@(c == 2 ? 90 : c == 8 ? 50 : 70)%">&nbsp;</div></td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tbl-cat-ready">
+        <div class="table-cat-wrap">
+            <div class="table-responsive">
+                <table id="tbl-categorizacao" class="table table-cat table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Estabelecimento</th>
+                            <th>Cód. Item</th>
+                            <th>Nome do Item</th>
+                            <th>Criticidade</th>
+                            <th>Custo Aquisição</th>
+                            <th>Estoque Disp.</th>
+                            <th>Categoria</th>
+                            <th>Prioridade</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Itens)
+                        {
+                            <tr>
+                                <td>@item.NmEstabelecimento</td>
+                                <td><span class="font-monospace small">@item.CdItem</span></td>
+                                <td>@item.NmItem</td>
+                                <td>@item.Criticidade</td>
+                                <td>@item.VlrCustoAquisicaoFormat</td>
+                                <td>@item.QtDispEstoque</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.Categoria))
+                                    {
+                                        <span class="badge bg-success" style="font-size:.75rem">@item.Categoria</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary" style="font-size:.75rem">Sem categoria</span>
+                                    }
+                                </td>
+                                <td>@item.Prioridade</td>
+                                <td class="text-center text-nowrap">
+                                    <button class="btn btn-outline-primary btn-sm btn-editar-categoria"
+                                            data-id="@item.ItemID" data-cat="@item.PesquisaTipoListaID"
+                                            title="Editar categoria">
+                                        <i class="fa-duotone fa-pen"></i>
+                                    </button>
+                                    @if (item.PesquisaTipoListaID.HasValue)
+                                    {
+                                        <button class="btn btn-outline-danger btn-sm btn-remover-categoria"
+                                                data-id="@item.ItemID" title="Remover categoria">
+                                            <i class="fa-duotone fa-trash"></i>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+@* Modal: Itens Sem Categoria *@
+<div class="modal fade" id="modalSemCategoria" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-duotone fa-triangle-exclamation me-2 text-warning"></i>Itens Sem Categoria</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table id="tbl-sem-categoria" class="table table-cat table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Cód. Item</th>
+                                <th>Nome do Item</th>
+                                <th>Segmento</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ItensSemCategoria)
+                            {
+                                <tr>
+                                    <td><span class="font-monospace small">@item.CdItem</span></td>
+                                    <td>@item.NmItem</td>
+                                    <td>@(item.NmSegmento ?? "-")</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-outline-success btn-sm btn-adicionar-categoria"
+                                                data-id="@item.ItemID" title="Adicionar categoria">
+                                            <i class="fa-duotone fa-plus"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Modal: Selecionar Categoria *@
+<div class="modal fade" id="modalSelecionarCategoria" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSelecionarCategoriaLabel">Selecionar Categoria</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="itemIDCategoria" />
+                <label class="form-label small fw-semibold">Categoria</label>
+                <select id="selectCategoria" class="form-select form-select-sm">
+                    @foreach (var cat in Model.Categorias)
+                    {
+                        <option value="@cat.PesquisaTipoListaID">@cat.NmTipoLista</option>
+                    }
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success btn-sm" id="btnConfirmarCategoria">
+                    <i class="fa-duotone fa-check me-1"></i>Gravar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+    (function () {
+        var style = document.createElement('style');
+        style.textContent = String.fromCharCode(64) + 'keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}';
+        document.head.appendChild(style);
+
+        var urlSalvar  = '@Url.Action("SalvarCategoria",  "InteligenciaDeBusca")';
+        var urlRemover = '@Url.Action("RemoverCategoria", "InteligenciaDeBusca")';
+
+        var dtPrincipal = $('#tbl-categorizacao').DataTable({
+            language: { search: 'Filtro:', info: '_TOTAL_ registros', infoEmpty: 'Sem registros', lengthMenu: 'Exibir _MENU_ registros', zeroRecords: 'Nenhum resultado', paginate: { previous: 'Anterior', next: 'Próximo' } },
+            pageLength: 25, order: [],
+            initComplete: function () {
+                document.getElementById('tbl-cat-skeleton').style.display = 'none';
+                document.getElementById('tbl-cat-ready').style.display    = 'block';
+            }
+        });
+        $('#tbl-sem-categoria').DataTable({
+            language: { search: 'Filtro:', info: '_TOTAL_ registros', infoEmpty: 'Sem registros', lengthMenu: 'Exibir _MENU_ registros', zeroRecords: 'Nenhum resultado', paginate: { previous: 'Anterior', next: 'Próximo' } },
+            pageLength: 25, order: []
+        });
+
+        $('#filtroEstabelecimento').on('change', function () {
+            dtPrincipal.column(0).search(this.value).draw();
+        });
+
+        var modalSel = new bootstrap.Modal(document.getElementById('modalSelecionarCategoria'));
+
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.btn-adicionar-categoria');
+            if (!btn) return;
+            document.getElementById('itemIDCategoria').value = btn.dataset.id;
+            document.getElementById('modalSelecionarCategoriaLabel').textContent = 'Adicionar Categoria';
+            document.getElementById('selectCategoria').selectedIndex = 0;
+            modalSel.show();
+        });
+
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.btn-editar-categoria');
+            if (!btn) return;
+            document.getElementById('itemIDCategoria').value = btn.dataset.id;
+            document.getElementById('modalSelecionarCategoriaLabel').textContent = 'Editar Categoria';
+            var sel = document.getElementById('selectCategoria');
+            var catAtual = btn.dataset.cat;
+            for (var i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value == catAtual) { sel.selectedIndex = i; break; }
+            }
+            modalSel.show();
+        });
+
+        document.getElementById('btnConfirmarCategoria').addEventListener('click', function () {
+            var itemId = document.getElementById('itemIDCategoria').value;
+            var catId  = document.getElementById('selectCategoria').value;
+            var btn    = this;
+            btn.disabled = true;
+            fetch(urlSalvar, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ itemID: parseInt(itemId), pesquisaTipoListaID: parseInt(catId) })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.result) {
+                    Swal.fire({ icon: 'success', title: 'Sucesso!', timer: 2000, showConfirmButton: false }).then(function () { location.reload(); });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Erro!', text: 'Não foi possível salvar.' });
+                }
+            })
+            .catch(function () { Swal.fire({ icon: 'error', title: 'Erro!', text: 'Falha na requisição.' }); })
+            .finally(function () { btn.disabled = false; });
+        });
+
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.btn-remover-categoria');
+            if (!btn) return;
+            var id = btn.dataset.id;
+            Swal.fire({
+                title: 'Atenção!', text: 'Deseja remover a categoria deste item?', icon: 'warning',
+                showCancelButton: true, confirmButtonText: 'Sim, remover!', cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#d33', cancelButtonColor: '#6c757d'
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                fetch(urlRemover, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ itemID: parseInt(id) })
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.result) {
+                        Swal.fire({ icon: 'success', title: 'Removido!', timer: 2000, showConfirmButton: false }).then(function () { location.reload(); });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Erro!', text: 'Não foi possível remover.' });
+                    }
+                })
+                .catch(function () { Swal.fire({ icon: 'error', title: 'Erro!', text: 'Falha na requisição.' }); });
+            });
+        });
+    })();
+    </script>
+}

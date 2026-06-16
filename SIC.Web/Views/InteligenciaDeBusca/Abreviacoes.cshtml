@@ -1,0 +1,214 @@
+@model IReadOnlyList<SIC.Web.Models.Abreviacoes.AbreviacaoItemViewModel>
+@{
+    ViewData["Title"] = "Abreviações";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css" />
+    <style>
+        .abrev-section-title {
+            font-size: .8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--sic-muted);
+            border-bottom: 1px solid var(--sic-border);
+            padding-bottom: .5rem;
+            margin-bottom: 1rem;
+        }
+        .table-abrev-wrap { border: 1px solid var(--sic-border); border-radius: .5rem; overflow: hidden; }
+        .table-abrev thead th {
+            font-size: .7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .05em; color: var(--sic-muted); background: var(--sic-surface-2);
+            border-bottom: 2px solid var(--sic-border); padding: .55rem .75rem; white-space: nowrap;
+        }
+        .table-abrev tbody td {
+            color: var(--sic-text); border-bottom: 1px solid var(--sic-border);
+            padding: .5rem .75rem; font-size: .85rem; vertical-align: middle;
+        }
+        .table-abrev tbody tr:last-child td { border-bottom: none; }
+    </style>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 mb-0">
+                    <i class="fa-duotone fa-text-size me-2 text-br"></i>Abreviações
+                </h2>
+                <p class="text-muted mt-1 mb-0">
+                    <strong>@Model.Count</strong> abreviação(ões) cadastrada(s)
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalCadastrarAbreviacao">
+                    <i class="fa-duotone fa-plus me-1"></i>Cadastrar Abreviação
+                </button>
+                <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("InteligenciaDeBusca", "InteligenciaDeBusca")">
+                    <i class="fa-duotone fa-chevron-left me-1"></i>Voltar
+                </a>
+            </div>
+        </div>
+
+        <div class="abrev-section-title">
+            <i class="fa-duotone fa-list me-1 text-br"></i>Registros
+        </div>
+
+        <div class="table-abrev-wrap">
+            <div class="table-responsive">
+                <table id="tbl-abreviacoes" class="table table-abrev table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th class="text-center">Abreviação</th>
+                            <th class="text-center">Usuário</th>
+                            <th class="text-center">Data</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Texto</td>
+                                <td class="text-center">@item.Abreviacao</td>
+                                <td class="text-center">@item.NmUsuario</td>
+                                <td class="text-center">@item.DataHora</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-danger btn-excluir"
+                                            data-id="@item.ID"
+                                            title="Excluir">
+                                        <i class="fa-duotone fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@* Modal Cadastrar *@
+<div class="modal fade" id="modalCadastrarAbreviacao" tabindex="-1" aria-labelledby="modalCadastrarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCadastrarLabel">
+                    <i class="fa-duotone fa-plus text-br me-2"></i>Cadastrar Abreviação
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Texto</label>
+                    <input type="text" id="inputTexto" class="form-control" placeholder="Ex: Parafuso de aço inoxidável" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Abreviação</label>
+                    <input type="text" id="inputAbreviacao" class="form-control" placeholder="Ex: Par. aço inox" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-success" id="btnGravarAbreviacao">
+                    <i class="fa-duotone fa-floppy-disk me-1"></i>Gravar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+    (function () {
+        var urlGravar  = '@Url.Content("~/InteligenciaDeBusca/Abreviacoes/Gravar")';
+        var urlExcluir = '@Url.Content("~/InteligenciaDeBusca/Abreviacoes/Excluir")';
+        // console.log(urlGravar)
+
+        var modalEl   = document.getElementById('modalCadastrarAbreviacao');
+        var inputTxt  = document.getElementById('inputTexto');
+        var inputAbr  = document.getElementById('inputAbreviacao');
+        var btnGravar = document.getElementById('btnGravarAbreviacao');
+
+        // Inicializa DataTable
+        var dt = $('#tbl-abreviacoes').DataTable({
+            language: {
+                search: 'Filtro:',
+                info: '_TOTAL_ registros',
+                infoEmpty: 'Sem registros',
+                lengthMenu: 'Exibir _MENU_ registros',
+                zeroRecords: 'Nenhum resultado encontrado',
+                paginate: { previous: 'Anterior', next: 'Próximo' }
+            },
+            pageLength: 25,
+            order: []
+        });
+
+        // Gravar
+        btnGravar.addEventListener('click', function () {
+            var texto      = inputTxt.value.trim();
+            var abreviacao = inputAbr.value.trim();
+            if (!texto || !abreviacao) { Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Preencha todos os campos.' }); return; }
+
+            btnGravar.disabled = true;
+            fetch(urlGravar, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Texto: texto, Abreviacao: abreviacao })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                
+                if (data.result) {
+                    Swal.fire({ icon: 'success', title: 'Sucesso!', timer: 2000, showConfirmButton: false })
+                        .then(function () { location.reload(); });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Erro!', text: 'Não foi possível cadastrar.' });
+                }
+            })
+            .catch(function () { Swal.fire({ icon: 'error', title: 'Erro!', text: 'Falha na requisição.' }); })
+            .finally(function () { btnGravar.disabled = false; });
+        });
+
+        // Limpar modal ao fechar
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            inputTxt.value = '';
+            inputAbr.value = '';
+        });
+
+        // Excluir
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.btn-excluir');
+            if (!btn) return;
+            var id = btn.dataset.id;
+            Swal.fire({
+                title: 'Atenção!', text: 'Deseja realmente excluir?', icon: 'warning',
+                showCancelButton: true, confirmButtonText: 'Sim, excluir!', cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#d33', cancelButtonColor: '#6c757d'
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                fetch(urlExcluir + '/' + id, { method: 'DELETE' })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.result) {
+                        Swal.fire({ icon: 'success', title: 'Excluído!', timer: 2000, showConfirmButton: false })
+                            .then(function () { location.reload(); });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Erro!', text: 'Não foi possível excluir.' });
+                    }
+                })
+                .catch(function () { Swal.fire({ icon: 'error', title: 'Erro!', text: 'Falha na requisição.' }); });
+            });
+        });
+    })();
+    </script>
+}
+

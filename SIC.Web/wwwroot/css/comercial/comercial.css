@@ -31,8 +31,8 @@
 }
 
 .comercial-accordion .accordion-button:not(.collapsed) {
-    background-color: var(--bs-primary-bg-subtle, #cfe2ff);
-    color: var(--bs-primary-text-emphasis, #052c65);
+    background-color: var(--sic-brand-2, #ffeee6);
+    color: var(--sic-brand-dark, #ff5e2d);
     box-shadow: none;
 }
 
@@ -54,9 +54,9 @@
     line-height: 1.6;
     margin-bottom: 1rem;
     padding: 0.75rem 1rem;
-    background-color: var(--bs-tertiary-bg, #f8f9fa);
+    background-color: var(--sic-brand-2, #ffeee6);
     border-radius: 0.5rem;
-    border-left: 4px solid var(--bs-primary, #0d6efd);
+    border-left: 4px solid var(--sic-brand, #FF782D);
 }
 
 /* ---------- Lista de funcionalidades ---------- */
@@ -81,13 +81,13 @@
 }
 
 .comercial-feature-item:hover {
-    border-color: var(--bs-primary, #0d6efd);
-    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.1);
+    border-color: var(--sic-brand, #FF782D);
+    box-shadow: 0 0 0 0.15rem rgba(255, 120, 45, 0.15);
 }
 
 .comercial-feature-icon {
     font-size: 1.25rem;
-    color: var(--bs-primary, #0d6efd);
+    color: var(--sic-brand, #FF782D);
     flex-shrink: 0;
     margin-top: 0.1rem;
 }

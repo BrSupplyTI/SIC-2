@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using QuestPDF.Infrastructure;
 using SIC.Web.Services;
 using SIC.Web.Services.Admin;
 using SIC.Web.Services.Cotacao;
@@ -9,6 +10,9 @@ using SIC.Web.Services.PrePedidosPDF;
 using SIC.Web.Services.Propostas;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configurar licença QuestPDF
+QuestPDF.Settings.License = LicenseType.Community;
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -241,7 +245,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("sic_admin", "1"));
 });
 builder.Services.AddScoped<CotacaoEmailService>();
-
+builder.Services.AddScoped<CotacaoExcelService>();
+builder.Services.AddScoped<CotacaoPdfService>();
 builder.Services.AddHttpClient<CotacaoApiClient>(client =>
 {
     var baseUrl = builder.Configuration["Api:BaseUrl"]

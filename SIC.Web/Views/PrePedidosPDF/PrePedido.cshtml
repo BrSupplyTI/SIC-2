@@ -105,7 +105,7 @@
 
             <div class="col-md-6 col-xl-3">
                 <div class="prepedido-quick-card h-100">
-                    <i class="fa-duotone fa-calendar-check text-br"></i>
+                    <i class="fa-duotone fa-credit-card text-br"></i>
                     <div>
                         <small class="text-muted">Cond. Pagto</small>
                         <div class="fw-semibold">@Model.CondPagto</div>
@@ -119,6 +119,16 @@
                     <div>
                         <small class="text-muted">Canal de Venda</small>
                         <div class="fw-semibold">@Model.CanalVenda</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="prepedido-quick-card h-100">
+                    <i class="fa-duotone fa-calendar-check text-br"></i>
+                    <div>
+                        <small class="text-muted">Data Entrega</small>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.DataEntrega) ? "—" : Model.DataEntrega)</div>
                     </div>
                 </div>
             </div>

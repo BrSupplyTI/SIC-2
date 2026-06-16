@@ -47,6 +47,7 @@ public sealed class SqlPrePedidoPDFQueryRepository(IConfiguration configuration)
                pdfPP.ObsNota,
                pdfPP.ObsComprador,
                pdfPP.ClienteCategoriaPedidoID,
+               CONVERT(Varchar(10),pdfPP.DataEntrega, 103) AS DataEntrega,
                CCP.NmCategoria AS NmCategoriaPedido
         FROM Integracao_Clientes.dbo.PDF_PrePedido pdfPP WITH (NOLOCK)
         INNER JOIN Integracao_Clientes.dbo.PDF_ArquivoPrePedido pdfAPP WITH (NOLOCK) ON pdfAPP.PDFArquivoPrePedidoID = pdfPP.ArquivoPrePedidoId
@@ -478,6 +479,7 @@ public sealed class SqlPrePedidoPDFQueryRepository(IConfiguration configuration)
             ObsComprador = GetString(reader, "ObsComprador"),
             ClienteCategoriaPedidoID = GetNullableInt32(reader, "ClienteCategoriaPedidoID"),
             NmCategoriaPedido = GetString(reader, "NmCategoriaPedido"),
+            DataEntrega = GetString(reader, "DataEntrega"),
         };
     }
 

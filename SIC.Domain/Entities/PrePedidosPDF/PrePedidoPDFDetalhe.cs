@@ -38,6 +38,7 @@ public sealed class PrePedidoPDFDetalhe
     public string ObsComprador { get; set; } = string.Empty;
     public int? ClienteCategoriaPedidoID { get; set; }
     public string NmCategoriaPedido { get; set; } = string.Empty;
+    public string DataEntrega { get; set; } = string.Empty;
 
     public IReadOnlyList<PrePedidoPDFItem> Itens { get; set; } = [];
     public IReadOnlyList<PrePedidoPDFLog> Logs { get; set; } = [];

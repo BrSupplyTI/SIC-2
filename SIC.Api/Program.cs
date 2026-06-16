@@ -1,3 +1,5 @@
+using SIC.Domain.Abstractions.Abreviacoes;
+using SIC.Infrastructure.Repositories.Abreviacoes;
 using SIC.Api.Services;
 using SIC.Api.Services.Admin;
 using SIC.Api.Services.Cotacao;
@@ -5,6 +7,7 @@ using SIC.Api.Services.PrePedidosPDF;
 using SIC.Api.Services.Propostas;
 using SIC.Domain.Abstractions;
 using SIC.Domain.Abstractions.Admin;
+using SIC.Domain.Abstractions.Categorizacao;
 using SIC.Domain.Abstractions.Cotacao;
 using SIC.Domain.Abstractions.PrePedidosPDF;
 using SIC.Domain.Abstractions.Propostas;
@@ -12,6 +15,7 @@ using SIC.Infrastructure.Integrations;
 using SIC.Infrastructure.Integrations.PrePedidosPDF;
 using SIC.Infrastructure.Repositories;
 using SIC.Infrastructure.Repositories.Admin;
+using SIC.Infrastructure.Repositories.Categorizacao;
 using SIC.Infrastructure.Repositories.Cotacao;
 using SIC.Infrastructure.Repositories.PrePedidosPDF;
 using SIC.Infrastructure.Repositories.Propostas;
@@ -55,6 +59,9 @@ builder.Services.AddScoped<ICotacaoQueryRepository, SqlCotacaoQueryRepository>()
 builder.Services.AddScoped<ICotacaoQueryService, CotacaoQueryService>();
 builder.Services.AddScoped<ICotacaoCommandRepository, SqlCotacaoCommandRepository>();
 builder.Services.AddScoped<ICotacaoCommandService, CotacaoCommandService>();
+builder.Services.AddScoped<ICategorizacaoRepository, SqlCategorizacaoRepository>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IAbreviacaoRepository, SqlAbreviacaoRepository>();
 
 var app = builder.Build();
 

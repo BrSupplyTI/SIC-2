@@ -1,0 +1,286 @@
+﻿@{
+    ViewData["Title"] = "Inteligência de Busca";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/comercial/comercial.css" asp-append-version="true" />
+}
+
+<div class="comercial-area">
+    <div class="comercial-header">
+        <h2>
+            <i class="fa-duotone fa-brain text-br me-2"></i>Inteligência de Busca
+        </h2>
+        <p>
+            Ferramentas inteligentes para localizar e sugerir produtos, clientes e oportunidades comerciais.
+        </p>
+    </div>
+
+    <div class="accordion comercial-accordion" id="inteligenciaAccordion">
+
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <div class="accordion-button fw-semibold pe-none" style="cursor:default; box-shadow:none">
+                    <i class="fa-duotone fa-brain comercial-icon"></i>
+                    Inteligência de Busca
+                </div>
+            </h2>
+            <div class="accordion-collapse show">
+                <div class="accordion-body">
+                    <div class="comercial-module-desc">
+                        Configure e alimente a inteligência de busca do sistema: categorize itens, registre abreviações
+                        e envie o histórico para melhorar a precisão das sugestões automáticas.
+                    </div>
+                    <ul class="comercial-feature-list">
+                        <li class="comercial-feature-item comercial-feature-item-link">
+                            <a class="comercial-feature-link" href="@Url.Action("CategorizacaoDosItens", "InteligenciaDeBusca")">
+                                <i class="fa-duotone fa-tags comercial-feature-icon"></i>
+                                <div class="comercial-feature-content">
+                                    <h6>Categorização dos Itens</h6>
+                                    <p>Classifique e organize os itens do catálogo por categoria, facilitando buscas e sugestões automáticas.</p>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="comercial-feature-item comercial-feature-item-link">
+                            <a class="comercial-feature-link" href="@Url.Action("Abreviacoes", "InteligenciaDeBusca")">
+                                <i class="fa-duotone fa-text-size comercial-feature-icon"></i>
+                                <div class="comercial-feature-content">
+                                    <h6>Abreviações</h6>
+                                    <p>Gerencie abreviações e termos alternativos para que o sistema reconheça variações na busca de produtos.</p>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="comercial-feature-item comercial-feature-item-link">
+                            <a class="comercial-feature-link" href="#" data-bs-toggle="modal" data-bs-target="#modalEnviarHistorico">
+                                <i class="fa-duotone fa-clock-rotate-left comercial-feature-icon"></i>
+                                <div class="comercial-feature-content">
+                                    <h6>Enviar Histórico</h6>
+                                    <p>Envie o histórico de pedidos e cotações para aprimorar a inteligência e relevância das sugestões.</p>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+    (function () {
+        var urlProxy = '@Url.Action("EnviarHistoricoItem", "InteligenciaDeBusca")';
+
+        var $formImportacao      = document.getElementById('form-importacao-historico');
+        var $arquivo             = document.getElementById('arquivo-historico');
+        var $btnGravar           = document.getElementById('btn-gravar-historico');
+        var $statusEnvio         = document.getElementById('status-envio-historico');
+        var $textoProgresso      = document.getElementById('texto-progresso-envio');
+        var $barraProgresso      = document.getElementById('barra-progresso-envio');
+        var modalEl              = document.getElementById('modalEnviarHistorico');
+
+        function alternarBotaoGravar() {
+            $btnGravar.style.display = $arquivo.value ? '' : 'none';
+        }
+
+        function atualizarProgresso(enviados, total, erros) {
+            var pct = total > 0 ? Math.round((enviados / total) * 100) : 0;
+            $barraProgresso.style.width = pct + '%';
+            $barraProgresso.setAttribute('aria-valuenow', pct);
+            $barraProgresso.textContent = pct + '%';
+            $textoProgresso.textContent = 'Enviados: ' + enviados + '/' + total + ' | Erros: ' + erros;
+        }
+
+        function resetarStatus() {
+            $statusEnvio.style.display = 'none';
+            $textoProgresso.textContent = 'Aguardando envio...';
+            $barraProgresso.style.width = '0%';
+            $barraProgresso.setAttribute('aria-valuenow', 0);
+            $barraProgresso.textContent = '0%';
+        }
+
+        function limpar() {
+            $formImportacao.reset();
+            alternarBotaoGravar();
+            resetarStatus();
+            $btnGravar.disabled = false;
+        }
+
+        function limparTexto(msg) {
+            var t = String(msg || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            return t.length > 140 ? t.substring(0, 140) + '...' : t;
+        }
+
+        function traduzirErro(item) {
+            var bruto = item.error || (item.response_json && (item.response_json.error || item.response_json.message)) || item.response || '';
+            var limpo = limparTexto(bruto).toLowerCase();
+            if (!item.ok && (item.status === 401 || item.status === 403)) return 'Sem permissão para enviar.';
+            if (!item.ok && item.status === 404) return 'Serviço de importação não encontrado.';
+            if (!item.ok && item.status >= 500) return 'Serviço indisponível. Tente novamente.';
+            if (limpo.indexOf('failed to fetch') >= 0 || limpo.indexOf('networkerror') >= 0) return 'Falha de conexão.';
+            if (limpo.indexOf('timeout') >= 0) return 'Tempo de resposta excedido.';
+            if (limpo) return limparTexto(bruto);
+            if (item.status && item.status !== 200) return 'Erro HTTP ' + item.status + '.';
+            return 'Erro desconhecido.';
+        }
+
+        function lerExcel(arquivo, onSucesso, onErro) {
+            if (typeof XLSX === 'undefined') { onErro('Biblioteca Excel não carregada.'); return; }
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                    var aba = wb.Sheets[wb.SheetNames[0]];
+                    if (!aba) { onErro('Nenhuma aba encontrada no arquivo.'); return; }
+                    var linhas = XLSX.utils.sheet_to_json(aba, { header: 1, blankrows: false, raw: false, defval: '' });
+                    var dados = [];
+                    for (var i = 1; i < linhas.length; i++) {
+                        var l = linhas[i] || [];
+                        var codigo = String(l[0] !== undefined ? l[0] : '').trim().replace(/^'/, '');
+                        var descricao = String(l[1] !== undefined ? l[1] : '').trim();
+                        if (!codigo && !descricao) continue;
+                        dados.push({ Codigo: codigo, Descricao: descricao, LinhaExcel: i + 1 });
+                    }
+                    onSucesso(dados);
+                } catch (err) { onErro('Erro ao ler o arquivo Excel.'); }
+            };
+            reader.onerror = function () { onErro('Não foi possível ler o arquivo.'); };
+            reader.readAsArrayBuffer(arquivo);
+        }
+
+        function enviarItens(dados, onConcluido) {
+            var enviados = 0, erros = 0, total = dados.length, respostas = [];
+            atualizarProgresso(0, total, 0);
+
+            function enviarProximo(i) {
+                if (i >= total) { onConcluido({ enviados: enviados, total: total, erros: erros, respostas: respostas }); return; }
+                var item = dados[i];
+                var payload = JSON.stringify({ Query: item.Descricao, ReferenceId: item.Codigo });
+                fetch(urlProxy, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload })
+                    .then(function (r) {
+                        return r.text().then(function (corpo) {
+                            var json = null;
+                            try { json = JSON.parse(corpo); } catch (e) { }
+                            if (!r.ok || (json && json.ok === false)) erros++;
+                            respostas.push({ request: { query: item.Descricao, reference_id: item.Codigo }, linha_excel: item.LinhaExcel, status: r.status, ok: r.ok, response: corpo, response_json: json });
+                        });
+                    })
+                    .catch(function (err) {
+                        erros++;
+                        respostas.push({ request: { query: item.Descricao, reference_id: item.Codigo }, linha_excel: item.LinhaExcel, ok: false, error: String(err) });
+                    })
+                    .then(function () {
+                        enviados++;
+                        atualizarProgresso(enviados, total, erros);
+                        enviarProximo(i + 1);
+                    });
+            }
+            enviarProximo(0);
+        }
+
+        $arquivo.addEventListener('change', function () { alternarBotaoGravar(); resetarStatus(); });
+
+        modalEl.addEventListener('hidden.bs.modal', function () { limpar(); });
+
+        $formImportacao.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var arquivo = $arquivo.files[0];
+            if (!arquivo) { alert('Selecione um arquivo antes de gravar.'); return; }
+            $btnGravar.disabled = true;
+            $statusEnvio.style.display = '';
+            $textoProgresso.textContent = 'Preparando arquivo para envio...';
+
+            lerExcel(arquivo, function (linhas) {
+                if (!linhas.length) {
+                    $btnGravar.disabled = false;
+                    $textoProgresso.textContent = 'Nenhum registro válido encontrado.';
+                    return;
+                }
+                enviarItens(linhas, function (resultado) {
+                    $btnGravar.disabled = false;
+                    if (resultado.erros === 0) {
+                        $textoProgresso.textContent = 'Envio concluído com sucesso.';
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'success', title: 'Importação concluída', text: 'O histórico foi importado com sucesso.' })
+                                .then(function () { bootstrap.Modal.getInstance(modalEl).hide(); });
+                        } else {
+                            alert('O histórico foi importado com sucesso.');
+                            bootstrap.Modal.getInstance(modalEl).hide();
+                        }
+                        return;
+                    }
+                    var comErro = resultado.respostas.filter(function (r) { return !!r.error || r.ok === false || (r.response_json && r.response_json.ok === false); });
+                    if (comErro.length) {
+                        var html = comErro.map(function (r) {
+                            return '<li><strong>Linha ' + (r.linha_excel || '?') + ' (código ' + (r.request && r.request.reference_id ? r.request.reference_id : '-') + '):</strong> ' + traduzirErro(r) + '</li>';
+                        }).join('');
+                        $textoProgresso.innerHTML = '<strong>Foram encontrados erros no envio.</strong><br>Valide os itens abaixo:<div style="max-height:180px;overflow-y:auto;margin-top:8px;border:1px solid #f5c6cb;background:#fff5f5;border-radius:4px;padding:8px"><ul style="margin:0;padding-left:18px">' + html + '</ul></div>';
+                    } else {
+                        $textoProgresso.textContent = 'Foram encontrados erros, mas não foi possível identificar os itens.';
+                    }
+                });
+            }, function (msg) {
+                $btnGravar.disabled = false;
+                $textoProgresso.textContent = 'Falha na leitura do arquivo.';
+                alert(msg);
+            });
+        });
+    })();
+    </script>
+}
+
+@* Modal – Enviar Histórico *@
+<div class="modal fade" id="modalEnviarHistorico" tabindex="-1" aria-labelledby="modalEnviarHistoricoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEnviarHistoricoLabel">
+                    <i class="fa-duotone fa-clock-rotate-left text-br me-2"></i>Enviar Histórico
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-importacao-historico" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="arquivo-historico" class="form-label fw-semibold">Arquivo Excel</label>
+                        <input type="file" class="form-control" id="arquivo-historico" name="arquivo_historico" accept=".xls,.xlsx,.csv" />
+                        <div class="form-text">Selecione um arquivo Excel para enviar o histórico.</div>
+                    </div>
+                    <div class="alert alert-warning small mb-3">
+                        <strong>Aviso importante:</strong> o campo <strong>Codigo</strong> pode ter mais de 6 dígitos,
+                        mas deve <strong>manter o 0 na frente</strong> quando aplicável.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Modelo para envio</label>
+                        <div>
+                            <a class="btn btn-success btn-sm" href="@Url.Content("~/files/modelo_abreviacoes.xlsx")" download>
+                                <i class="fa-duotone fa-file-excel me-1"></i>Baixar modelo Excel
+                            </a>
+                        </div>
+                    </div>
+                    <div id="status-envio-historico" style="display:none;">
+                        <p id="texto-progresso-envio" class="form-text mb-1">Aguardando envio...</p>
+                        <div class="progress">
+                            <div id="barra-progresso-envio" class="progress-bar bg-success" role="progressbar"
+                                 aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width:0%">0%</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-success" id="btn-gravar-historico"
+                        form="form-importacao-historico" style="display:none;">
+                    <i class="fa-duotone fa-floppy-disk me-1"></i>Gravar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,10 +3,14 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using SIC.Web.Services;
+using SIC.Web.Services.Abreviacoes;
 using SIC.Web.Services.Admin;
 using SIC.Web.Services.Cotacao;
 using SIC.Web.Services.PrePedidosPDF;
+using SIC.Web.Services.InteligenciaDeBusca;
 using SIC.Web.Services.Propostas;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +83,22 @@ builder.Services.AddHttpClient<LiberacaoPedidoApiClient>(client =>
 });
 
 builder.Services.AddHttpClient<PropostaApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddHttpClient<CategorizacaoApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddHttpClient<AbreviacaoApiClient>(client =>
 {
     var baseUrl = builder.Configuration["Api:BaseUrl"]
         ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");

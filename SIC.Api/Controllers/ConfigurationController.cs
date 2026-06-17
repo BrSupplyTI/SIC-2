@@ -19,8 +19,10 @@ public sealed class ConfigurationController(IConfiguration configuration) : Cont
         var config = new SmtpConfigDto
         {
             Host = configuration["Smtp:Host"] ?? string.Empty,
+            HostFallback = configuration["Smtp:HostFallback"] ?? string.Empty,
             Port = configuration.GetValue<int?>("Smtp:Port") ?? 587,
             EnableSsl = configuration.GetValue<bool?>("Smtp:EnableSsl") ?? true,
+            Timeout = configuration.GetValue<int?>("Smtp:Timeout") ?? 30,
             Username = configuration["Smtp:Username"] ?? string.Empty,
             Password = configuration["Smtp:Password"] ?? string.Empty,
             FromEmail = configuration["Smtp:FromEmail"] ?? string.Empty,

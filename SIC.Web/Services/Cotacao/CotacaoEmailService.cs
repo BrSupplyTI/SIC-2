@@ -17,8 +17,10 @@ public sealed class CotacaoEmailService(
     CotacaoApiClient apiClient)
 {
     private string _smtpHost = string.Empty;
+    private string _smtpHostFallback = string.Empty;
     private int _smtpPort = 587;
     private bool _smtpSsl = true;
+    private int _smtpTimeout = 30;
     private string _smtpUser = string.Empty;
     private string _smtpPass = string.Empty;
     private string _smtpFrom = string.Empty;
@@ -38,8 +40,10 @@ public sealed class CotacaoEmailService(
                          ?? throw new InvalidOperationException("Configurações de SMTP não encontradas na API.");
 
         _smtpHost = smtpConfig.Host;
+        _smtpHostFallback = smtpConfig.HostFallback;
         _smtpPort = smtpConfig.Port;
         _smtpSsl = smtpConfig.EnableSsl;
+        _smtpTimeout = smtpConfig.Timeout;
         _smtpUser = smtpConfig.Username;
         _smtpPass = smtpConfig.Password;
         _smtpFrom = smtpConfig.FromEmail;
@@ -148,12 +152,41 @@ public sealed class CotacaoEmailService(
 
         mimeMessage.Body = new TextPart("html") { Text = corpo };
 
-        // ── 8. Enviar via MailKit (STARTTLS — igual ao PHPMailer) ─────────
-        System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando: {_smtpHost}:{_smtpPort} user={_smtpUser} to={emailDestinatario}");
+         // ── 8. Enviar via MailKit com fallback e timeout ──────────────────
+        System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando: {_smtpHostFallback}:{_smtpPort} user={_smtpUser} to={emailDestinatario}");
         try
         {
             using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+            smtp.Timeout = _smtpTimeout * 1000; // Converter para milissegundos
+
+            try
+            {
+                // Tentar host fallback primeiro (padrão que já funcionava)
+                if (!string.IsNullOrWhiteSpace(_smtpHostFallback))
+                {
+                    await smtp.ConnectAsync(_smtpHostFallback, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+                }
+                else
+                {
+                    // Se não tem fallback, usa o primário
+                    await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+                }
+            }
+            catch (Exception exFallback)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SMTP] Falha ao conectar em {_smtpHostFallback}: {exFallback.Message}. Tentando primário...");
+
+                if (!string.IsNullOrWhiteSpace(_smtpHost) && _smtpHost != _smtpHostFallback)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando ao host primário: {_smtpHost}:{_smtpPort}");
+                    await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
             await smtp.AuthenticateAsync(_smtpUser, _smtpPass, cancellationToken);
             await smtp.SendAsync(mimeMessage, cancellationToken);
             await smtp.DisconnectAsync(true, cancellationToken);

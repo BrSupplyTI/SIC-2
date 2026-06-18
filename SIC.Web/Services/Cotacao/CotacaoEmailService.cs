@@ -148,80 +148,35 @@ public sealed class CotacaoEmailService(
 
         mimeMessage.Body = new TextPart("html") { Text = corpo };
 
-<<<<<<< Updated upstream
         // ── 8. Enviar via MailKit (STARTTLS — igual ao PHPMailer) ─────────
-        System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando: {_smtpHost}:{_smtpPort} user={_smtpUser} to={emailDestinatario}");
-        try
-        {
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
-=======
-         // ── 8. Enviar via MailKit com fallback e timeout ──────────────────
-        // Mantém a lógica do PHP antigo: tenta o fallback (Office365) primeiro
-        // e, se falhar, tenta o host primário. Cada etapa lança uma exceção
-        // com diagnóstico (etapa + host + porta + tipo de erro) para o navegador.
+        // Cada etapa (CONEXÃO, AUTENTICAÇÃO, ENVIO) lança uma exceção com
+        // diagnóstico (etapa + host + porta + tipo de erro) para o navegador.
         using var smtp = new SmtpClient();
-        smtp.Timeout = _smtpTimeout * 1000; // Converter para milissegundos
 
-        var hostConectado = string.Empty;
-
-        // ── 8.1 Conectar (fallback primeiro, depois primário) ──────────────
+        // ── 8.1 Conectar ──────────────────────────────────────────────────
         try
         {
-            if (!string.IsNullOrWhiteSpace(_smtpHostFallback))
-            {
-                hostConectado = _smtpHostFallback;
-                System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando (fallback): {_smtpHostFallback}:{_smtpPort}");
-                await smtp.ConnectAsync(_smtpHostFallback, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
-            }
-            else
-            {
-                hostConectado = _smtpHost;
-                System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando (primário): {_smtpHost}:{_smtpPort}");
-                await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
-            }
+            System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando: {_smtpHost}:{_smtpPort} user={_smtpUser} to={emailDestinatario}");
+            await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
         }
-        catch (Exception exFallback)
+        catch (Exception exConexao)
         {
-            System.Diagnostics.Debug.WriteLine($"[SMTP] Falha ao conectar em {hostConectado}: {exFallback.Message}. Tentando primário...");
-
-            if (!string.IsNullOrWhiteSpace(_smtpHost) && _smtpHost != _smtpHostFallback)
-            {
-                try
-                {
-                    hostConectado = _smtpHost;
-                    System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando ao host primário: {_smtpHost}:{_smtpPort}");
-                    await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
-                }
-                catch (Exception exPrimario)
-                {
-                    throw new InvalidOperationException(
-                        $"[ETAPA: CONEXÃO] Falha ao conectar em ambos os servidores SMTP. " +
-                        $"Fallback ({_smtpHostFallback}:{_smtpPort}): {exFallback.GetType().Name} - {exFallback.Message}. " +
-                        $"Primário ({_smtpHost}:{_smtpPort}): {exPrimario.GetType().Name} - {exPrimario.Message}.",
-                        exPrimario);
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    $"[ETAPA: CONEXÃO] Falha ao conectar no servidor SMTP {hostConectado}:{_smtpPort}. " +
-                    $"{exFallback.GetType().Name} - {exFallback.Message}.",
-                    exFallback);
-            }
+            throw new InvalidOperationException(
+                $"[ETAPA: CONEXÃO] Falha ao conectar no servidor SMTP {_smtpHost}:{_smtpPort}. " +
+                $"{exConexao.GetType().Name} - {exConexao.Message}.",
+                exConexao);
         }
 
         // ── 8.2 Autenticar ────────────────────────────────────────────────
         try
         {
-            System.Diagnostics.Debug.WriteLine($"[SMTP] Autenticando user={_smtpUser} em {hostConectado}");
->>>>>>> Stashed changes
+            System.Diagnostics.Debug.WriteLine($"[SMTP] Autenticando user={_smtpUser} em {_smtpHost}");
             await smtp.AuthenticateAsync(_smtpUser, _smtpPass, cancellationToken);
         }
         catch (Exception exAuth)
         {
             throw new InvalidOperationException(
-                $"[ETAPA: AUTENTICAÇÃO] Conexão OK em {hostConectado}:{_smtpPort}, mas a autenticação do usuário '{_smtpUser}' falhou. " +
+                $"[ETAPA: AUTENTICAÇÃO] Conexão OK em {_smtpHost}:{_smtpPort}, mas a autenticação do usuário '{_smtpUser}' falhou. " +
                 $"{exAuth.GetType().Name} - {exAuth.Message}. " +
                 $"Verifique se SMTP AUTH está habilitado para esta conta no Office365.",
                 exAuth);
@@ -238,7 +193,7 @@ public sealed class CotacaoEmailService(
         catch (Exception exSend)
         {
             throw new InvalidOperationException(
-                $"[ETAPA: ENVIO] Conexão e autenticação OK em {hostConectado}:{_smtpPort}, mas o envio para '{emailDestinatario}' falhou. " +
+                $"[ETAPA: ENVIO] Conexão e autenticação OK em {_smtpHost}:{_smtpPort}, mas o envio para '{emailDestinatario}' falhou. " +
                 $"{exSend.GetType().Name} - {exSend.Message}.",
                 exSend);
         }

@@ -1175,6 +1175,16 @@ public sealed class CotacaoController(
         {
             await emailService.EnviarAsync(form, GetUsuarioId(), cancellationToken);
 
+            if (IsAjaxRequest())
+            {
+                return Json(new
+                {
+                    sucesso = true,
+                    mensagem = $"Cotação enviada para {form.EmailDestinatario} com sucesso.",
+                    redirectUrl = Url.Action(nameof(Cotacao), new { propostaId })
+                });
+            }
+
             TempData["SwalIcon"]  = "success";
             TempData["SwalTitle"] = "E-mail enviado!";
             TempData["SwalText"]  = $"Cotação enviada para {form.EmailDestinatario} com sucesso.";
@@ -1182,6 +1192,18 @@ public sealed class CotacaoController(
         }
         catch (Exception ex)
         {
+            if (IsAjaxRequest())
+            {
+                return Json(new
+                {
+                    sucesso = false,
+                    mensagem = "Erro ao enviar e-mail.",
+                    detalheTecnico = ex.Message,
+                    excecaoInterna = ex.InnerException?.Message,
+                    tipoErro = ex.GetType().Name
+                });
+            }
+
             var dados = await apiClient.GetEmailDadosAsync(propostaId, cancellationToken);
             if (dados is not null)
             {
@@ -1202,4 +1224,7 @@ public sealed class CotacaoController(
             return View("EnviarEmailCotacao", form);
         }
     }
+
+    private bool IsAjaxRequest() =>
+        Request.Headers["X-Requested-With"] == "XMLHttpRequest";
 }

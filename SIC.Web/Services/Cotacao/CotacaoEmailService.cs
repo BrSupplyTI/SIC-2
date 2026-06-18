@@ -17,8 +17,10 @@ public sealed class CotacaoEmailService(
     CotacaoApiClient apiClient)
 {
     private string _smtpHost = string.Empty;
+    private string _smtpHostFallback = string.Empty;
     private int _smtpPort = 587;
     private bool _smtpSsl = true;
+    private int _smtpTimeout = 30;
     private string _smtpUser = string.Empty;
     private string _smtpPass = string.Empty;
     private string _smtpFrom = string.Empty;
@@ -38,8 +40,10 @@ public sealed class CotacaoEmailService(
                          ?? throw new InvalidOperationException("Configurações de SMTP não encontradas na API.");
 
         _smtpHost = smtpConfig.Host;
+        _smtpHostFallback = smtpConfig.HostFallback;
         _smtpPort = smtpConfig.Port;
         _smtpSsl = smtpConfig.EnableSsl;
+        _smtpTimeout = smtpConfig.Timeout;
         _smtpUser = smtpConfig.Username;
         _smtpPass = smtpConfig.Password;
         _smtpFrom = smtpConfig.FromEmail;
@@ -151,13 +155,41 @@ public sealed class CotacaoEmailService(
         // ── 8. Enviar via MailKit (STARTTLS — igual ao PHPMailer) ─────────
         // Cada etapa (CONEXÃO, AUTENTICAÇÃO, ENVIO) lança uma exceção com
         // diagnóstico (etapa + host + porta + tipo de erro) para o navegador.
+        // A conexão tenta o host fallback e, em caso de falha, o primário.
         using var smtp = new SmtpClient();
+        smtp.Timeout = _smtpTimeout * 1000; // Converter para milissegundos
 
         // ── 8.1 Conectar ──────────────────────────────────────────────────
         try
         {
-            System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando: {_smtpHost}:{_smtpPort} user={_smtpUser} to={emailDestinatario}");
-            await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+            try
+            {
+                // Tentar host fallback primeiro (padrão que já funcionava)
+                if (!string.IsNullOrWhiteSpace(_smtpHostFallback))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando: {_smtpHostFallback}:{_smtpPort} user={_smtpUser} to={emailDestinatario}");
+                    await smtp.ConnectAsync(_smtpHostFallback, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando: {_smtpHost}:{_smtpPort} user={_smtpUser} to={emailDestinatario}");
+                    await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+                }
+            }
+            catch (Exception exFallback)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SMTP] Falha ao conectar em {_smtpHostFallback}: {exFallback.Message}. Tentando primário...");
+
+                if (!string.IsNullOrWhiteSpace(_smtpHost) && _smtpHost != _smtpHostFallback)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando ao host primário: {_smtpHost}:{_smtpPort}");
+                    await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
         catch (Exception exConexao)
         {

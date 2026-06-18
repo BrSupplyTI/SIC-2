@@ -321,4 +321,66 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('form[method="post"]');
+            if (!form) {
+                console.error('%c[EMAIL] Formulário não encontrado.', 'color:#e74c3c;font-weight:bold');
+                return;
+            }
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                console.groupCollapsed('%c[EMAIL] Envio de Cotação', 'color:#2980b9;font-weight:bold');
+                console.log('Início:', new Date().toLocaleString());
+                console.log('Destinatário:', form.querySelector('[name="EmailDestinatario"]')?.value || '(vazio)');
+                console.log('Com cópia:', form.querySelector('[name="ComCopia"]')?.value || '(vazio)');
+                console.log('PropostaId:', form.querySelector('[name="PropostaId"]')?.value || '(vazio)');
+
+                const inicio = performance.now();
+                const url = form.action;
+                console.log('URL (POST):', url);
+
+                fetch(url, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(function (resp) {
+                    const tempo = ((performance.now() - inicio) / 1000).toFixed(2);
+                    console.log('%cResposta recebida em ' + tempo + 's | HTTP ' + resp.status, 'color:#8e44ad');
+                    return resp.json().catch(function () {
+                        throw new Error('Resposta não-JSON (HTTP ' + resp.status + ')');
+                    });
+                })
+                .then(function (data) {
+                    if (data.sucesso) {
+                        console.log('%c✓ SUCESSO: ' + data.mensagem, 'color:#27ae60;font-weight:bold');
+                        console.groupEnd();
+                        if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        }
+                    } else {
+                        console.error('%c✗ ERRO NO ENVIO', 'color:#e74c3c;font-weight:bold');
+                        console.error('Mensagem:', data.mensagem);
+                        console.error('Tipo do erro:', data.tipoErro);
+                        console.error('Detalhe técnico:', data.detalheTecnico);
+                        if (data.excecaoInterna) {
+                            console.error('Exceção interna:', data.excecaoInterna);
+                        }
+                        console.groupEnd();
+                        alert('Erro ao enviar e-mail:\n\n' + (data.detalheTecnico || data.mensagem));
+                    }
+                })
+                .catch(function (err) {
+                    const tempo = ((performance.now() - inicio) / 1000).toFixed(2);
+                    console.error('%c✗ FALHA NA REQUISIÇÃO após ' + tempo + 's: ' + err.message, 'color:#e74c3c;font-weight:bold');
+                    console.groupEnd();
+                    alert('Falha na requisição: ' + err.message);
+                });
+            });
+        });
+    </script>
 }

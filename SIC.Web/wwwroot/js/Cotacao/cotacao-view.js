@@ -1437,7 +1437,17 @@
 
         if (!itemId || !propostaId) return;
 
-        const url = `/Cotacao/${propostaId}/itens/${itemId}/impostos`;
+        // Usar a URL da config que foi gerada pelo @Url.Action()
+        let url = window.cotacaoConfig?.urls?.impostosItem;
+        if (!url) {
+            // Fallback (não deveria acontecer, mas deixamos por segurança)
+            url = `/Cotacao/${propostaId}/itens/${itemId}/impostos`;
+        } else {
+            // Substituir {itemId} no template
+            url = url.replace('{itemId}', itemId);
+        }
+
+        console.log('[DEBUG] Modal Impostos - URL gerada:', url);
 
         impostosLoading?.classList.remove('d-none');
         impostosConteudo?.classList.add('d-none');

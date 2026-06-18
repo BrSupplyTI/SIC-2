@@ -47,17 +47,17 @@ public sealed class CotacaoEmailService(
 
         // ── 1. Normalizar campos (igual ao PHP) ───────────────────────────
         var emailDestinatario = form.EmailDestinatario.Replace(" ", "");
-        var comCopia          = string.IsNullOrWhiteSpace(form.ComCopia) ? null
+        var comCopia = string.IsNullOrWhiteSpace(form.ComCopia) ? null
                                     : form.ComCopia.Replace(" ", "");
-        var mensagem          = (form.Mensagem ?? "").Replace("'", " ");
+        var mensagem = (form.Mensagem ?? "").Replace("'", " ");
 
         // ── 2. Gerar hash único (equivalente a "BRS-{id}-{md5(uniqid)}") ──
         var hash = $"BRS-{form.CotacaoID}-{Guid.NewGuid():N}";
 
         // ── 3. Título e cor do estabelecimento ────────────────────────────
         const string estabTitulo = "Br Supply";
-        const string estabCor    = "#F68620";
-        const string estabLogo   = "https://supplymanager.com.br/logos/brsupply_350x70.png";
+        const string estabCor = "#F68620";
+        const string estabLogo = "https://supplymanager.com.br/logos/brsupply_350x70.png";
 
         var titulo = $"Cotação {estabTitulo}: {form.CotacaoID}";
 
@@ -117,7 +117,7 @@ public sealed class CotacaoEmailService(
         var corpo = builder.Construir(titulo, form.Saudacao, mensagem, dadosEmail, hash);
 
         // ── 7. Montar MimeMessage com CC / BCC / Reply-To ─────────────────
-        var bcc     = new List<string>();
+        var bcc = new List<string>();
         string? replyTo = null;
 
         if (form.ConsultorRecebeCCO && !string.IsNullOrWhiteSpace(form.ConsultorEmail))
@@ -148,38 +148,116 @@ public sealed class CotacaoEmailService(
 
         mimeMessage.Body = new TextPart("html") { Text = corpo };
 
+<<<<<<< Updated upstream
         // ── 8. Enviar via MailKit (STARTTLS — igual ao PHPMailer) ─────────
         System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando: {_smtpHost}:{_smtpPort} user={_smtpUser} to={emailDestinatario}");
         try
         {
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+=======
+         // ── 8. Enviar via MailKit com fallback e timeout ──────────────────
+        // Mantém a lógica do PHP antigo: tenta o fallback (Office365) primeiro
+        // e, se falhar, tenta o host primário. Cada etapa lança uma exceção
+        // com diagnóstico (etapa + host + porta + tipo de erro) para o navegador.
+        using var smtp = new SmtpClient();
+        smtp.Timeout = _smtpTimeout * 1000; // Converter para milissegundos
+
+        var hostConectado = string.Empty;
+
+        // ── 8.1 Conectar (fallback primeiro, depois primário) ──────────────
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(_smtpHostFallback))
+            {
+                hostConectado = _smtpHostFallback;
+                System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando (fallback): {_smtpHostFallback}:{_smtpPort}");
+                await smtp.ConnectAsync(_smtpHostFallback, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+            }
+            else
+            {
+                hostConectado = _smtpHost;
+                System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando (primário): {_smtpHost}:{_smtpPort}");
+                await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+            }
+        }
+        catch (Exception exFallback)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SMTP] Falha ao conectar em {hostConectado}: {exFallback.Message}. Tentando primário...");
+
+            if (!string.IsNullOrWhiteSpace(_smtpHost) && _smtpHost != _smtpHostFallback)
+            {
+                try
+                {
+                    hostConectado = _smtpHost;
+                    System.Diagnostics.Debug.WriteLine($"[SMTP] Conectando ao host primário: {_smtpHost}:{_smtpPort}");
+                    await smtp.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls, cancellationToken);
+                }
+                catch (Exception exPrimario)
+                {
+                    throw new InvalidOperationException(
+                        $"[ETAPA: CONEXÃO] Falha ao conectar em ambos os servidores SMTP. " +
+                        $"Fallback ({_smtpHostFallback}:{_smtpPort}): {exFallback.GetType().Name} - {exFallback.Message}. " +
+                        $"Primário ({_smtpHost}:{_smtpPort}): {exPrimario.GetType().Name} - {exPrimario.Message}.",
+                        exPrimario);
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"[ETAPA: CONEXÃO] Falha ao conectar no servidor SMTP {hostConectado}:{_smtpPort}. " +
+                    $"{exFallback.GetType().Name} - {exFallback.Message}.",
+                    exFallback);
+            }
+        }
+
+        // ── 8.2 Autenticar ────────────────────────────────────────────────
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[SMTP] Autenticando user={_smtpUser} em {hostConectado}");
+>>>>>>> Stashed changes
             await smtp.AuthenticateAsync(_smtpUser, _smtpPass, cancellationToken);
+        }
+        catch (Exception exAuth)
+        {
+            throw new InvalidOperationException(
+                $"[ETAPA: AUTENTICAÇÃO] Conexão OK em {hostConectado}:{_smtpPort}, mas a autenticação do usuário '{_smtpUser}' falhou. " +
+                $"{exAuth.GetType().Name} - {exAuth.Message}. " +
+                $"Verifique se SMTP AUTH está habilitado para esta conta no Office365.",
+                exAuth);
+        }
+
+        // ── 8.3 Enviar ────────────────────────────────────────────────────
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[SMTP] Enviando mensagem para {emailDestinatario}");
             await smtp.SendAsync(mimeMessage, cancellationToken);
             await smtp.DisconnectAsync(true, cancellationToken);
             System.Diagnostics.Debug.WriteLine("[SMTP] Enviado com sucesso!");
         }
-        catch (Exception ex)
+        catch (Exception exSend)
         {
-            System.Diagnostics.Debug.WriteLine($"[SMTP ERRO] {ex.GetType().Name}: {ex.Message}");
-            throw;
+            throw new InvalidOperationException(
+                $"[ETAPA: ENVIO] Conexão e autenticação OK em {hostConectado}:{_smtpPort}, mas o envio para '{emailDestinatario}' falhou. " +
+                $"{exSend.GetType().Name} - {exSend.Message}.",
+                exSend);
         }
 
         // ── 9. Gravar log no banco via API ────────────────────────────────
         await apiClient.SalvarLogEnvioAsync(new SalvarLogEnvioRequest
         {
-            PropostaId            = form.PropostaId,
-            Nome                  = form.ContatoNome,
-            Email                 = emailDestinatario,
-            Saudacao              = form.Saudacao,
-            Mensagem              = mensagem,
-            ComCopia              = comCopia,
-            Hash                  = hash,
-            UsuarioId             = usuarioLogadoId,
-            PodeDispEstoque       = form.PodeDispEstoque       ? 1 : 0,
+            PropostaId = form.PropostaId,
+            Nome = form.ContatoNome,
+            Email = emailDestinatario,
+            Saudacao = form.Saudacao,
+            Mensagem = mensagem,
+            ComCopia = comCopia,
+            Hash = hash,
+            UsuarioId = usuarioLogadoId,
+            PodeDispEstoque = form.PodeDispEstoque ? 1 : 0,
             PodeAltTransportadora = form.PodeAltTransportadora ? 1 : 0,
-            PodeAltCondPagamento  = form.PodeAltCondPagamento  ? 1 : 0,
-            PodeNegociar          = form.PodeNegociar          ? 1 : 0,
+            PodeAltCondPagamento = form.PodeAltCondPagamento ? 1 : 0,
+            PodeNegociar = form.PodeNegociar ? 1 : 0,
         }, cancellationToken);
     }
 
@@ -189,44 +267,44 @@ public sealed class CotacaoEmailService(
 
     private static DadosEmail MapToDadosEmail(CotacaoEmailTemplateViewModel tpl) => new()
     {
-        CdProposta         = tpl.CdProposta,
-        OrdemCompra        = tpl.OrdemCompra,
-        Obs                = tpl.Obs,
-        ContatoNome        = tpl.ContatoNome,
-        ContatoEmail       = tpl.ContatoEmail,
-        DataValidade       = tpl.DataValidade,
-        CondPagtoNome      = tpl.CondPagtoNome,
-        StatusNome         = tpl.StatusNome,
-        DiasPrazoEntrega   = tpl.DiasPrazoEntrega,
+        CdProposta = tpl.CdProposta,
+        OrdemCompra = tpl.OrdemCompra,
+        Obs = tpl.Obs,
+        ContatoNome = tpl.ContatoNome,
+        ContatoEmail = tpl.ContatoEmail,
+        DataValidade = tpl.DataValidade,
+        CondPagtoNome = tpl.CondPagtoNome,
+        StatusNome = tpl.StatusNome,
+        DiasPrazoEntrega = tpl.DiasPrazoEntrega,
         TransportadoraNome = tpl.TransportadoraNome,
-        VlrFrete           = tpl.VlrFrete,
+        VlrFrete = tpl.VlrFrete,
         TotalVendaSemFrete = tpl.TotalVendaSemFrete,
-        TotalVendaFinal    = tpl.TotalVendaFinal,
-        EstabRazaoSocial   = tpl.EstabRazaoSocial,
-        EstabCNPJ          = tpl.EstabCNPJ,
+        TotalVendaFinal = tpl.TotalVendaFinal,
+        EstabRazaoSocial = tpl.EstabRazaoSocial,
+        EstabCNPJ = tpl.EstabCNPJ,
         EstabInscrEstadual = tpl.EstabInscrEstadual,
-        EstabTelefone      = tpl.EstabTelefone,
-        EstabEndereco      = tpl.EstabEndereco,
-        EstabNumero        = tpl.EstabNumero,
-        EstabComplemento   = tpl.EstabComplemento,
-        EstabBairro        = tpl.EstabBairro,
-        EstabCidade        = tpl.EstabCidade,
-        EstabUF            = tpl.EstabUF,
-        EstabCEP           = tpl.EstabCEP,
-        ConsultorNome      = tpl.ConsultorNome,
-        ConsultorEmail     = tpl.ConsultorEmail,
-        ConsultorTelefone  = tpl.ConsultorTelefone,
+        EstabTelefone = tpl.EstabTelefone,
+        EstabEndereco = tpl.EstabEndereco,
+        EstabNumero = tpl.EstabNumero,
+        EstabComplemento = tpl.EstabComplemento,
+        EstabBairro = tpl.EstabBairro,
+        EstabCidade = tpl.EstabCidade,
+        EstabUF = tpl.EstabUF,
+        EstabCEP = tpl.EstabCEP,
+        ConsultorNome = tpl.ConsultorNome,
+        ConsultorEmail = tpl.ConsultorEmail,
+        ConsultorTelefone = tpl.ConsultorTelefone,
         ClienteRazaoSocial = tpl.ClienteRazaoSocial,
-        ClienteCNPJ        = tpl.ClienteCNPJ,
-        ClienteTelefone    = tpl.ClienteTelefone,
-        ClienteEndereco    = tpl.ClienteEndereco,
-        ClienteNumero      = tpl.ClienteNumero,
+        ClienteCNPJ = tpl.ClienteCNPJ,
+        ClienteTelefone = tpl.ClienteTelefone,
+        ClienteEndereco = tpl.ClienteEndereco,
+        ClienteNumero = tpl.ClienteNumero,
         ClienteComplemento = tpl.ClienteComplemento,
-        ClienteBairro      = tpl.ClienteBairro,
-        ClienteCidade      = tpl.ClienteCidade,
-        ClienteUF          = tpl.ClienteUF,
-        ClienteCEP         = tpl.ClienteCEP,
-        Itens              = tpl.Itens.Select(i => new ItemEmail(
+        ClienteBairro = tpl.ClienteBairro,
+        ClienteCidade = tpl.ClienteCidade,
+        ClienteUF = tpl.ClienteUF,
+        ClienteCEP = tpl.ClienteCEP,
+        Itens = tpl.Itens.Select(i => new ItemEmail(
             i.CodItemBR, i.DescrItemBR, i.PrecoItem, i.IPI, i.ST,
             i.Quantidade, i.VlrUnitario, i.NmSegmento, i.NCM)).ToList(),
     };
@@ -249,46 +327,46 @@ public sealed class CotacaoEmailService(
 
     private sealed class DadosEmail
     {
-        public string CdProposta         { get; set; } = string.Empty;
-        public string OrdemCompra        { get; set; } = string.Empty;
-        public string Obs                { get; set; } = string.Empty;
-        public string ContatoNome        { get; set; } = string.Empty;
-        public string ContatoEmail       { get; set; } = string.Empty;
-        public string DataValidade       { get; set; } = string.Empty;
-        public string CondPagtoNome      { get; set; } = string.Empty;
-        public string StatusNome         { get; set; } = string.Empty;
-        public int    DiasPrazoEntrega   { get; set; }
+        public string CdProposta { get; set; } = string.Empty;
+        public string OrdemCompra { get; set; } = string.Empty;
+        public string Obs { get; set; } = string.Empty;
+        public string ContatoNome { get; set; } = string.Empty;
+        public string ContatoEmail { get; set; } = string.Empty;
+        public string DataValidade { get; set; } = string.Empty;
+        public string CondPagtoNome { get; set; } = string.Empty;
+        public string StatusNome { get; set; } = string.Empty;
+        public int DiasPrazoEntrega { get; set; }
         public string TransportadoraNome { get; set; } = string.Empty;
-        public decimal VlrFrete          { get; set; }
+        public decimal VlrFrete { get; set; }
         public decimal TotalVendaSemFrete { get; set; }
-        public decimal TotalVendaFinal   { get; set; }
+        public decimal TotalVendaFinal { get; set; }
 
-        public string EstabRazaoSocial   { get; set; } = string.Empty;
-        public string EstabCNPJ          { get; set; } = string.Empty;
+        public string EstabRazaoSocial { get; set; } = string.Empty;
+        public string EstabCNPJ { get; set; } = string.Empty;
         public string EstabInscrEstadual { get; set; } = string.Empty;
-        public string EstabTelefone      { get; set; } = string.Empty;
-        public string EstabEndereco      { get; set; } = string.Empty;
-        public string EstabNumero        { get; set; } = string.Empty;
-        public string EstabComplemento   { get; set; } = string.Empty;
-        public string EstabBairro        { get; set; } = string.Empty;
-        public string EstabCidade        { get; set; } = string.Empty;
-        public string EstabUF            { get; set; } = string.Empty;
-        public string EstabCEP           { get; set; } = string.Empty;
+        public string EstabTelefone { get; set; } = string.Empty;
+        public string EstabEndereco { get; set; } = string.Empty;
+        public string EstabNumero { get; set; } = string.Empty;
+        public string EstabComplemento { get; set; } = string.Empty;
+        public string EstabBairro { get; set; } = string.Empty;
+        public string EstabCidade { get; set; } = string.Empty;
+        public string EstabUF { get; set; } = string.Empty;
+        public string EstabCEP { get; set; } = string.Empty;
 
-        public string ConsultorNome      { get; set; } = string.Empty;
-        public string ConsultorEmail     { get; set; } = string.Empty;
-        public string ConsultorTelefone  { get; set; } = string.Empty;
+        public string ConsultorNome { get; set; } = string.Empty;
+        public string ConsultorEmail { get; set; } = string.Empty;
+        public string ConsultorTelefone { get; set; } = string.Empty;
 
         public string ClienteRazaoSocial { get; set; } = string.Empty;
-        public string ClienteCNPJ        { get; set; } = string.Empty;
-        public string ClienteTelefone    { get; set; } = string.Empty;
-        public string ClienteEndereco    { get; set; } = string.Empty;
-        public string ClienteNumero      { get; set; } = string.Empty;
+        public string ClienteCNPJ { get; set; } = string.Empty;
+        public string ClienteTelefone { get; set; } = string.Empty;
+        public string ClienteEndereco { get; set; } = string.Empty;
+        public string ClienteNumero { get; set; } = string.Empty;
         public string ClienteComplemento { get; set; } = string.Empty;
-        public string ClienteBairro      { get; set; } = string.Empty;
-        public string ClienteCidade      { get; set; } = string.Empty;
-        public string ClienteUF          { get; set; } = string.Empty;
-        public string ClienteCEP         { get; set; } = string.Empty;
+        public string ClienteBairro { get; set; } = string.Empty;
+        public string ClienteCidade { get; set; } = string.Empty;
+        public string ClienteUF { get; set; } = string.Empty;
+        public string ClienteCEP { get; set; } = string.Empty;
 
         public IReadOnlyList<ItemEmail> Itens { get; set; } = [];
     }

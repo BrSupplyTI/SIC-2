@@ -366,3 +366,4 @@ FodyWeavers.xsd
 **/appsettings.json
 **/appsettings.*.json
 **/web.config
+/SIC.Api/Program.cs

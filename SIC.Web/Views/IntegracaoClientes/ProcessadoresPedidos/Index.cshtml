@@ -1,0 +1,175 @@
+@model SIC.Web.Models.IntegracaoClientes.ProcessadoresPedidos.ProcessadoresPedidosIndexViewModel
+@{
+    ViewData["Title"] = "Processadores Pedidos";
+}
+
+@section Styles {
+    <style>
+        .prepedido-section-title {
+            font-size: .8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--sic-muted);
+            border-bottom: 1px solid var(--sic-border);
+            padding-bottom: .5rem;
+            margin-bottom: 1rem;
+        }
+
+        .table-prepedido-wrap {
+            border: 1px solid var(--sic-border);
+            border-radius: .5rem;
+            overflow: hidden;
+        }
+
+        .table-prepedido {
+            --bs-table-bg: transparent;
+            --bs-table-hover-bg: var(--sic-surface-2);
+        }
+
+            .table-prepedido thead th {
+                font-size: .7rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: .05em;
+                color: var(--sic-muted);
+                background: var(--sic-surface-2);
+                border-bottom: 2px solid var(--sic-border);
+                padding: .55rem .75rem;
+                white-space: nowrap;
+            }
+
+            .table-prepedido tbody td {
+                color: var(--sic-text);
+                border-bottom: 1px solid var(--sic-border);
+                padding: .5rem .75rem;
+                font-size: .85rem;
+                vertical-align: middle;
+            }
+
+            .table-prepedido tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+        .prepedido-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+            font-size: .8rem;
+            font-weight: 600;
+            padding: .4rem .75rem;
+            border-radius: .375rem;
+            border: 1px solid transparent;
+            transition: all .2s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .prepedido-btn-detalhes {
+            background: rgba(var(--bs-primary-rgb), .12);
+            color: var(--sic-text);
+            border-color: rgba(var(--bs-primary-rgb), .3);
+        }
+
+            .prepedido-btn-detalhes:hover {
+                background: rgba(var(--bs-primary-rgb), .25);
+                border-color: rgba(var(--bs-primary-rgb), .5);
+            }
+
+        .prepedido-btn-excluir {
+            background: rgba(var(--bs-warning-rgb), .16);
+            color: var(--bs-warning-text-emphasis);
+            border-color: rgba(var(--bs-warning-rgb), .3);
+        }
+
+            .prepedido-btn-excluir:hover {
+                background: rgba(var(--bs-warning-rgb), .28);
+                border-color: rgba(var(--bs-warning-rgb), .5);
+            }
+    </style>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 p-lg-5">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="h4 mb-0"><i class="fa-duotone fa-gears me-2 text-br"></i>Configuração de Processamento de Pedidos</h2>
+                </div>
+                <p class="text-muted mt-1 mb-0">Selecione um processador para listar os clientes configurados.</p>
+            </div>
+        </div>
+
+        <form method="get" asp-controller="ProcessadoresPedidos" asp-action="Index" class="row g-3 mb-4">
+            <div class="col-12 col-md-8 col-lg-6">
+                <label for="processadorPedidoId" class="form-label fw-semibold">
+                    <i class="fa-duotone fa-list me-1 text-muted"></i>Processador Pedidos:
+                </label>
+                <select id="processadorPedidoId" name="processadorPedidoId" class="form-select" onchange="this.form.submit()">
+                    <option value="">Selecione...</option>
+                    @foreach (var item in Model.ProcessadoresPedido)
+                    {
+                        <option value="@item.ProcessadorPedidoId" selected="@(Model.ProcessadorPedidoIdSelecionado == item.ProcessadorPedidoId)">@item.Nome</option>
+                    }
+                </select>
+            </div>
+        </form>
+
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="prepedido-section-title mb-0 border-0 p-0">Clientes</div>
+            <a href="javascript:void(0)" class="text-decoration-none text-warning fw-semibold">Novo</a>
+        </div>
+
+        <div class="table-prepedido-wrap">
+            <div class="table-responsive">
+                <table class="table table-hover table-prepedido mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Código Cliente</th>
+                            <th>Razão Social</th>
+                            <th>De x Para Cliente</th>
+                            <th class="text-center">Detalhes</th>
+                            <th class="text-center">Excluir</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ProcessadorPedidoIdSelecionado is null)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Selecione um Processador de Pedidos para visualizar as configurações.</td>
+                            </tr>
+                        }
+                        else if (Model.Configuracoes.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Nenhuma configuração encontrada para o processador selecionado.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model.Configuracoes)
+                            {
+                                <tr>
+                                    <td>@item.CodigoCliente</td>
+                                    <td>@item.RazaoSocialCliente</td>
+                                    <td>@item.DeParaCliente</td>
+                                    <td class="text-center">
+                                        <a href="javascript:void(0)" class="prepedido-btn prepedido-btn-detalhes" title="Detalhes">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                        </a>
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="javascript:void(0)" class="prepedido-btn prepedido-btn-excluir" title="Excluir">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

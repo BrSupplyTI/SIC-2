@@ -7,6 +7,7 @@ using SIC.Web.Services;
 using SIC.Web.Services.Abreviacoes;
 using SIC.Web.Services.Admin;
 using SIC.Web.Services.Cotacao;
+using SIC.Web.Services.IntegracaoClientes;
 using SIC.Web.Services.PrePedidosPDF;
 using SIC.Web.Services.InteligenciaDeBusca;
 using SIC.Web.Services.Propostas;
@@ -103,6 +104,14 @@ builder.Services.AddHttpClient<CategorizacaoApiClient>(client =>
 });
 
 builder.Services.AddHttpClient<AbreviacaoApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddHttpClient<ProcessadoresPedidosApiClient>(client =>
 {
     var baseUrl = builder.Configuration["Api:BaseUrl"]
         ?? throw new InvalidOperationException("Api:BaseUrl não configurado.");

@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Shared\" />
+    <Compile Remove="Abstractions\IntegracaoClientes\ProcessadoresPedidos\NovaPasta\**" />
+    <EmbeddedResource Remove="Abstractions\IntegracaoClientes\ProcessadoresPedidos\NovaPasta\**" />
+    <None Remove="Abstractions\IntegracaoClientes\ProcessadoresPedidos\NovaPasta\**" />
   </ItemGroup>
 
 </Project>

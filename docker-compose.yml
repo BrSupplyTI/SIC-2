@@ -1,0 +1,26 @@
+services:
+
+  sic-api:
+    build:
+      context: .
+      dockerfile: SIC.Api/Dockerfile
+    container_name: sic-api
+    ports:
+      - "7001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__SicDatabase=Server=192.168.0.8;Database=BrSupply;User Id=usuario_intranet;Password=brs123#;TrustServerCertificate=True;
+
+  sic-web:
+    build:
+      context: .
+      dockerfile: SIC.Web/Dockerfile
+    container_name: sic-web
+    ports:
+      - "7296:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__SicDatabase=Server=192.168.0.8;Database=BrSupply;User Id=usuario_intranet;Password=brs123#;TrustServerCertificate=True;
+      - Api__BaseUrl=http://sic-api:8080/
+    depends_on:
+      - sic-api

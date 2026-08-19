@@ -2,6 +2,8 @@
 
 ## General Guidelines
 - Primeiro, ouça, entenda o contexto completo e debata conversacionalmente ANTES de sugerir ou implementar código. Não antecipe, duplique soluções ou crie coisas desnecessárias. Foque no que é pedido, verifique o que já existe e só então aja.
+- O usuário prefere instruções em português do Brasil e em passos pequenos (um de cada vez) durante troubleshooting.
+- O usuário prefere soluções com baixa burocracia e onboarding mínimo para a equipe, com passos simples e práticos.
 
 ## Diretrizes de projeto
 - Para simplificar a arquitetura, o usuário prefere aplicar Dependency Inversion de forma pragmática: interfaces de integração (ex.: IEmailService) no SIC.Domain/Abstractions e implementações no SIC.Infrastructure/Integrations.
